@@ -1,6 +1,6 @@
 extends Node3D
 
-const BB_SCENE := preload("res://bb.tscn")
+const BB_SCENE := preload("res://Guns/bb.tscn")
 const MUZZLE_ENERGY := 1.49
 
 const TRAIL_COLORS := [

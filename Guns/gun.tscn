@@ -1,0 +1,32 @@
+[gd_scene load_steps=5 format=3 uid="uid://ble4klsjtx5q2"]
+
+[ext_resource type="Script" uid="uid://bvspvig8o52i4" path="res://Guns/gun.gd" id="1_a202f"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_bhunq"]
+size = Vector3(0.06, 0.12, 0.55)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_bhunq"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.35
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gun"]
+albedo_color = Color(0.1, 0.11, 0.12, 1)
+metallic = 0.55
+roughness = 0.42
+
+[node name="Gun" type="Node3D" unique_id=989647515]
+script = ExtResource("1_a202f")
+slow_motion = 1.0
+
+[node name="Body" type="MeshInstance3D" parent="." unique_id=562363311]
+mesh = SubResource("BoxMesh_bhunq")
+surface_material_override/0 = SubResource("StandardMaterial3D_gun")
+
+[node name="Barrel" type="MeshInstance3D" parent="." unique_id=31371069]
+transform = Transform3D(-0.9981349, 8.734124e-08, 0.061048515, 0.061048515, -2.6685147e-09, 0.9981349, 8.7341256e-08, 0.99999994, -2.6685152e-09, 0, 0, -0.45)
+mesh = SubResource("CylinderMesh_bhunq")
+surface_material_override/0 = SubResource("StandardMaterial3D_gun")
+
+[node name="Muzzle" type="Marker3D" parent="." unique_id=951973944]
+transform = Transform3D(1, 0, 0, 0, 0.9999999, 0, 0, 0, 1.0000001, 1.311324e-10, -0.0030000005, -0.6299407)

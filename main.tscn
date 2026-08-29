@@ -1,0 +1,37 @@
+[gd_scene load_steps=8 format=3 uid="uid://bjxj5q2g211rq"]
+
+[ext_resource type="PackedScene" uid="uid://btibewlgadtuq" path="res://Levels/level_01.tscn" id="1_level"]
+[ext_resource type="PackedScene" uid="uid://bh7clxqxu8qbe" path="res://Player/Player.tscn" id="2_player"]
+[ext_resource type="Script" path="res://main.gd" id="3_main"]
+[ext_resource type="Shader" path="res://Shaders/sky.gdshader" id="4_sky"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
+shader = ExtResource("4_sky")
+
+[sub_resource type="Sky" id="Sky_main"]
+sky_material = SubResource("ShaderMaterial_sky")
+
+[sub_resource type="Environment" id="Environment_main"]
+background_mode = 2
+sky = SubResource("Sky_main")
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.63, 0.77, 0.89, 1)
+fog_density = 0.0012
+fog_sky_affect = 0.0
+
+[node name="Main" type="Node3D" unique_id=241308351]
+script = ExtResource("3_main")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_main")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.81915, 0.40558, -0.40558, 0, 0.7071, 0.7071, 0.57358, -0.57923, 0.57923, 0, 12, 0)
+light_energy = 1.1
+shadow_enabled = true
+
+[node name="Level01" parent="." instance=ExtResource("1_level")]
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 60)
