@@ -1,12 +1,23 @@
-[gd_scene load_steps=8 format=3 uid="uid://bjxj5q2g211rq"]
+[gd_scene format=3 uid="uid://bjxj5q2g211rq"]
 
 [ext_resource type="PackedScene" uid="uid://btibewlgadtuq" path="res://Levels/level_01.tscn" id="1_level"]
 [ext_resource type="PackedScene" uid="uid://bh7clxqxu8qbe" path="res://Player/Player.tscn" id="2_player"]
-[ext_resource type="Script" path="res://main.gd" id="3_main"]
-[ext_resource type="Shader" path="res://Shaders/sky.gdshader" id="4_sky"]
+[ext_resource type="Script" uid="uid://dytwqbacucyvx" path="res://main.gd" id="3_main"]
+[ext_resource type="Shader" uid="uid://dowsb4pwaj2qi" path="res://Shaders/sky.gdshader" id="4_sky"]
+[ext_resource type="PackedScene" path="res://HUD/hud.tscn" id="5_hud"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("4_sky")
+shader_parameter/top_color = Color(0.11, 0.32, 0.68, 1)
+shader_parameter/horizon_color = Color(0.63, 0.77, 0.89, 1)
+shader_parameter/ground_color = Color(0.2, 0.22, 0.24, 1)
+shader_parameter/cloud_color = Color(1, 1, 1, 1)
+shader_parameter/cloud_shadow = Color(0.52, 0.59, 0.7, 1)
+shader_parameter/cloud_cover = 0.4
+shader_parameter/cloud_sharpness = 0.25
+shader_parameter/cloud_scale = 0.6
+shader_parameter/horizon_softness = 0.15
+shader_parameter/sun_glow = 0.6
 
 [sub_resource type="Sky" id="Sky_main"]
 sky_material = SubResource("ShaderMaterial_sky")
@@ -23,15 +34,17 @@ fog_sky_affect = 0.0
 [node name="Main" type="Node3D" unique_id=241308351]
 script = ExtResource("3_main")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1208392827]
 environment = SubResource("Environment_main")
 
-[node name="Sun" type="DirectionalLight3D" parent="."]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=2079382858]
 transform = Transform3D(0.81915, 0.40558, -0.40558, 0, 0.7071, 0.7071, 0.57358, -0.57923, 0.57923, 0, 12, 0)
 light_energy = 1.1
 shadow_enabled = true
 
-[node name="Level01" parent="." instance=ExtResource("1_level")]
+[node name="Level01" parent="." unique_id=654820858 instance=ExtResource("1_level")]
 
-[node name="Player" parent="." instance=ExtResource("2_player")]
+[node name="Player" parent="." unique_id=659214260 instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 60)
+
+[node name="HUD" parent="." instance=ExtResource("5_hud")]

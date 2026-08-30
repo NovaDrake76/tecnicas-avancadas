@@ -1,23 +1,25 @@
-[gd_scene load_steps=5 format=3 uid="uid://ble4klsjtx5q2"]
+[gd_scene format=3 uid="uid://ble4klsjtx5q2"]
 
 [ext_resource type="Script" uid="uid://bvspvig8o52i4" path="res://Guns/gun.gd" id="1_a202f"]
+[ext_resource type="Resource" uid="uid://cj4v814hgajyy" path="res://Guns/mag_rifle.tres" id="2_2b3y3"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_bhunq"]
 size = Vector3(0.06, 0.12, 0.55)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_bhunq"]
-top_radius = 0.012
-bottom_radius = 0.012
-height = 0.35
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gun"]
 albedo_color = Color(0.1, 0.11, 0.12, 1)
 metallic = 0.55
 roughness = 0.42
 
+[sub_resource type="CylinderMesh" id="CylinderMesh_bhunq"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.35
+
 [node name="Gun" type="Node3D" unique_id=989647515]
 script = ExtResource("1_a202f")
-slow_motion = 1.0
+motor_rpm = 9000.0
+magazine = ExtResource("2_2b3y3")
 
 [node name="Body" type="MeshInstance3D" parent="." unique_id=562363311]
 mesh = SubResource("BoxMesh_bhunq")
