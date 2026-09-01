@@ -52,11 +52,16 @@ extends Node3D
 @export var air_pose_damping := 10.0
 
 @export_group("Aim down sights")
-## where the gun sits when fully aimed: centred on the crosshair and dropped so the rail sits on
-## it. aiming moves the weapon INWARD, never toward the camera, or the stock ends up behind it.
-@export var sights_position := Vector3(0.0, -0.0855, -0.245)
+## where the gun sits when fully aimed. the eye rides the line through the rear sight and the
+## front post, close enough behind the rear one to be looking THROUGH it.
+@export var sights_position := Vector3(0.0, -0.0917, -0.1485)
+## the m4a1's two sights are not the same height, so the line droops. this levels it.
+@export var sights_pitch_deg := 0.96
 ## how much aiming damps sway and bob, a braced gun does not breathe like a hip held one.
 @export_range(0.0, 1.0) var ads_steadiness := 0.8
+## how much of the recoil TRAVEL survives while aimed. a shouldered rifle rises, it does not
+## slide back into your eye, and at this eye relief the full travel would clip the rear sight.
+@export_range(0.0, 1.0) var ads_recoil_travel := 0.25
 
 @export_group("Wall avoidance")
 @export var wall_probe_dist := 0.85
@@ -100,6 +105,7 @@ var _player: CharacterBody3D
 var _head: Node3D
 var _gun: Node3D
 var _hip_position := Vector3.ZERO
+var _hip_pitch := 0.0
 var _ads := 0.0
 
 
@@ -119,6 +125,7 @@ func _bind() -> void:
 		gun.fired.connect(_on_fired)
 		_gun = gun
 		_hip_position = gun.position
+		_hip_pitch = gun.rotation.x
 
 
 ## driven by AimScope, 0 at the hip and 1 fully aimed.
@@ -249,16 +256,19 @@ func _process(delta: float) -> void:
 	_wall_pos = wp[0]
 	_wall_pos_vel = wp[1]
 
-	## aiming damps the whole procedural layer as a scale on the sum, recoil is deliberately left out.
-	## a gun that kicked less because you were looking down it would be a free accuracy buff.
+	## aiming damps the whole procedural layer as a scale on the sum. the recoil ROTATION is
+	## deliberately left at full strength: a gun that kicked less because you were looking down it
+	## would be a free accuracy buff. only the travel is damped, and that moves no shot anywhere.
 	var steady := 1.0 - _ads * ads_steadiness
+	var travel := lerpf(1.0, ads_recoil_travel, _ads)
 	var sway := Vector3(_idle_x.x + _look_x.x + _bob_x.x, _idle_y.x + _look_y.x + _bob_y.x, 0.0)
-	position = (sway + _run_pos + _air_pos + _wall_pos) * steady + _recoil_pos
+	position = (sway + _run_pos + _air_pos + _wall_pos) * steady + _recoil_pos * travel
 	rotation = (Vector3(_rot_pitch.x, _rot_yaw.x, _rot_roll.x) + _run_rot) * steady + _recoil_rot
 
 	## the raise itself is on the gun, this node keeps carrying the procedural offsets on top.
 	if _gun != null:
 		_gun.position = _hip_position.lerp(sights_position, _ads)
+		_gun.rotation.x = lerpf(_hip_pitch, deg_to_rad(sights_pitch_deg), _ads)
 
 
 func _spring3(value: Vector3, velocity: Vector3, target: Vector3, stiffness: float, damping: float, delta: float) -> Array:

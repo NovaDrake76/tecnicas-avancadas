@@ -40,6 +40,7 @@ collision_mask = 1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
 
 [node name="Camera3D" type="Camera3D" parent="Head" unique_id=693236177]
+near = 0.02
 far = 500.0
 script = ExtResource("8_camfx")
 
