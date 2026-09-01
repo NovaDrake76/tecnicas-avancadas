@@ -1,0 +1,154 @@
+@tool
+class_name HillRing
+extends Node3D
+
+## hills that begin where the flat range ends, so the world has an edge you cannot see over.
+## the middle stays perfectly flat on purpose, the gridded floor is the ruler the ballistics demo reads.
+
+@export_group("Shape")
+## the floor is a 200 m square, so the falloff follows a square too or the corners poke through.
+@export var square_falloff := true
+## everything inside this stays flat. it must match the floor's half extent.
+@export var inner := 100.0
+## the hills reach full height by here.
+@export var outer := 190.0
+@export var extent := 440.0
+@export var resolution := 150
+@export var height := 26.0
+## above 1 pushes more ground low, which reads as separate hills rather than one smooth wall.
+@export var contrast := 1.7
+
+@export_group("Noise")
+@export var noise_seed := 20260901
+@export var noise_frequency := 0.008
+@export var noise_octaves := 4
+@export var detail_frequency := 0.035
+@export var detail_amount := 1.8
+
+@export_group("Look")
+@export var low_color := Color(0.24, 0.33, 0.18)
+@export var high_color := Color(0.40, 0.42, 0.28)
+
+@export_group("Build")
+## flip this in the editor to rebuild after changing anything above.
+@export var rebuild := false:
+	set(value):
+		rebuild = false
+		if is_inside_tree():
+			build()
+
+var _noise := FastNoiseLite.new()
+var _detail := FastNoiseLite.new()
+var _ready_noise := false
+
+
+func _ready() -> void:
+	build()
+
+
+func _configure_noise() -> void:
+	_noise.seed = noise_seed
+	_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	_noise.frequency = noise_frequency
+	_noise.fractal_octaves = noise_octaves
+	_detail.seed = noise_seed + 977
+	_detail.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	_detail.frequency = detail_frequency
+	_ready_noise = true
+
+
+## 0 on the flat range, 1 out where the hills are full height.
+func falloff(x: float, z: float) -> float:
+	var d := maxf(absf(x), absf(z)) if square_falloff else Vector2(x, z).length()
+	return smoothstep(inner, outer, d)
+
+
+## the ground height at a world point. the foliage scatter calls this so plants sit on the ground.
+func height_at(x: float, z: float) -> float:
+	if not _ready_noise:
+		_configure_noise()
+	var ramp := falloff(x, z)
+	if ramp <= 0.0:
+		return 0.0
+	var base: float = pow(_noise.get_noise_2d(x, z) * 0.5 + 0.5, contrast)
+	var fine := _detail.get_noise_2d(x, z) * detail_amount
+	return (base * height + fine) * ramp
+
+
+func build() -> void:
+	_configure_noise()
+	for child in get_children():
+		child.queue_free()
+
+	var step := extent / float(resolution)
+	var half := extent * 0.5
+
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var faces := PackedVector3Array()
+
+	for iz in resolution:
+		for ix in resolution:
+			var x0 := -half + float(ix) * step
+			var z0 := -half + float(iz) * step
+			var x1 := x0 + step
+			var z1 := z0 + step
+
+			var a := Vector3(x0, height_at(x0, z0), z0)
+			var b := Vector3(x1, height_at(x1, z0), z0)
+			var c := Vector3(x1, height_at(x1, z1), z1)
+			var d := Vector3(x0, height_at(x0, z1), z1)
+
+			## a fully flat quad sits over the gridded floor, which already draws that ground.
+			if is_zero_approx(a.y) and is_zero_approx(b.y) and is_zero_approx(c.y) and is_zero_approx(d.y):
+				continue
+
+			_add_tri(surface, a, b, c)
+			_add_tri(surface, a, c, d)
+			faces.append_array([a, b, c, a, c, d])
+
+	surface.generate_normals()
+
+	var mesh_node := MeshInstance3D.new()
+	mesh_node.name = "HillMesh"
+	mesh_node.mesh = surface.commit()
+	mesh_node.material_override = _make_material()
+	_attach(mesh_node)
+
+	var body := StaticBody3D.new()
+	body.name = "HillBody"
+	body.collision_layer = 1
+	body.collision_mask = 0
+	var shape := CollisionShape3D.new()
+	var concave := ConcavePolygonShape3D.new()
+	concave.set_faces(faces)
+	shape.shape = concave
+	body.add_child(shape)
+	_attach(body)
+	if Engine.is_editor_hint():
+		shape.owner = get_tree().edited_scene_root
+
+
+func _attach(node: Node) -> void:
+	add_child(node)
+	if Engine.is_editor_hint():
+		node.owner = get_tree().edited_scene_root
+
+
+func _add_tri(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
+	for v in [a, b, c]:
+		surface.set_color(low_color.lerp(high_color, clampf(v.y / maxf(height, 0.001), 0.0, 1.0)))
+		surface.add_vertex(v)
+
+
+func _make_material() -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	## the colours above are written the way a colour picker shows them, which is gamma encoded.
+	## without this godot reads them as linear and the hills come out about a third too pale.
+	if "vertex_color_is_srgb" in mat:
+		mat.vertex_color_is_srgb = true
+	mat.albedo_color = Color.WHITE
+	mat.roughness = 1.0
+	mat.specular = 0.05
+	return mat
