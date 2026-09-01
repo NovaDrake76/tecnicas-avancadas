@@ -52,8 +52,9 @@ extends Node3D
 @export var air_pose_damping := 10.0
 
 @export_group("Aim down sights")
-## where the gun sits when fully aimed, centred on the crosshair rather than off to the side.
-@export var sights_position := Vector3(0.0, -0.045, -0.2)
+## where the gun sits when fully aimed: centred on the crosshair and dropped so the rail sits on
+## it. aiming moves the weapon INWARD, never toward the camera, or the stock ends up behind it.
+@export var sights_position := Vector3(0.0, -0.088, -0.52)
 ## how much aiming damps sway and bob, a braced gun does not breathe like a hip held one.
 @export_range(0.0, 1.0) var ads_steadiness := 0.8
 
