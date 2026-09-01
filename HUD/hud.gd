@@ -9,6 +9,10 @@ const ALERT_COLOR := Color(1.0, 0.35, 0.3)
 @onready var hopup_label: Label = %Hopup
 @onready var message_label: Label = %Message
 @onready var prompt_label: Label = %Prompt
+@onready var objective_label: Label = %Objective
+@onready var timer_label: Label = %Timer
+@onready var banner_label: Label = %Banner
+@onready var summary_label: Label = %Summary
 
 var _weapon: Gun
 var _interactor: Interactor
@@ -19,6 +23,17 @@ var _flash_tween: Tween
 func _ready() -> void:
 	message_label.text = ""
 	prompt_label.text = ""
+	banner_label.text = ""
+	summary_label.text = ""
+	objective_label.text = ""
+	timer_label.text = ""
+
+	Run.level_started.connect(_on_level_started)
+	Run.targets_changed.connect(_on_targets_changed)
+	Run.time_changed.connect(_on_time_changed)
+	Run.level_cleared.connect(_on_level_cleared)
+	Run.run_finished.connect(_on_run_finished)
+
 	_bind_weapon.call_deferred()
 
 
@@ -40,6 +55,46 @@ func _bind_weapon() -> void:
 	if _interactor != null:
 		_interactor.focus_changed.connect(_on_focus_changed)
 		_interactor.focus_lost.connect(_on_focus_lost)
+
+
+func _on_level_started(index: int, name: String) -> void:
+	banner_label.text = ""
+	summary_label.text = ""
+	show_message("Level %d  %s" % [index + 1, name])
+
+
+func _on_targets_changed(_down: int, _total: int) -> void:
+	objective_label.text = Run.objective_text()
+
+
+func _on_time_changed(seconds: float) -> void:
+	timer_label.text = "%d:%02d" % [int(seconds) / 60, int(seconds) % 60]
+
+
+func _on_level_cleared(_index: int, summary: Dictionary) -> void:
+	banner_label.text = "LEVEL CLEAR"
+	summary_label.text = _summary_text(summary)
+
+
+func _on_run_finished(summary: Dictionary) -> void:
+	banner_label.text = "MISSION COMPLETE"
+	summary_label.text = _summary_text(summary)
+	objective_label.text = ""
+
+
+## every line is something the player did, so the score can be explained back to them.
+func _summary_text(s: Dictionary) -> String:
+	return "targets %d / %d          shots %d          accuracy %d%%
+time %s   (par %s)
+
+level %d          run %d" % [
+		int(s["targets"]), int(s["total"]), int(s["shots"]), int(round(float(s["accuracy"]) * 100.0)),
+		_clock(float(s["time"])), _clock(float(s["par"])),
+		int(s["level_score"]), int(s["run_score"])]
+
+
+func _clock(seconds: float) -> String:
+	return "%d:%02d" % [int(seconds) / 60, int(seconds) % 60]
 
 
 func _on_focus_changed(text: String, action: StringName, _target: Node) -> void:

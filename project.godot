@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 BulletHoles="*res://VFX/bullet_holes.gd"
 DamageNumbers="*res://VFX/damage_numbers.gd"
+Run="*res://Autoload/run.gd"
 
 [display]
 

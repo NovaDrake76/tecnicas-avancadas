@@ -1,6 +1,5 @@
 [gd_scene format=3 uid="uid://bjxj5q2g211rq"]
 
-[ext_resource type="PackedScene" uid="uid://btibewlgadtuq" path="res://Levels/level_01.tscn" id="1_level"]
 [ext_resource type="PackedScene" uid="uid://bh7clxqxu8qbe" path="res://Player/Player.tscn" id="2_player"]
 [ext_resource type="Script" uid="uid://dytwqbacucyvx" path="res://main.gd" id="3_main"]
 [ext_resource type="Shader" uid="uid://dowsb4pwaj2qi" path="res://Shaders/sky.gdshader" id="4_sky"]
@@ -46,7 +45,6 @@ transform = Transform3D(0.81915, 0.40558, -0.40558, 0, 0.7071, 0.7071, 0.57358, 
 light_energy = 1.1
 shadow_enabled = true
 
-[node name="Level01" parent="." unique_id=654820858 instance=ExtResource("1_level")]
 
 [node name="Player" parent="." unique_id=659214260 instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 60)
@@ -61,3 +59,5 @@ script = ExtResource("6_void")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="KillPlane"]
 shape = SubResource("BoxShape3D_void")
+
+[node name="LevelHolder" type="Node3D" parent="."]

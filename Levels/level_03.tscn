@@ -1,0 +1,75 @@
+[gd_scene format=3]
+
+[ext_resource type="Shader" path="res://Shaders/grid_floor.gdshader" id="1_grid"]
+[ext_resource type="PackedScene" path="res://Guns/magazine/magazine_pickup.tscn" id="2_1jt1u"]
+[ext_resource type="PackedScene" path="res://Characters/kiwi.tscn" id="3_er0or"]
+[ext_resource type="Script" path="res://Levels/hill_ring.gd" id="90_hills"]
+[ext_resource type="Script" path="res://Levels/foliage.gd" id="91_foliage"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bhunq"]
+size = Vector3(200, 1, 200)
+
+[sub_resource type="BoxMesh" id="BoxMesh_bhunq"]
+size = Vector3(200, 1, 200)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_floor"]
+render_priority = 0
+shader = ExtResource("1_grid")
+shader_parameter/base_color = Color(0.27, 0.3, 0.28, 1)
+shader_parameter/minor_color = Color(0.36, 0.4, 0.37, 1)
+shader_parameter/major_color = Color(0.56, 0.61, 0.57, 1)
+shader_parameter/minor_spacing = 1.0
+shader_parameter/major_spacing = 10.0
+shader_parameter/minor_fade_distance = 70.0
+
+[node name="%s" type="Node3D"]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("BoxShape3D_bhunq")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+visible = false
+mesh = SubResource("BoxMesh_bhunq")
+surface_material_override/0 = SubResource("ShaderMaterial_floor")
+
+[node name="MagazinePickup" parent="StaticBody3D" instance=ExtResource("2_1jt1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.800, 0.00000, 118.000)
+
+[node name="MagazinePickup2" parent="StaticBody3D" instance=ExtResource("2_1jt1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.900, 0.00000, 118.000)
+
+[node name="Kiwi" parent="StaticBody3D" instance=ExtResource("3_er0or")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 49.000, 0.00090, -37.080)
+
+[node name="Kiwi2" parent="StaticBody3D" instance=ExtResource("3_er0or")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.865, 0.00090, -14.800)
+
+[node name="Kiwi3" parent="StaticBody3D" instance=ExtResource("3_er0or")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.892, 0.00090, 0.347)
+
+[node name="Kiwi4" parent="StaticBody3D" instance=ExtResource("3_er0or")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44.428, 0.00090, 19.413)
+
+[node name="Kiwi5" parent="StaticBody3D" instance=ExtResource("3_er0or")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52.116, 0.00090, 30.422)
+
+[node name="Kiwi6" parent="StaticBody3D" instance=ExtResource("3_er0or")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.009, 0.00090, 56.769)
+
+[node name="Kiwi7" parent="StaticBody3D" instance=ExtResource("3_er0or")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50.579, 0.00090, 74.215)
+
+[node name="PlayerSpawn" type="Marker3D" parent="." groups=["player_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.632, 2.33, 136.366)
+
+[node name="HillRing" type="Node3D" parent="."]
+script = ExtResource("90_hills")
+noise_seed = 4417
+
+[node name="Foliage" type="Node3D" parent="."]
+script = ExtResource("91_foliage")
+scatter_seed = 9020
