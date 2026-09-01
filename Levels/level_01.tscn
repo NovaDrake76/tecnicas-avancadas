@@ -5,7 +5,6 @@
 [ext_resource type="PackedScene" path="res://Characters/kiwi.tscn" id="3_er0or"]
 [ext_resource type="Script" uid="uid://bufn6abaxlns0" path="res://Levels/hill_ring.gd" id="90_hills"]
 [ext_resource type="Script" uid="uid://bb0mpba02qew7" path="res://Levels/foliage.gd" id="91_foliage"]
-[ext_resource type="PackedScene" uid="uid://dhv7ke716d5cs" path="res://Characters/meisho-doto-temp/meisho_doto.glb" id="92_doto"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bhunq"]
 size = Vector3(200, 1, 200)
@@ -45,9 +44,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.895088, 1.9073486e-06, 20.
 
 [node name="Kiwi" parent="StaticBody3D" unique_id=756847431 instance=ExtResource("3_er0or")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.586499, 0.00090217753, 55.495514)
-
-[node name="MeishoDoto" parent="StaticBody3D" unique_id=1873794629 instance=ExtResource("92_doto")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.4, 0, 55.5)
 
 [node name="Kiwi2" parent="StaticBody3D" unique_id=1386454169 instance=ExtResource("3_er0or")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.586499, 0.00090217753, 26.581268)
