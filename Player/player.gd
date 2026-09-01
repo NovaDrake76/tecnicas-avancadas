@@ -1,5 +1,9 @@
 extends CharacterBody3D
 
+## how far above and below a spawn marker to look for ground, and how far to stand clear of it.
+const SPAWN_PROBE := 300.0
+const SPAWN_CLEARANCE := 0.15
+
 @export var movement: MovementConfig
 
 @export_group("Look")
@@ -218,5 +222,17 @@ func respawn_from_void() -> void:
 	if spawn == null:
 		push_warning("player.gd: no node in group 'player_spawn'; keeping current position.")
 		return
-	global_position = spawn.global_position
+	global_position = ground_under(spawn.global_position)
 	rotation.y = spawn.global_rotation.y
+
+
+## the marker says where, the terrain says how high. every level grows its hills from its own
+## seed, so a y typed into one marker is only ever correct for the level it was typed in.
+func ground_under(point: Vector3) -> Vector3:
+	var query := PhysicsRayQueryParameters3D.create(
+		point + Vector3.UP * SPAWN_PROBE, point - Vector3.UP * SPAWN_PROBE, 1)
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		push_warning("player.gd: no ground under the spawn marker at %v; using it as given." % point)
+		return point
+	return (hit["position"] as Vector3) + Vector3.UP * SPAWN_CLEARANCE

@@ -34,6 +34,11 @@ func _load_level() -> void:
 
 
 func _begin() -> void:
+	## the terrain builds its collision in _ready and the old level frees itself at the end of the
+	## frame. the physics server knows about neither until it has stepped, and a spawn placed
+	## before that reads the ground of the level we just left, or no ground at all.
+	await get_tree().physics_frame
+	await get_tree().physics_frame
 	move_player_to_spawn()
 	Run.begin_level(_level)
 
