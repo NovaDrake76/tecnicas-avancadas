@@ -47,7 +47,7 @@ script = ExtResource("8_camfx")
 script = ExtResource("9_vm")
 
 [node name="Gun" parent="Head/Camera3D/Viewmodel" unique_id=321049290 instance=ExtResource("2_tok1r")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, -0.22, -0.35)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, -0.19, -0.42)
 
 [node name="StateMachine" type="Node" parent="."]
 script = ExtResource("4_sm")

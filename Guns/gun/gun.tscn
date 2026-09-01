@@ -1,34 +1,32 @@
-[gd_scene format=3 uid="uid://ble4klsjtx5q2"]
+[gd_scene load_steps=7 format=3 uid="uid://ble4klsjtx5q2"]
 
 [ext_resource type="Script" uid="uid://bvspvig8o52i4" path="res://Guns/gun/gun.gd" id="1_a202f"]
-[ext_resource type="Resource" uid="uid://cj4v814hgajyy" path="res://Guns/resources/mag_rifle.tres" id="2_2b3y3"]
+[ext_resource type="Mesh" uid="uid://cgky0oklhe07b" path="res://Models/Weapons/m4a1.obj" id="2_mesh"]
+[ext_resource type="Texture2D" path="res://Models/Weapons/m4a1_body.png" id="3_body"]
+[ext_resource type="Texture2D" path="res://Models/Weapons/m4a1_mag.png" id="4_mag"]
+[ext_resource type="Resource" path="res://Guns/resources/mag_rifle.tres" id="5_rifle"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_bhunq"]
-size = Vector3(0.06, 0.12, 0.55)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_texture = ExtResource("3_body")
+texture_filter = 0
+roughness = 0.65
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gun"]
-albedo_color = Color(0.1, 0.11, 0.12, 1)
-metallic = 0.55
-roughness = 0.42
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_bhunq"]
-top_radius = 0.012
-bottom_radius = 0.012
-height = 0.35
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mag"]
+albedo_texture = ExtResource("4_mag")
+texture_filter = 0
+roughness = 0.65
 
 [node name="Gun" type="Node3D" unique_id=989647515]
 script = ExtResource("1_a202f")
+slow_motion = 1.0
 motor_rpm = 9000.0
-magazine = ExtResource("2_2b3y3")
+magazine = ExtResource("5_rifle")
 
-[node name="Body" type="MeshInstance3D" parent="." unique_id=562363311]
-mesh = SubResource("BoxMesh_bhunq")
-surface_material_override/0 = SubResource("StandardMaterial3D_gun")
-
-[node name="Barrel" type="MeshInstance3D" parent="." unique_id=31371069]
-transform = Transform3D(-0.9981349, 8.734124e-08, 0.061048515, 0.061048515, -2.6685147e-09, 0.9981349, 8.7341256e-08, 0.99999994, -2.6685152e-09, 0, 0, -0.45)
-mesh = SubResource("CylinderMesh_bhunq")
-surface_material_override/0 = SubResource("StandardMaterial3D_gun")
+[node name="Model" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 0, -0.17, 0, 0.17, 0, 0.17, 0, 0, 0, 0, 0)
+mesh = ExtResource("2_mesh")
+surface_material_override/0 = SubResource("StandardMaterial3D_body")
+surface_material_override/1 = SubResource("StandardMaterial3D_mag")
 
 [node name="Muzzle" type="Marker3D" parent="." unique_id=951973944]
-transform = Transform3D(1, 0, 0, 0, 0.9999999, 0, 0, 0, 1.0000001, 1.311324e-10, -0.0030000005, -0.6299407)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.038, -0.51)
