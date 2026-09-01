@@ -1,0 +1,60 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://Guns/gun/gun.gd" id="1_gun"]
+[ext_resource type="PackedScene" path="res://Models/Weapons/shotgun_1.glb" id="2_model"]
+[ext_resource type="Resource" path="res://Guns/resources/mag_shotgun.tres" id="3_mag"]
+[ext_resource type="Script" path="res://Components/sfx_bank.gd" id="4_sfx"]
+
+[node name="M870" type="Node3D"]
+script = ExtResource("1_gun")
+weapon_model = "M870"
+accepted_mag = 0
+action = 2
+spring_constant = 300.0
+spring_compression = 0.1
+motor_rpm = 90.0
+rotations_per_shot = 1
+pellets = 3
+spread_deg = 2.5
+allow_auto = false
+magazine = ExtResource("3_mag")
+cycle_delay = 0.35
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+transform = Transform3D(0, 0.75, 0, 0, 0, -0.75, -0.75, 0, 0, 0, 0, 0)
+
+[node name="Muzzle" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, -0.53)
+
+[node name="HipPose" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, -0.19, -0.5)
+
+[node name="AimPose" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.025, -0.085, -0.15)
+
+[node name="FireSfx" type="AudioStreamPlayer3D" parent="."]
+unit_size = 3.0
+max_distance = 40.0
+panning_strength = 0.0
+script = ExtResource("4_sfx")
+clip_paths = PackedStringArray("res://Sounds/shotgun_fire_1.ogg")
+pitch_range = Vector2(0.94, 1.06)
+base_db = -12.0
+
+[node name="CycleSfx" type="AudioStreamPlayer3D" parent="."]
+unit_size = 3.0
+max_distance = 30.0
+panning_strength = 0.0
+script = ExtResource("4_sfx")
+clip_paths = PackedStringArray("res://Sounds/shotgun_rack_1.ogg", "res://Sounds/shotgun_rack_2.ogg", "res://Sounds/shotgun_rack_3.ogg", "res://Sounds/shotgun_rack_4.ogg")
+pitch_range = Vector2(0.96, 1.04)
+base_db = -8.0
+
+[node name="MagSfx" type="AudioStreamPlayer3D" parent="."]
+unit_size = 3.0
+max_distance = 30.0
+panning_strength = 0.0
+script = ExtResource("4_sfx")
+clip_paths = PackedStringArray("res://Sounds/shell_in_1.ogg", "res://Sounds/shell_in_2.ogg", "res://Sounds/shell_in_3.ogg")
+pitch_range = Vector2(0.95, 1.05)
+base_db = -6.0

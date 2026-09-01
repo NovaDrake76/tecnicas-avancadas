@@ -40,6 +40,8 @@ class Band:
 @export var scatter_seed := 1312
 ## nothing is planted inside this radius, it is the firing lane and it stays clear.
 @export var clear_radius := 22.0
+## multiplies every band's radii and the clear zone. the menu backdrop is the same field shrunk to a garden.
+@export var ring_scale := 1.0
 @export var tree_count := 430
 ## sparse over the firing range so the grid stays readable, dense past its edge.
 @export var range_grass_count := 900
@@ -58,6 +60,10 @@ class Band:
 ## trunks block movement. one body carrying many shapes, not many bodies.
 @export var tree_collision := true
 @export var trunk_radius := 0.45
+## boulders block movement too, and a stealth map wants things to hide behind.
+@export var rock_collision := true
+## a ball slightly inside the silhouette, so you can stand against a rock without being shoved.
+@export_range(0.3, 1.2) var rock_radius_scale := 0.78
 
 @export_group("Debug")
 @export var verbose := false
@@ -102,20 +108,31 @@ func build() -> void:
 
 	var trunks := PackedVector3Array()
 	var trunk_scales := PackedFloat32Array()
+	var rocks := PackedVector3Array()
+	var rock_radii := PackedFloat32Array()
 
 	for band in bands:
 		var is_tree := band.sink >= 0.3 and band.scenes[0].begins_with("tree")
+		var is_rock := band.scenes[0].begins_with("stone")
 		var per_species: int = maxi(1, band.count / band.scenes.size())
 		for source in band.scenes:
 			var placements := _place(band, per_species)
-			_emit(source, placements, band.tint)
+			var box := _emit(source, placements, band.tint)
 			if is_tree and tree_collision:
 				for t in placements:
 					trunks.append(t.origin)
 					trunk_scales.append(t.basis.get_scale().y)
+			## sized from the model the player can see, not from a number typed in here.
+			if is_rock and rock_collision and box.size != Vector3.ZERO:
+				var half := maxf(box.size.x, box.size.z) * 0.5 * rock_radius_scale
+				for t in placements:
+					rocks.append(t.origin)
+					rock_radii.append(half * t.basis.get_scale().y)
 
 	if tree_collision and trunks.size() > 0:
 		_build_trunk_bodies(trunks, trunk_scales)
+	if rock_collision and rocks.size() > 0:
+		_build_rock_bodies(rocks, rock_radii)
 
 	if verbose:
 		for child in get_children():
@@ -148,8 +165,8 @@ func _place(band: Band, wanted: int) -> Array[Transform3D]:
 		var angle := _rng.randf() * TAU
 		## sqrt keeps the density even across the ring instead of crowding the inner edge.
 		var t := sqrt(_rng.randf())
-		var radius: float = lerpf(band.inner, band.outer, t)
-		if radius < clear_radius:
+		var radius: float = lerpf(band.inner, band.outer, t) * ring_scale
+		if radius < clear_radius * ring_scale:
 			continue
 
 		var x := cos(angle) * radius
@@ -176,18 +193,20 @@ func _slope(x: float, z: float) -> float:
 
 
 ## one MultiMeshInstance3D per surface of the source model, all sharing the same instance transforms.
-func _emit(source: String, placements: Array[Transform3D], tint := Color.WHITE) -> void:
+## returns the model's own bounds, which is what any collision built from it has to be sized by.
+func _emit(source: String, placements: Array[Transform3D], tint := Color.WHITE) -> AABB:
 	if placements.is_empty():
-		return
+		return AABB()
 	var packed := load(NATURE % source) as PackedScene
 	if packed == null:
 		push_warning("foliage: missing model %s" % source)
-		return
+		return AABB()
 
 	var probe := packed.instantiate() as Node3D
 	var parts := _collect_meshes(probe)
 	probe.free()
 
+	var bounds := AABB()
 	for index in parts.size():
 		var part: Array = parts[index]
 		var mesh: Mesh = part[0]
@@ -216,6 +235,11 @@ func _emit(source: String, placements: Array[Transform3D], tint := Color.WHITE) 
 			node.material_override = _tinting_material(mesh)
 		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 		add_child(node)
+
+		var box := local * mesh.get_aabb()
+		bounds = box if index == 0 else bounds.merge(box)
+
+	return bounds
 
 
 ## the exporter left every model on a blender layout grid, so the file origin is metres away from the
@@ -282,6 +306,25 @@ func _relative_transform(root: Node3D, node: Node3D) -> Transform3D:
 		out = current.transform * out
 		current = current.get_parent() as Node3D
 	return out
+
+
+## one body carrying a ball per boulder, same as the trunks. never given an owner, so none of this
+## is ever serialised into the level file.
+func _build_rock_bodies(points: PackedVector3Array, radii: PackedFloat32Array) -> void:
+	var body := StaticBody3D.new()
+	body.name = "RockCollision"
+	body.collision_layer = 1
+	body.collision_mask = 0
+	add_child(body)
+
+	for i in points.size():
+		var shape := CollisionShape3D.new()
+		var ball := SphereShape3D.new()
+		ball.radius = maxf(radii[i], 0.2)
+		shape.shape = ball
+		## the rocks are sunk into the ground, so the ball sits low or you walk into thin air.
+		shape.position = points[i] + Vector3.UP * (ball.radius * 0.5)
+		body.add_child(shape)
 
 
 func _build_trunk_bodies(points: PackedVector3Array, scales: PackedFloat32Array) -> void:

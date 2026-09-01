@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://HUD/hud.gd" id="1_hud"]
+[ext_resource type="Script" path="res://HUD/alert_ring.gd" id="2_ring"]
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_hud")
@@ -11,6 +12,7 @@ anchor_bottom = 1.0
 mouse_filter = 2
 
 [node name="Crosshair" type="Label" parent="Root"]
+unique_name_in_owner = true
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -64,28 +66,12 @@ theme_override_font_sizes/font_size = 19
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Alert" type="Control" parent="Root"]
+[node name="AlertRing" type="Control" parent="Root"]
 unique_name_in_owner = true
-anchor_left = 0.5
-anchor_top = 0.545
-anchor_right = 0.5
-anchor_bottom = 0.545
-offset_left = -70.0
-offset_right = 70.0
-offset_bottom = 10.0
-mouse_filter = 2
-
-[node name="Back" type="ColorRect" parent="Root/Alert"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
-color = Color(0, 0, 0, 0.45)
-
-[node name="Fill" type="ColorRect" parent="Root/Alert"]
-unique_name_in_owner = true
-anchor_bottom = 1.0
-mouse_filter = 2
-color = Color(1, 0.78, 0.35, 1)
+script = ExtResource("2_ring")
 
 [node name="Stealth" type="Label" parent="Root"]
 unique_name_in_owner = true

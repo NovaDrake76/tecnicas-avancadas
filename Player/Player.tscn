@@ -1,15 +1,20 @@
-[gd_scene load_steps=13 format=3 uid="uid://bh7clxqxu8qbe"]
+[gd_scene format=3 uid="uid://bh7clxqxu8qbe"]
 
 [ext_resource type="Script" uid="uid://bw74jtn6krfi4" path="res://Player/player.gd" id="1_q3lat"]
 [ext_resource type="PackedScene" uid="uid://ble4klsjtx5q2" path="res://Guns/gun/gun.tscn" id="2_tok1r"]
 [ext_resource type="Resource" path="res://Components/resources/movement_default.tres" id="3_move"]
-[ext_resource type="Script" path="res://Components/StateMachine/state_machine.gd" id="4_sm"]
-[ext_resource type="Script" path="res://Player/States/grounded_state.gd" id="5_ground"]
-[ext_resource type="Script" path="res://Player/States/airborne_state.gd" id="6_air"]
-[ext_resource type="Script" path="res://Components/interactor.gd" id="7_inter"]
-[ext_resource type="Script" path="res://Player/camera_effects.gd" id="8_camfx"]
-[ext_resource type="Script" path="res://Components/viewmodel_motion.gd" id="9_vm"]
-[ext_resource type="Script" path="res://Components/aim_scope.gd" id="10_aim"]
+[ext_resource type="Script" uid="uid://bpeghu0xl0aqj" path="res://Components/StateMachine/state_machine.gd" id="4_sm"]
+[ext_resource type="Script" uid="uid://b21lmmsuw8lr8" path="res://Player/States/grounded_state.gd" id="5_ground"]
+[ext_resource type="Script" uid="uid://bsjfvrarc0r6" path="res://Player/States/airborne_state.gd" id="6_air"]
+[ext_resource type="Script" uid="uid://bivu53yfs7j71" path="res://Components/interactor.gd" id="7_inter"]
+[ext_resource type="Script" uid="uid://d2culktmqyskv" path="res://Player/camera_effects.gd" id="8_camfx"]
+[ext_resource type="Script" uid="uid://cgyuvyv28rhjy" path="res://Components/viewmodel_motion.gd" id="9_vm"]
+[ext_resource type="Script" uid="uid://cliulu5264l7k" path="res://Components/aim_scope.gd" id="10_aim"]
+[ext_resource type="Script" path="res://Components/footsteps.gd" id="11_steps"]
+[ext_resource type="Script" path="res://Player/weapon_rack.gd" id="12_rack"]
+[ext_resource type="PackedScene" path="res://Guns/gun/m870.tscn" id="13_m870"]
+[ext_resource type="PackedScene" path="res://Guns/gun/m1911.tscn" id="14_m1911"]
+[ext_resource type="PackedScene" path="res://Guns/gun/g18c.tscn" id="15_g18c"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_bhunq"]
 radius = 0.4
@@ -19,10 +24,10 @@ height = 1.8
 radius = 0.28
 
 [node name="Player" type="CharacterBody3D" unique_id=30225432]
-floor_constant_speed = true
-floor_snap_length = 0.4
-floor_max_angle = 0.9
 collision_layer = 2
+floor_constant_speed = true
+floor_max_angle = 0.9
+floor_snap_length = 0.4
 script = ExtResource("1_q3lat")
 movement = ExtResource("3_move")
 
@@ -30,13 +35,12 @@ movement = ExtResource("3_move")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_bhunq")
 
-[node name="HeadClearance" type="ShapeCast3D" parent="."]
+[node name="HeadClearance" type="ShapeCast3D" parent="." unique_id=913750173]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.72, 0)
 shape = SubResource("SphereShape3D_head")
 target_position = Vector3(0, 0.8, 0)
-collision_mask = 1
 
-[node name="Head" type="Node3D" parent="."]
+[node name="Head" type="Node3D" parent="." unique_id=525935456]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
 
 [node name="Camera3D" type="Camera3D" parent="Head" unique_id=693236177]
@@ -44,23 +48,54 @@ near = 0.02
 far = 500.0
 script = ExtResource("8_camfx")
 
-[node name="Viewmodel" type="Node3D" parent="Head/Camera3D"]
+[node name="Viewmodel" type="Node3D" parent="Head/Camera3D" unique_id=1024155961]
 script = ExtResource("9_vm")
+resting_fov = 75.0
 
-[node name="Gun" parent="Head/Camera3D/Viewmodel" unique_id=321049290 instance=ExtResource("2_tok1r")]
+[node name="HipPose" type="Node3D" parent="Head/Camera3D/Viewmodel" unique_id=805313162]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, -0.19, -0.5)
 
-[node name="StateMachine" type="Node" parent="."]
+[node name="AimPose" type="Node3D" parent="Head/Camera3D/Viewmodel" unique_id=1656606710]
+transform = Transform3D(1, 0, 0, 0, 0.9999556, 0.009424636, 0, -0.009424636, 0.9999556, 0, -0.090957426, -0.1461691)
+
+[node name="Weapons" type="Node3D" parent="Head/Camera3D/Viewmodel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, -0.19, -0.5)
+script = ExtResource("12_rack")
+
+[node name="M4A1" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("2_tok1r")]
+
+[node name="M870" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("13_m870")]
+
+[node name="M1911" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("14_m1911")]
+
+[node name="G18C" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("15_g18c")]
+
+[node name="StateMachine" type="Node" parent="." unique_id=1775062315]
 script = ExtResource("4_sm")
 
-[node name="Grounded" type="Node" parent="StateMachine"]
+[node name="Grounded" type="Node" parent="StateMachine" unique_id=1080115131]
 script = ExtResource("5_ground")
 
-[node name="Airborne" type="Node" parent="StateMachine"]
+[node name="Airborne" type="Node" parent="StateMachine" unique_id=416086889]
 script = ExtResource("6_air")
 
-[node name="Interactor" type="Node" parent="."]
+[node name="Interactor" type="Node" parent="." unique_id=308023215]
 script = ExtResource("7_inter")
 
-[node name="AimScope" type="Node" parent="."]
+[node name="AimScope" type="Node" parent="." unique_id=1804868852]
 script = ExtResource("10_aim")
+
+[node name="Footsteps" type="AudioStreamPlayer3D" parent="." unique_id=771204553]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+unit_size = 3.0
+max_distance = 30.0
+panning_strength = 0.0
+script = ExtResource("11_steps")
+clip_paths = PackedStringArray("res://Sounds/footstep_grass_1.ogg", "res://Sounds/footstep_grass_2.ogg", "res://Sounds/footstep_grass_3.ogg", "res://Sounds/footstep_grass_4.ogg", "res://Sounds/footstep_grass_5.ogg")
+pitch_range = Vector2(0.9, 1.12)
+base_db = -14.0
+
+[editable path="Head/Camera3D/Viewmodel/Weapons/M4A1"]
+[editable path="Head/Camera3D/Viewmodel/Weapons/M870"]
+[editable path="Head/Camera3D/Viewmodel/Weapons/M1911"]
+[editable path="Head/Camera3D/Viewmodel/Weapons/G18C"]

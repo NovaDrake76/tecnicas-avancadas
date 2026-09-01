@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" path="res://Models/Weapons/m4a1_body.png" id="3_body"]
 [ext_resource type="Texture2D" path="res://Models/Weapons/m4a1_mag.png" id="4_mag"]
 [ext_resource type="Resource" path="res://Guns/resources/mag_rifle.tres" id="5_rifle"]
+[ext_resource type="Script" path="res://Components/sfx_bank.gd" id="6_sfx"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
 albedo_texture = ExtResource("3_body")
@@ -30,3 +31,27 @@ surface_material_override/1 = SubResource("StandardMaterial3D_mag")
 
 [node name="Muzzle" type="Marker3D" parent="." unique_id=951973944]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.038, -0.51)
+
+[node name="HipPose" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, -0.19, -0.5)
+
+[node name="AimPose" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.9999556, 0.009424636, 0, -0.009424636, 0.9999556, 0, -0.090957426, -0.1461691)
+
+[node name="FireSfx" type="AudioStreamPlayer3D" parent="."]
+unit_size = 3.0
+max_distance = 40.0
+panning_strength = 0.0
+script = ExtResource("6_sfx")
+clip_paths = PackedStringArray("res://Sounds/rifle_fire_1.ogg")
+pitch_range = Vector2(0.92, 1.09)
+base_db = -13.0
+
+[node name="MagSfx" type="AudioStreamPlayer3D" parent="."]
+unit_size = 3.0
+max_distance = 30.0
+panning_strength = 0.0
+script = ExtResource("6_sfx")
+clip_paths = PackedStringArray("res://Sounds/mag_in_1.ogg", "res://Sounds/mag_in_2.ogg", "res://Sounds/mag_in_3.ogg", "res://Sounds/mag_in_4.ogg")
+pitch_range = Vector2(0.95, 1.05)
+base_db = -6.0

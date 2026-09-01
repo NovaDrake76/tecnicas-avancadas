@@ -24,5 +24,10 @@ shape = SubResource("CapsuleShape3D_kiwi")
 script = ExtResource("3_health")
 max_health = 1.0
 
+[node name="Voice" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
+unit_size = 12.0
+max_distance = 120.0
+
 [node name="Vision" type="Node" parent="."]
 script = ExtResource("4_vision")

@@ -87,7 +87,7 @@ func exposure_to(target: Node3D) -> float:
 		reach *= crouch_range_scale
 
 	var eye := _eye()
-	var at := target.global_position + Vector3.UP * 0.9
+	var at := sight_point(target)
 	var to := at - eye
 	var distance := to.length()
 	if distance > maxf(reach, point_blank):
@@ -109,6 +109,13 @@ func sees_point(point: Vector3, max_distance: float) -> bool:
 	if to.length() > max_distance:
 		return false
 	return _within_cone(to) and has_line_to(point)
+
+
+## where on the player the eyes test: shoulder standing, chest crouched. a kiwi's eye is 0.35 m up,
+## so this is what decides whether an 0.85 m barricade at your side hides you. it does, crouched.
+static func sight_point(target: Node3D) -> Vector3:
+	var crouched: bool = target.has_method("is_crouching") and target.is_crouching()
+	return target.global_position + Vector3.UP * (0.55 if crouched else 1.2)
 
 
 func has_line_to(point: Vector3) -> bool:

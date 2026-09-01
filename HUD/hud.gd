@@ -1,7 +1,6 @@
 extends CanvasLayer
 
 const ALERT_COLOR := Color(1.0, 0.35, 0.3)
-const CALM_COLOR := Color(1.0, 0.82, 0.35)
 const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 
 @onready var type_label: Label = %Type
@@ -15,17 +14,19 @@ const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 @onready var timer_label: Label = %Timer
 @onready var banner_label: Label = %Banner
 @onready var summary_label: Label = %Summary
-@onready var alert_meter: Control = %Alert
-@onready var alert_fill: ColorRect = %Fill
+@onready var alert_ring: AlertRing = %AlertRing
 @onready var stealth_label: Label = %Stealth
+@onready var crosshair: Label = %Crosshair
 
 var _weapon: Gun
 var _interactor: Interactor
 var _message_tween: Tween
 var _flash_tween: Tween
+var _aim_tween: Tween
 
 
 func _ready() -> void:
+	add_to_group("hud")
 	message_label.text = ""
 	prompt_label.text = ""
 	banner_label.text = ""
@@ -33,44 +34,74 @@ func _ready() -> void:
 	objective_label.text = ""
 	timer_label.text = ""
 	stealth_label.text = ""
-	alert_meter.visible = false
+	alert_ring.clear()
 
 	Run.level_started.connect(_on_level_started)
 	Run.targets_changed.connect(_on_targets_changed)
 	Run.time_changed.connect(_on_time_changed)
 	Run.level_cleared.connect(_on_level_cleared)
 	Run.run_finished.connect(_on_run_finished)
-	Run.alert_changed.connect(_on_alert_changed)
+	Run.watcher_changed.connect(_on_watcher_changed)
 	Run.detections_changed.connect(_on_detections_changed)
 
 	_bind_weapon.call_deferred()
 
 
 func _bind_weapon() -> void:
-	_weapon = get_tree().get_first_node_in_group("weapon") as Gun
+	var rack := get_tree().get_first_node_in_group("weapon_rack") as WeaponRack
+	if rack != null:
+		rack.weapon_changed.connect(_follow_weapon)
+		_follow_weapon(rack.current())
+	else:
+		_follow_weapon(get_tree().get_first_node_in_group("weapon") as Gun)
 	if _weapon == null:
-		push_warning("hud.gd: no node in group 'weapon'; HUD will stay blank.")
-		return
-
-	_weapon.ammo_changed.connect(_on_ammo_changed)
-	_weapon.magazine_changed.connect(_on_magazine_changed)
-	_weapon.fire_mode_changed.connect(_on_fire_mode_changed)
-	_weapon.hopup_changed.connect(_on_hopup_changed)
-	_weapon.fire_failed.connect(_on_fire_failed)
-	_weapon.magazine_rejected.connect(_on_magazine_rejected)
-	_weapon.emit_state()
+		push_warning("hud.gd: no weapon to follow; HUD will stay blank.")
 
 	_interactor = get_tree().get_first_node_in_group("interactor") as Interactor
 	if _interactor != null:
 		_interactor.focus_changed.connect(_on_focus_changed)
 		_interactor.focus_lost.connect(_on_focus_lost)
 
+	var scope := get_tree().get_first_node_in_group("aim_scope") as AimScope
+	if scope != null:
+		scope.aim_changed.connect(_on_aim_changed)
+
+
+## the hud listens to exactly one weapon at a time. switching moves every connection over,
+## and the new one is asked to state itself so nothing shows stale.
+func _follow_weapon(gun: Gun) -> void:
+	if _weapon != null and is_instance_valid(_weapon):
+		for pair in _weapon_signals():
+			var sig: Signal = _weapon.get(pair[0])
+			if sig.is_connected(pair[1]):
+				sig.disconnect(pair[1])
+	_weapon = gun
+	if _weapon == null:
+		return
+	for pair in _weapon_signals():
+		var sig: Signal = _weapon.get(pair[0])
+		sig.connect(pair[1])
+	_weapon.emit_state()
+	show_message(_weapon.weapon_model)
+
+
+func _weapon_signals() -> Array:
+	return [
+		["ammo_changed", _on_ammo_changed],
+		["magazine_changed", _on_magazine_changed],
+		["fire_mode_changed", _on_fire_mode_changed],
+		["hopup_changed", _on_hopup_changed],
+		["fire_failed", _on_fire_failed],
+		["magazine_rejected", _on_magazine_rejected],
+		["mode_refused", show_message],
+	]
+
 
 func _on_level_started(index: int, name: String) -> void:
 	banner_label.text = ""
 	summary_label.text = ""
 	_on_detections_changed(0)
-	_on_alert_changed(0.0)
+	alert_ring.clear()
 	show_message("Level %d  %s" % [index + 1, name])
 
 
@@ -82,13 +113,10 @@ func _on_time_changed(seconds: float) -> void:
 	timer_label.text = "%d:%02d" % [int(seconds) / 60, int(seconds) % 60]
 
 
-## the meter is the only warning the player gets, so it fills long before anything happens.
-func _on_alert_changed(value: float) -> void:
-	alert_meter.visible = value > 0.01
-	if not alert_meter.visible:
-		return
-	alert_fill.size.x = alert_meter.size.x * clampf(value, 0.0, 1.0)
-	alert_fill.color = CALM_COLOR.lerp(ALERT_COLOR, value)
+## one arc per bird that is noticing you, drawn at its bearing, so you can tell WHICH one and
+## turn the right way. a bar in the middle of the screen could never say that.
+func _on_watcher_changed(kiwi: Node3D, value: float) -> void:
+	alert_ring.set_watcher(kiwi, value)
 
 
 func _on_detections_changed(count: int) -> void:
@@ -99,7 +127,7 @@ func _on_detections_changed(count: int) -> void:
 func _on_level_cleared(_index: int, summary: Dictionary) -> void:
 	banner_label.text = "LEVEL CLEAR"
 	summary_label.text = _summary_text(summary)
-	alert_meter.visible = false
+	alert_ring.clear()
 
 
 func _on_run_finished(summary: Dictionary) -> void:
@@ -107,7 +135,7 @@ func _on_run_finished(summary: Dictionary) -> void:
 	summary_label.text = _summary_text(summary)
 	objective_label.text = ""
 	stealth_label.text = ""
-	alert_meter.visible = false
+	alert_ring.clear()
 
 
 ## every line is something the player did, so the score can be explained back to them.
@@ -152,7 +180,7 @@ func _on_magazine_changed(mag: Magazine) -> void:
 		type_label.text = "NO MAGAZINE"
 		mass_label.text = "--"
 		return
-	type_label.text = mag.type_label().to_upper()
+	type_label.text = "%s   %s" % [_weapon.weapon_model if _weapon != null else "", mag.type_label().to_upper()]
 	mass_label.text = "%.2f g" % mag.mass_grams()
 
 
@@ -174,6 +202,15 @@ func _on_fire_failed(reason: Gun.FireBlock, message: String) -> void:
 			flash_ammo()
 		_:
 			show_message(message)
+
+
+## the iron sights are the aiming device once you are looking down them, and the crosshair would
+## sit right on the front post. it goes out faster than the weapon comes up.
+func _on_aim_changed(aiming: bool) -> void:
+	if _aim_tween != null and _aim_tween.is_valid():
+		_aim_tween.kill()
+	_aim_tween = create_tween()
+	_aim_tween.tween_property(crosshair, "modulate:a", 0.0 if aiming else 1.0, 0.07)
 
 
 func flash_ammo() -> void:

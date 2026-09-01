@@ -8,9 +8,14 @@ signal hopup_changed(value: float, min_value: float, max_value: float)
 signal fired(speed: float, mass_kg: float)
 signal fire_failed(reason: FireBlock, message: String)
 signal magazine_rejected(offered: Magazine, message: String)
+signal mode_refused(message: String)
 
 enum FireMode { SEMI, AUTO }
 enum FireBlock { NONE, NO_MAGAZINE, EMPTY, COOLDOWN }
+## how the weapon cycles. the cadence formula is the same for all three, rpm over sixty n, the
+## brief's own. an aeg has a real motor and gearbox; for a gas or pump action rpm is the cyclic rate
+## the action can manage and n is one. that is the documented conversion the brief asks for.
+enum Action { AEG, GAS_BLOWBACK, PUMP }
 
 const BB_SCENE := preload("res://Guns/bb/bb.tscn")
 const DEFAULT_BB_MASS := 0.0002
@@ -24,8 +29,9 @@ const TRAIL_COLORS := [
 ]
 
 @export_group("Identity")
-@export var weapon_model: String = "KE-1"
+@export var weapon_model: String = "M4A1"
 @export var accepted_mag: Ordnance.MagType = Ordnance.MagType.Rifle
+@export var action: Action = Action.AEG
 
 @export_group("Spring")
 @export_range(10.0, 2000.0, 1.0, "or_greater") var spring_constant: float = 300.0
@@ -34,6 +40,15 @@ const TRAIL_COLORS := [
 @export_group("Motor")
 @export_range(100.0, 30000.0, 10.0, "or_greater") var motor_rpm: float = 8100.0
 @export_range(1, 200, 1, "or_greater") var rotations_per_shot: int = 30
+
+@export_group("Shot")
+## bbs released per unit of ammunition. one for anything with a magazine of bbs; a shell shotgun
+## spends one shell and lets several bbs out of it, sharing the spring's energy between them.
+@export_range(1, 12) var pellets: int = 1
+## half angle of the cone the pellets leave in. zero is a single bb straight down the aim line.
+@export_range(0.0, 15.0, 0.1) var spread_deg: float = 0.0
+## a pump or a gas slide cannot hold the trigger down for continuous fire. f still answers, with why.
+@export var allow_auto := true
 
 @export_group("Hop-up")
 @export_range(0.0, 0.002, 0.00001, "or_greater") var hopup: float = 0.0002
@@ -59,11 +74,18 @@ const TRAIL_COLORS := [
 @export var muzzle_fx_scale := 1.0
 @export var muzzle_fx_intensity := 0.4
 
+@export_group("Sound")
+## the pump rack or the slide coming back, a moment after the shot. optional.
+@export var cycle_delay := 0.25
+
 @export_group("Debug")
 @export var slow_motion: float = 1.0
 @export var log_shots: bool = true
 
 @onready var muzzle: Marker3D = $Muzzle
+@onready var fire_sfx: SfxBank = $FireSfx
+@onready var mag_sfx: SfxBank = $MagSfx
+@onready var cycle_sfx: SfxBank = get_node_or_null("CycleSfx") as SfxBank
 
 var _shot := 0
 var _clock := 0.0
@@ -71,9 +93,13 @@ var _next_shot_at := 0.0
 
 
 func _ready() -> void:
-	add_to_group("weapon")
+	## the rack decides which weapon is in the group. a weapon on its own joins by itself.
+	if not (get_parent() is WeaponRack):
+		add_to_group("weapon")
 	Engine.time_scale = slow_motion
 	hopup = clampf(hopup, hopup_min, hopup_max)
+	if not allow_auto:
+		fire_mode = FireMode.SEMI
 	if magazine != null:
 		magazine = magazine.duplicate()
 		if not magazine.is_plausible():
@@ -82,8 +108,14 @@ func _ready() -> void:
 	print_config()
 
 
+## the spring's whole energy, one compression.
 func muzzle_energy() -> float:
 	return 0.5 * spring_constant * spring_compression * spring_compression
+
+
+## what each bb actually gets. a shotgun shell splits the one charge across its pellets.
+func pellet_energy() -> float:
+	return muzzle_energy() / float(maxi(1, pellets))
 
 
 func shots_per_second() -> float:
@@ -97,7 +129,7 @@ func shot_interval() -> float:
 func muzzle_speed(bb_mass_kg: float) -> float:
 	if bb_mass_kg <= 0.0:
 		return 0.0
-	return sqrt(2.0 * muzzle_energy() / bb_mass_kg)
+	return sqrt(2.0 * pellet_energy() / bb_mass_kg)
 
 
 func equipped_mass() -> float:
@@ -116,6 +148,15 @@ func fire_mode_label() -> String:
 	return "AUTO" if fire_mode == FireMode.AUTO else "SEMI"
 
 
+func action_label() -> String:
+	match action:
+		Action.GAS_BLOWBACK:
+			return "gas blowback"
+		Action.PUMP:
+			return "pump action"
+	return "aeg"
+
+
 func accepts(mag: Magazine) -> bool:
 	return mag != null and mag.mag_type == accepted_mag
 
@@ -127,12 +168,18 @@ func equip_magazine(mag: Magazine) -> bool:
 	if not accepts(mag):
 		var message := "%s magazine required - this one is %s" % [
 			Ordnance.type_name(accepted_mag), Ordnance.type_name(mag.mag_type)]
+		var rack := get_parent() as WeaponRack
+		if rack != null:
+			var taker := rack.weapon_for(mag.mag_type)
+			if taker != null:
+				message += ". Switch to the %s" % taker.weapon_model
 		magazine_rejected.emit(mag, message)
 		if log_shots:
 			print("Rejected: %s" % message)
 		return false
 
 	magazine = mag.duplicate()
+	mag_sfx.play_one()
 	magazine_changed.emit(magazine)
 	ammo_changed.emit(magazine.count, magazine.capacity)
 	if log_shots:
@@ -203,7 +250,15 @@ func time_until_ready() -> float:
 	return maxf(0.0, _next_shot_at - _clock)
 
 
+## the brief's rule: switching modes never reloads and never lets the next shot come early.
+## the cadence gate is untouched here on purpose.
 func toggle_fire_mode() -> void:
+	if not allow_auto:
+		var message := "%s is %s: semi only" % [weapon_model, action_label()]
+		mode_refused.emit(message)
+		if log_shots:
+			print("Refused: %s" % message)
+		return
 	fire_mode = FireMode.SEMI if fire_mode == FireMode.AUTO else FireMode.AUTO
 	fire_mode_changed.emit(fire_mode)
 	if log_shots:
@@ -211,6 +266,8 @@ func toggle_fire_mode() -> void:
 			% [fire_mode_label(), shots_per_second(), shot_interval()])
 
 
+## one unit of ammunition per pull, exactly, and only if the shot happens. how many bbs that unit
+## lets out is the weapon's business, the magazine only counts units.
 func try_fire() -> bool:
 	if not is_ready():
 		_reject(FireBlock.COOLDOWN)
@@ -225,7 +282,10 @@ func try_fire() -> bool:
 		return false
 
 	_next_shot_at = maxf(_clock, _next_shot_at) + shot_interval()
-	_spawn_bb(magazine.bb_mass_kg)
+	_spawn_shot(magazine.bb_mass_kg)
+	fire_sfx.play_one()
+	if cycle_sfx != null and cycle_sfx.clips.size() > 0:
+		get_tree().create_timer(cycle_delay).timeout.connect(cycle_sfx.play_one)
 	ammo_changed.emit(magazine.count, magazine.capacity)
 	return true
 
@@ -242,30 +302,47 @@ func _reject(reason: FireBlock) -> void:
 		print("Blocked: %s" % message)
 
 
-func _spawn_bb(mass_kg: float) -> void:
+func _spawn_shot(mass_kg: float) -> void:
 	var speed := muzzle_speed(mass_kg)
-
-	var bb: BB = BB_SCENE.instantiate()
-	bb.bb_mass = mass_kg
-	bb.BackspinDrag = hopup
-	bb.trail_color = TRAIL_COLORS[_shot % TRAIL_COLORS.size()]
+	var dir := aim_direction()
+	var world := get_tree().current_scene
 	_shot += 1
 
-	get_tree().current_scene.add_child(bb)
-	bb.global_transform = muzzle.global_transform
-	var dir := aim_direction()
-	bb.linear_velocity = dir * speed
+	for i in maxi(1, pellets):
+		var bb: BB = BB_SCENE.instantiate()
+		bb.bb_mass = mass_kg
+		bb.BackspinDrag = hopup
+		bb.trail_color = TRAIL_COLORS[(_shot + i) % TRAIL_COLORS.size()]
+		world.add_child(bb)
+		bb.global_transform = muzzle.global_transform
+		bb.linear_velocity = _scatter(dir) * speed
 
 	if muzzle_fx:
-		MuzzleFlashFx.spawn(get_tree().current_scene, muzzle.global_position, dir,
+		MuzzleFlashFx.spawn(world, muzzle.global_position, dir,
 			MuzzleFlashFx.GAS_COLOR, muzzle_fx_scale, muzzle_fx_intensity)
 
 	fired.emit(speed, mass_kg)
 
 	if log_shots:
-		print("Shot %d | %.2f m/s | %.1f fps | %.2f g | hop-up %.5f | ammo %d/%d"
-			% [_shot, speed, speed * 3.28084, mass_kg * 1000.0, hopup,
+		print("Shot %d | %d x %.2f m/s | %.1f fps | %.2f g | hop-up %.5f | ammo %d/%d"
+			% [_shot, pellets, speed, speed * 3.28084, mass_kg * 1000.0, hopup,
 			   magazine.count, magazine.capacity])
+
+
+## a random direction inside the spread cone, uniform over the cap so pellets do not bunch up
+## in the middle. zero spread returns the aim line untouched.
+func _scatter(dir: Vector3) -> Vector3:
+	if spread_deg <= 0.0 or pellets <= 1:
+		return dir
+	var cone := deg_to_rad(spread_deg)
+	var theta := acos(lerpf(1.0, cos(cone), randf()))
+	var phi := randf() * TAU
+	var side := dir.cross(Vector3.UP)
+	if side.length_squared() < 0.0001:
+		side = dir.cross(Vector3.RIGHT)
+	side = side.normalized()
+	var up := side.cross(dir).normalized()
+	return (dir * cos(theta) + (side * cos(phi) + up * sin(phi)) * sin(theta)).normalized()
 
 
 ## where the shot should actually go, from the muzzle toward the point under the crosshair.
@@ -300,14 +377,17 @@ func aim_direction() -> Vector3:
 
 func print_config() -> void:
 	var mass := equipped_mass()
-	print("--- %s ---" % weapon_model)
+	print("--- %s (%s) ---" % [weapon_model, action_label()])
 	print("  accepts    : %s" % Ordnance.type_name(accepted_mag))
 	print("  magazine   : %s" % (magazine.describe() if magazine != null else "<none>"))
 	print("  spring     : k=%.1f N/m  x=%.3f m" % [spring_constant, spring_compression])
-	print("  energy     : %.3f J" % muzzle_energy())
+	if pellets > 1:
+		print("  energy     : %.3f J per shell, %d pellets, %.3f J each" % [muzzle_energy(), pellets, pellet_energy()])
+	else:
+		print("  energy     : %.3f J" % muzzle_energy())
 	print("  ROF        : %.2f BB/s  (%.0f RPM / %d rot per shot)  interval %.4f s"
 		% [shots_per_second(), motor_rpm, rotations_per_shot, shot_interval()])
 	print("  muzzle vel : %.2f m/s  (%.1f fps)  at %.2f g"
 		% [muzzle_speed(mass), muzzle_speed(mass) * 3.28084, mass * 1000.0])
-	print("  fire mode  : %s   hop-up %.5f  [%.5f .. %.5f]"
-		% [fire_mode_label(), hopup, hopup_min, hopup_max])
+	print("  fire mode  : %s%s   hop-up %.5f  [%.5f .. %.5f]"
+		% [fire_mode_label(), "" if allow_auto else " (semi only)", hopup, hopup_min, hopup_max])

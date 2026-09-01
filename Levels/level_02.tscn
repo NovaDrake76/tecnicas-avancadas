@@ -22,7 +22,7 @@ shader_parameter/minor_spacing = 1.0
 shader_parameter/major_spacing = 10.0
 shader_parameter/minor_fade_distance = 70.0
 
-[node name="%s" type="Node3D"]
+[node name="Level02" type="Node3D"]
 
 [node name="StaticBody3D" type="StaticBody3D" parent="."]
 

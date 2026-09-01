@@ -8,7 +8,7 @@ signal downed(kiwi: Kiwi)
 signal alerted(kiwi: Kiwi)
 signal awareness_changed(kiwi: Kiwi, value: float)
 
-enum State { IDLE, WALK, DOWN, FLEE }
+enum State { IDLE, WALK, DOWN, FLEE, LOOK }
 
 @export_group("Wander")
 ## radius of the patch it stays inside, measured from wherever it was placed.
@@ -21,12 +21,34 @@ enum State { IDLE, WALK, DOWN, FLEE }
 ## chance of walking rather than idling again after each idle finishes.
 @export_range(0.0, 1.0) var walk_chance := 0.55
 
+@export_group("Hearing")
+## a noise never raises the alarm by itself. it turns the bird to face the sound, and the eyes
+## take it from there. that keeps the alarm on exactly one sense and a missed bb still silent.
+@export var hearing := true
+@export var look_time := 3.0
+## how far off a noise it will settle for. it turns, it does not walk over to investigate.
+@export var look_turn_speed := 2.6
+
 @export_group("Stealth")
 ## how far a burst carries. a kiwi with a clear line to one going down inside this raises the alarm.
 @export var witness_radius := 14.0
 @export var flee_speed := 3.4
 @export var flee_distance := 18.0
 @export var flee_time := 6.0
+
+@export_group("Voice")
+## one recording, resampled. pitch_scale moves speed and pitch together, which is what turns a
+## single clip into a flock instead of a row of clones.
+@export var voice: AudioStream
+## found on its own once godot has imported it, so a missing file never breaks the scene.
+@export var voice_path := "res://Sounds/kiwi.wav"
+@export var call_interval := Vector2(6.0, 17.0)
+## the three bands do not overlap, so you can tell what happened without looking.
+@export var idle_pitch := Vector2(0.94, 1.06)
+@export var alert_pitch := Vector2(1.08, 1.16)
+@export var down_pitch := Vector2(0.84, 0.92)
+@export var idle_db := -8.0
+@export var alert_db := 1.0
 
 @export_group("Clips")
 @export var idle_clips: Array[String] = ["IdleA", "IdleB", "IdleC", "IdleD"]
@@ -43,7 +65,8 @@ enum State { IDLE, WALK, DOWN, FLEE }
 @export_group("Down")
 ## a hit kiwi pops and is gone. turn this off to leave it lying in the sleep pose instead.
 @export var vanish_on_down := true
-@export var despawn_delay := 1.1
+## long enough for the slowest, lowest call to finish before the node carrying it is freed.
+@export var despawn_delay := 1.6
 
 @export_group("Down burst")
 @export var burst_light := Color(0.55, 0.4, 0.2)
@@ -59,6 +82,7 @@ enum State { IDLE, WALK, DOWN, FLEE }
 @onready var model: Node3D = $Model
 @onready var health: Health = $Health
 @onready var vision: VisionCone = $Vision
+@onready var throat: AudioStreamPlayer3D = $Voice
 
 var _anim: AnimationPlayer
 var _clips := {}
@@ -67,6 +91,7 @@ var _timer := 0.0
 var _home := Vector3.ZERO
 var _target := Vector3.ZERO
 var _detected := false
+var _call_timer := 0.0
 
 
 func _ready() -> void:
@@ -79,6 +104,12 @@ func _ready() -> void:
 	_anim = find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if _anim != null:
 		_resolve_clips()
+
+	if voice == null and ResourceLoader.exists(voice_path):
+		voice = load(voice_path) as AudioStream
+	throat.stream = voice
+	## staggered, or every bird on the map calls on the very same tick.
+	_call_timer = randf_range(0.5, call_interval.y)
 
 	health.died.connect(_go_down)
 	vision.spotted.connect(_on_spotted)
@@ -136,6 +167,14 @@ func _physics_process(delta: float) -> void:
 
 	if _state != State.DOWN:
 		vision.poll(delta)
+	## a bird already shouting the alarm does not stop to chit chat.
+	if _state != State.DOWN and _state != State.FLEE:
+		## clamped rather than only counted down, so shortening the interval in the inspector
+		## takes effect on the wait already running instead of on the one after it.
+		_call_timer = minf(_call_timer, call_interval.y) - delta
+		if _call_timer <= 0.0:
+			_call_timer = randf_range(call_interval.x, call_interval.y)
+			speak(idle_pitch, idle_db)
 
 	match _state:
 		State.DOWN:
@@ -143,6 +182,13 @@ func _physics_process(delta: float) -> void:
 			velocity.z = 0.0
 		State.FLEE:
 			_step_flee(delta)
+		State.LOOK:
+			velocity.x = move_toward(velocity.x, 0.0, walk_speed * 4.0 * delta)
+			velocity.z = move_toward(velocity.z, 0.0, walk_speed * 4.0 * delta)
+			_turn_to(_target, look_turn_speed, delta)
+			_timer -= delta
+			if _timer <= 0.0:
+				_begin_idle()
 		State.IDLE:
 			velocity.x = move_toward(velocity.x, 0.0, walk_speed * 4.0 * delta)
 			velocity.z = move_toward(velocity.z, 0.0, walk_speed * 4.0 * delta)
@@ -173,10 +219,7 @@ func _move_to(point: Vector3, speed: float, delta: float) -> bool:
 	if to_target.length() <= arrive_distance:
 		return true
 
-	var dir := to_target.normalized()
-	## the yaw whose -Z points along dir, turned into gradually so it does not snap.
-	var desired := atan2(-dir.x, -dir.z)
-	rotation.y = rotate_toward(rotation.y, desired, turn_speed * delta)
+	_turn_to(point, turn_speed, delta)
 
 	var forward := -global_transform.basis.z
 	velocity.x = forward.x * speed
@@ -184,6 +227,34 @@ func _move_to(point: Vector3, speed: float, delta: float) -> bool:
 
 	StepClimb.try_step(self, forward, 4)
 	return false
+
+
+## the yaw whose -Z points at the spot, turned into gradually so it never snaps.
+func _turn_to(point: Vector3, speed: float, delta: float) -> void:
+	var flat := point - global_position
+	flat.y = 0.0
+	if flat.length_squared() < 0.0001:
+		return
+	var dir := flat.normalized()
+	rotation.y = rotate_toward(rotation.y, atan2(-dir.x, -dir.z), speed * delta)
+
+
+## something made a noise nearby. loud things carry further, which is the whole of the mechanic.
+func hear(at: Vector3, radius: float) -> void:
+	if not hearing or _state == State.DOWN or _state == State.FLEE:
+		return
+	if global_position.distance_to(at) > radius:
+		return
+	_target = at
+	_timer = look_time
+	if _state != State.LOOK:
+		_state = State.LOOK
+		if not idle_clips.is_empty():
+			_play(idle_clips[randi() % idle_clips.size()])
+
+
+func is_listening() -> bool:
+	return _state == State.LOOK
 
 
 func _decide() -> void:
@@ -232,6 +303,7 @@ func _begin_flee(away_from: Vector3) -> void:
 	_timer = flee_time
 	_state = State.FLEE
 	_play(run_clip, 0.15)
+	speak(alert_pitch, alert_db)
 
 
 ## still alarmed, but back to watching, so walking into its face again sends it running again.
@@ -285,6 +357,7 @@ func _go_down() -> void:
 	BurstFx.spawn(world, at, burst_light, burst_count, burst_speed)
 	BurstFx.spawn(world, at, burst_dark, int(burst_count * 0.6), burst_speed * 0.8)
 
+	speak(down_pitch, idle_db)
 	_alert_witnesses()
 
 	## the signal goes out while we are still here, so a listener can read our position.
@@ -298,6 +371,15 @@ func _go_down() -> void:
 	set_physics_process(false)
 	## the node outlives the burst by a moment, the particles are parented to the world not to us.
 	get_tree().create_timer(despawn_delay).timeout.connect(queue_free)
+
+
+## the same clip every time, pulled to a different pitch so thirty birds are not one bird.
+func speak(band: Vector2, db: float) -> void:
+	if throat == null or throat.stream == null:
+		return
+	throat.pitch_scale = randf_range(band.x, band.y)
+	throat.volume_db = db
+	throat.play()
 
 
 func is_down() -> bool:

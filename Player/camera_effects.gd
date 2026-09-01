@@ -66,9 +66,14 @@ func _ready() -> void:
 
 func _bind() -> void:
 	player = get_tree().get_first_node_in_group("player") as CharacterBody3D
-	var gun := get_tree().get_first_node_in_group("weapon") as Gun
-	if gun != null:
-		gun.fired.connect(_on_weapon_fired)
+	var rack := get_tree().get_first_node_in_group("weapon_rack") as WeaponRack
+	if rack != null:
+		for g in rack.weapons():
+			g.fired.connect(_on_weapon_fired)
+	else:
+		var gun := get_tree().get_first_node_in_group("weapon") as Gun
+		if gun != null:
+			gun.fired.connect(_on_weapon_fired)
 
 
 func _on_weapon_fired(_speed: float, _mass_kg: float) -> void:

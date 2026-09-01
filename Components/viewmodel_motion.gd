@@ -1,3 +1,4 @@
+@tool
 class_name ViewmodelMotion
 extends Node3D
 
@@ -52,16 +53,44 @@ extends Node3D
 @export var air_pose_damping := 10.0
 
 @export_group("Aim down sights")
-## where the gun sits when fully aimed. the eye rides the line through the rear sight and the
-## front post, close enough behind the rear one to be looking THROUGH it.
-@export var sights_position := Vector3(0.0, -0.0917, -0.1485)
-## the m4a1's two sights are not the same height, so the line droops. this levels it.
+## drag these two in the editor to say where the weapon sits. the gun's own transform is
+## overwritten every frame, so these markers are the only thing that decides the pose.
+## leave them empty and children named HipPose and AimPose are used instead.
+@export var hip_pose: Node3D
+@export var aim_pose: Node3D
+## used only when no marker is assigned, so an unwired weapon still aims somewhere sane.
+@export var sights_position := Vector3(0.0, -0.0871, -0.1485)
 @export var sights_pitch_deg := 0.96
+
 ## how much aiming damps sway and bob, a braced gun does not breathe like a hip held one.
 @export_range(0.0, 1.0) var ads_steadiness := 0.8
 ## how much of the recoil TRAVEL survives while aimed. a shouldered rifle rises, it does not
 ## slide back into your eye, and at this eye relief the full travel would clip the rear sight.
 @export_range(0.0, 1.0) var ads_recoil_travel := 0.25
+
+@export_group("Editor preview")
+## editor only. puts the viewport into the aimed view: the camera drops to the aiming fov and the
+## weapon jumps to AimPose. move the weapon until the sights look right, then tick save_to_aim_pose.
+@export var aim_preview := false:
+	set(value):
+		aim_preview = value
+		_apply_preview()
+## takes whatever you dragged the weapon to and writes it into the marker, then unticks itself.
+@export var save_to_aim_pose := false:
+	set(value):
+		if value:
+			capture_into(aim_node())
+		save_to_aim_pose = false
+@export var save_to_hip_pose := false:
+	set(value):
+		if value:
+			capture_into(hip_node())
+		save_to_hip_pose = false
+## the fov to put back when the preview goes off. captured the first time you switch it on.
+@export var resting_fov := 0.0
+
+## the preview crosshair, made on the fly and torn down again. never part of the saved scene.
+const CROSSHAIR := "__AimPreviewCrosshair"
 
 @export_group("Wall avoidance")
 @export var wall_probe_dist := 0.85
@@ -110,22 +139,134 @@ var _ads := 0.0
 
 
 func _ready() -> void:
+	if Engine.is_editor_hint():
+		set_process(false)
+		return
+	## a preview left switched on must never reach the game with the camera still zoomed in.
+	if aim_preview:
+		aim_preview = false
 	add_to_group("viewmodel")
 	_noise.seed = randi()
 	_noise.frequency = 1.0
 	_bind.call_deferred()
 
 
+## the whole editor preview: swap the camera fov and park the weapon on one of the two markers.
+func _apply_preview() -> void:
+	if not is_inside_tree():
+		return
+	var cam := get_parent() as Camera3D
+	if cam == null:
+		return
+	if aim_preview:
+		if resting_fov <= 0.0:
+			resting_fov = cam.fov
+		cam.fov = _aiming_fov(cam.fov)
+		## this node's own transform is rewritten every frame by the sway, so anything dragged onto
+		## it is both meaningless and a lie in the preview. the weapon is what you move.
+		transform = Transform3D.IDENTITY
+		_park_on(aim_node())
+	else:
+		if resting_fov > 0.0:
+			cam.fov = resting_fov
+		_park_on(hip_node())
+	_show_crosshair(cam, aim_preview)
+
+
+## built here and never given an owner, so it cannot be serialised into Player.tscn. that is the
+## same rule the generated terrain follows, and for the same reason.
+func _show_crosshair(cam: Camera3D, on: bool) -> void:
+	var old := cam.get_node_or_null(NodePath(CROSSHAIR)) as Node
+	if old != null:
+		cam.remove_child(old)
+		old.queue_free()
+	if not on:
+		return
+
+	var mesh := ImmediateMesh.new()
+	mesh.surface_begin(Mesh.PRIMITIVE_LINES)
+	for dir in [Vector3.UP, Vector3.DOWN, Vector3.LEFT, Vector3.RIGHT]:
+		mesh.surface_add_vertex(dir * 0.004)
+		mesh.surface_add_vertex(dir * 0.026)
+	mesh.surface_end()
+
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.35, 1.0, 0.3)
+	## the whole point is to sit on top of the weapon rather than inside it.
+	mat.no_depth_test = true
+	mat.disable_fog = true
+	mat.render_priority = 10
+
+	var node := MeshInstance3D.new()
+	node.name = CROSSHAIR
+	node.mesh = mesh
+	node.material_override = mat
+	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	node.position = Vector3(0.0, 0.0, -1.0)
+	cam.add_child(node)
+
+
+func _aiming_fov(fallback: float) -> float:
+	var root: Node = owner
+	if root == null and Engine.is_editor_hint():
+		root = get_tree().edited_scene_root
+	if root == null:
+		return fallback
+	for node in root.find_children("*", "AimScope", true, false):
+		return (node as AimScope).ads_fov
+	return fallback
+
+
+func _park_on(pose: Node3D) -> void:
+	var gun := weapon()
+	if gun != null and pose != null:
+		gun.transform = pose.transform
+
+
+## whichever of the two you dragged, what you SAW is this node's transform times the weapon's.
+## fold them together, so moving the viewmodel and moving the gun both save the pose on screen.
+func capture_into(pose: Node3D) -> void:
+	var gun := weapon()
+	if gun == null or pose == null:
+		return
+	pose.transform = transform * gun.transform
+	gun.transform = pose.transform
+	transform = Transform3D.IDENTITY
+	print("viewmodel: %s set to %v, pitch %.2f deg" % [pose.name, pose.position,
+		rad_to_deg(pose.rotation.x)])
+
+
+## in the editor there is no bound gun yet, so take the child that is not one of the markers.
+func weapon() -> Node3D:
+	if _gun != null and is_instance_valid(_gun):
+		return _gun
+	var hip := hip_node()
+	var aim := aim_node()
+	for child in get_children():
+		if child is Node3D and child != hip and child != aim:
+			return child as Node3D
+	return null
+
+
 func _bind() -> void:
 	_player = get_tree().get_first_node_in_group("player") as CharacterBody3D
 	if _player != null:
 		_head = _player.get_node_or_null("Head")
-	var gun := get_tree().get_first_node_in_group("weapon") as Gun
-	if gun != null:
-		gun.fired.connect(_on_fired)
-		_gun = gun
-		_hip_position = gun.position
-		_hip_pitch = gun.rotation.x
+	## the node this moves is the rack. every weapon on it kicks this node when it fires.
+	var rack := get_tree().get_first_node_in_group("weapon_rack") as WeaponRack
+	if rack != null:
+		_gun = rack
+		for g in rack.weapons():
+			g.fired.connect(_on_fired)
+	else:
+		var gun := get_tree().get_first_node_in_group("weapon") as Gun
+		if gun != null:
+			gun.fired.connect(_on_fired)
+			_gun = gun
+	if _gun != null:
+		_hip_position = _gun.position
+		_hip_pitch = _gun.rotation.x
 
 
 ## driven by AimScope, 0 at the hip and 1 fully aimed.
@@ -267,8 +408,53 @@ func _process(delta: float) -> void:
 
 	## the raise itself is on the gun, this node keeps carrying the procedural offsets on top.
 	if _gun != null:
-		_gun.position = _hip_position.lerp(sights_position, _ads)
-		_gun.rotation.x = lerpf(_hip_pitch, deg_to_rad(sights_pitch_deg), _ads)
+		var from := hip_transform()
+		var to := aim_transform()
+		_gun.position = from.origin.lerp(to.origin, _ads)
+		_gun.quaternion = from.basis.get_rotation_quaternion().slerp(
+			to.basis.get_rotation_quaternion(), _ads)
+
+
+## where the weapon sits at the hip and fully aimed. a marker if one is assigned, otherwise the
+## numbers below it, so the probes and the game always read the same single answer.
+func hip_transform() -> Transform3D:
+	var pose := hip_node()
+	if pose != null:
+		return pose.transform
+	return Transform3D(Basis(Vector3.RIGHT, _hip_pitch), _hip_position)
+
+
+func aim_transform() -> Transform3D:
+	var pose := aim_node()
+	if pose != null:
+		return pose.transform
+	return Transform3D(Basis(Vector3.RIGHT, deg_to_rad(sights_pitch_deg)), sights_position)
+
+
+## an assigned marker wins. otherwise fall back to a child of that name, because a node reference
+## written into a .tscn by hand resolves to null: godot applies the property while building this
+## node, before its own children exist.
+func hip_node() -> Node3D:
+	return _marker(hip_pose, "HipPose")
+
+
+func aim_node() -> Node3D:
+	return _marker(aim_pose, "AimPose")
+
+
+## each weapon carries its own markers, because each has its own sights. a weapon without them
+## uses the shared pair on this node, and an explicitly assigned marker still wins over both.
+func _marker(assigned: Node3D, fallback: String) -> Node3D:
+	if assigned != null and is_instance_valid(assigned):
+		return assigned
+	var rack := weapon() as WeaponRack
+	if rack != null:
+		var gun := rack.shown()
+		if gun != null:
+			var own := gun.get_node_or_null(NodePath(fallback)) as Node3D
+			if own != null:
+				return own
+	return get_node_or_null(NodePath(fallback)) as Node3D
 
 
 func _spring3(value: Vector3, velocity: Vector3, target: Vector3, stiffness: float, damping: float, delta: float) -> Array:

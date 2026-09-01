@@ -30,6 +30,7 @@ const SPAWN_CLEARANCE := 0.15
 
 var _jump_buffer := 0.0
 var _crouch_t := 0.0
+var _base_sensitivity := 0.0022
 var _crouching := false
 var _grounded := false
 var _peak_fall_vy := 0.0
@@ -37,6 +38,9 @@ var _peak_fall_vy := 0.0
 
 func _ready() -> void:
 	add_to_group("player")
+	_base_sensitivity = mouse_sensitivity
+	_apply_settings()
+	Settings.changed.connect(_apply_settings)
 	if movement == null:
 		movement = MovementConfig.new()
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -62,8 +66,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		head.rotate_x(pitch * sens)
 		var limit := deg_to_rad(pitch_limit_deg)
 		head.rotation.x = clampf(head.rotation.x, -limit, limit)
-	elif event.is_action_pressed("ui_cancel"):
-		_toggle_mouse_capture()
 
 
 func _physics_process(delta: float) -> void:
@@ -208,11 +210,11 @@ func _on_landed(impact_vy: float) -> void:
 		camera.add_fall_kick(clampf(absf(impact_vy) * 0.5, 1.0, 6.0))
 
 
-func _toggle_mouse_capture() -> void:
-	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	else:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+## the exported value is the tuned base. the settings multiplier rides on top of it, so it can
+## be re-applied on every change without compounding.
+func _apply_settings() -> void:
+	mouse_sensitivity = _base_sensitivity * Settings.look_scale
+	invert_look = Settings.invert_look
 
 
 ## called by KillPlane when we fall out of the world, and by main.gd on load.

@@ -16,13 +16,14 @@ signal level_cleared(index: int, summary: Dictionary)
 signal run_finished(summary: Dictionary)
 signal state_changed(state: int)
 signal alert_changed(value: float)
+signal watcher_changed(kiwi: Node3D, value: float)
 signal detections_changed(count: int)
 
 ## a level is a scene path and the time you are expected to need. beating par is worth points.
 const LEVELS := [
-	{"path": "res://Levels/level_01.tscn", "name": "Ala Norte", "par": 90.0},
-	{"path": "res://Levels/level_02.tscn", "name": "Bosque", "par": 110.0},
-	{"path": "res://Levels/level_03.tscn", "name": "Cume", "par": 130.0},
+	{"path": "res://Levels/level_01.tscn", "name": "North Field", "par": 90.0},
+	{"path": "res://Levels/level_02.tscn", "name": "The Woods", "par": 110.0},
+	{"path": "res://Levels/level_03.tscn", "name": "The Summit", "par": 130.0},
 ]
 
 const POINTS_PER_TARGET := 100
@@ -71,6 +72,8 @@ func level_path() -> String:
 func start_run() -> void:
 	level_index = 0
 	run_score = 0
+	## the gun lives on the player, and quitting to the menu freed that player with its gun.
+	_gun_bound = false
 	_set_state(State.IDLE)
 
 
@@ -145,6 +148,12 @@ func _kiwis_in(level: Node) -> Array:
 func _bind_gun() -> void:
 	if _gun_bound:
 		return
+	var rack := get_tree().get_first_node_in_group("weapon_rack") as WeaponRack
+	if rack != null:
+		for g in rack.weapons():
+			g.fired.connect(_on_shot_fired)
+		_gun_bound = true
+		return
 	var gun := get_tree().get_first_node_in_group("weapon") as Gun
 	if gun == null:
 		return
@@ -164,6 +173,7 @@ func _on_kiwi_alerted(_kiwi: Kiwi) -> void:
 	detections_changed.emit(detections)
 	## the meter is a warning. once this one has seen you there is nothing left to warn about.
 	_awareness.erase(_kiwi.get_instance_id())
+	watcher_changed.emit(_kiwi, 0.0)
 	_push_alert()
 
 
@@ -172,6 +182,7 @@ func _on_kiwi_awareness(kiwi, value: float) -> void:
 	if state != State.PLAYING:
 		return
 	_awareness[kiwi.get_instance_id()] = value
+	watcher_changed.emit(kiwi, value)
 	_push_alert()
 
 
@@ -190,6 +201,7 @@ func _on_target_down(kiwi) -> void:
 		return
 	## a bird that is out is no longer watching, so its share of the meter has to go with it.
 	_awareness.erase(kiwi.get_instance_id())
+	watcher_changed.emit(kiwi, 0.0)
 	_push_alert()
 	targets_down += 1
 	targets_changed.emit(targets_down, targets_total)
