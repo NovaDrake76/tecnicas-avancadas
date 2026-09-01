@@ -15,6 +15,8 @@ signal time_changed(seconds: float)
 signal level_cleared(index: int, summary: Dictionary)
 signal run_finished(summary: Dictionary)
 signal state_changed(state: int)
+signal alert_changed(value: float)
+signal detections_changed(count: int)
 
 ## a level is a scene path and the time you are expected to need. beating par is worth points.
 const LEVELS := [
@@ -26,6 +28,8 @@ const LEVELS := [
 const POINTS_PER_TARGET := 100
 const ACCURACY_BONUS := 250
 const TIME_BONUS_PER_SECOND := 4
+## the stealth reward. a bb that misses is silent, so the only way to lose this is to be seen.
+const STEALTH_BONUS := 400
 
 ## seconds the clear banner stays up before the next level loads.
 const CLEAR_PAUSE := 3.5
@@ -36,10 +40,13 @@ var elapsed := 0.0
 var shots_fired := 0
 var targets_total := 0
 var targets_down := 0
+var detections := 0
 var run_score := 0
 
 var _level_score := 0
 var _gun_bound := false
+var _awareness := {}
+var _alert_level := 0.0
 
 
 func _process(delta: float) -> void:
@@ -72,24 +79,43 @@ func begin_level(level: Node) -> void:
 	elapsed = 0.0
 	shots_fired = 0
 	targets_down = 0
+	detections = 0
 	_level_score = 0
+	_awareness.clear()
+	_alert_level = 0.0
 
 	var kiwis := _kiwis_in(level)
 	targets_total = kiwis.size()
 	for kiwi in kiwis:
 		if not kiwi.downed.is_connected(_on_target_down):
 			kiwi.downed.connect(_on_target_down)
+		if not kiwi.alerted.is_connected(_on_kiwi_alerted):
+			kiwi.alerted.connect(_on_kiwi_alerted)
+		if not kiwi.awareness_changed.is_connected(_on_kiwi_awareness):
+			kiwi.awareness_changed.connect(_on_kiwi_awareness)
 
 	_bind_gun()
 	_set_state(State.PLAYING)
 	level_started.emit(level_index, String(current()["name"]))
 	targets_changed.emit(targets_down, targets_total)
 	time_changed.emit(0.0)
+	detections_changed.emit(detections)
+	alert_changed.emit(0.0)
 
 	## a level with nothing to shoot is already finished, and saying so beats hanging forever.
 	if targets_total == 0:
 		push_warning("run: level %d has no kiwi in group 'kiwi'" % (level_index + 1))
 		_clear_level()
+
+
+func alert_level() -> float:
+	return _alert_level
+
+
+func stealth_text() -> String:
+	if detections <= 0:
+		return "UNDETECTED"
+	return "SPOTTED  %d" % detections
 
 
 func objective_text() -> String:
@@ -131,9 +157,40 @@ func _on_shot_fired(_speed: float, _mass_kg: float) -> void:
 		shots_fired += 1
 
 
-func _on_target_down(_kiwi) -> void:
+func _on_kiwi_alerted(_kiwi: Kiwi) -> void:
 	if state != State.PLAYING:
 		return
+	detections += 1
+	detections_changed.emit(detections)
+	## the meter is a warning. once this one has seen you there is nothing left to warn about.
+	_awareness.erase(_kiwi.get_instance_id())
+	_push_alert()
+
+
+## the hud shows one meter, so this keeps the worst of them rather than a signal per bird.
+func _on_kiwi_awareness(kiwi, value: float) -> void:
+	if state != State.PLAYING:
+		return
+	_awareness[kiwi.get_instance_id()] = value
+	_push_alert()
+
+
+func _push_alert() -> void:
+	var worst := 0.0
+	for v in _awareness.values():
+		worst = maxf(worst, float(v))
+	if absf(worst - _alert_level) < 0.02 and worst > 0.0 and worst < 1.0:
+		return
+	_alert_level = worst
+	alert_changed.emit(worst)
+
+
+func _on_target_down(kiwi) -> void:
+	if state != State.PLAYING:
+		return
+	## a bird that is out is no longer watching, so its share of the meter has to go with it.
+	_awareness.erase(kiwi.get_instance_id())
+	_push_alert()
 	targets_down += 1
 	targets_changed.emit(targets_down, targets_total)
 	if targets_down >= targets_total:
@@ -159,7 +216,15 @@ func _score_level() -> int:
 	var par := float(current()["par"])
 	var time_points := int(round(maxf(par - elapsed, 0.0) * TIME_BONUS_PER_SECOND))
 
-	return base + accuracy_points + time_points
+	return base + accuracy_points + time_points + stealth_points()
+
+
+## the whole bonus for a clean infiltration, and a slice of it back for every bird you did not spook.
+func stealth_points() -> int:
+	if targets_total <= 0:
+		return 0
+	var unseen := float(maxi(targets_total - detections, 0)) / float(targets_total)
+	return int(round(STEALTH_BONUS * unseen * unseen))
 
 
 func _summary() -> Dictionary:
@@ -173,6 +238,8 @@ func _summary() -> Dictionary:
 		"accuracy": float(targets_down) / float(maxi(shots, 1)),
 		"time": elapsed,
 		"par": float(current()["par"]),
+		"detections": detections,
+		"stealth": stealth_points(),
 		"level_score": _level_score,
 		"run_score": run_score,
 		"last": level_index + 1 >= LEVELS.size(),

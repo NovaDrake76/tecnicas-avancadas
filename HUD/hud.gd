@@ -1,6 +1,8 @@
 extends CanvasLayer
 
 const ALERT_COLOR := Color(1.0, 0.35, 0.3)
+const CALM_COLOR := Color(1.0, 0.82, 0.35)
+const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 
 @onready var type_label: Label = %Type
 @onready var ammo_label: Label = %Ammo
@@ -13,6 +15,9 @@ const ALERT_COLOR := Color(1.0, 0.35, 0.3)
 @onready var timer_label: Label = %Timer
 @onready var banner_label: Label = %Banner
 @onready var summary_label: Label = %Summary
+@onready var alert_meter: Control = %Alert
+@onready var alert_fill: ColorRect = %Fill
+@onready var stealth_label: Label = %Stealth
 
 var _weapon: Gun
 var _interactor: Interactor
@@ -27,12 +32,16 @@ func _ready() -> void:
 	summary_label.text = ""
 	objective_label.text = ""
 	timer_label.text = ""
+	stealth_label.text = ""
+	alert_meter.visible = false
 
 	Run.level_started.connect(_on_level_started)
 	Run.targets_changed.connect(_on_targets_changed)
 	Run.time_changed.connect(_on_time_changed)
 	Run.level_cleared.connect(_on_level_cleared)
 	Run.run_finished.connect(_on_run_finished)
+	Run.alert_changed.connect(_on_alert_changed)
+	Run.detections_changed.connect(_on_detections_changed)
 
 	_bind_weapon.call_deferred()
 
@@ -60,6 +69,8 @@ func _bind_weapon() -> void:
 func _on_level_started(index: int, name: String) -> void:
 	banner_label.text = ""
 	summary_label.text = ""
+	_on_detections_changed(0)
+	_on_alert_changed(0.0)
 	show_message("Level %d  %s" % [index + 1, name])
 
 
@@ -71,25 +82,44 @@ func _on_time_changed(seconds: float) -> void:
 	timer_label.text = "%d:%02d" % [int(seconds) / 60, int(seconds) % 60]
 
 
+## the meter is the only warning the player gets, so it fills long before anything happens.
+func _on_alert_changed(value: float) -> void:
+	alert_meter.visible = value > 0.01
+	if not alert_meter.visible:
+		return
+	alert_fill.size.x = alert_meter.size.x * clampf(value, 0.0, 1.0)
+	alert_fill.color = CALM_COLOR.lerp(ALERT_COLOR, value)
+
+
+func _on_detections_changed(count: int) -> void:
+	stealth_label.text = Run.stealth_text()
+	stealth_label.modulate = ALERT_COLOR if count > 0 else CLEAR_COLOR
+
+
 func _on_level_cleared(_index: int, summary: Dictionary) -> void:
 	banner_label.text = "LEVEL CLEAR"
 	summary_label.text = _summary_text(summary)
+	alert_meter.visible = false
 
 
 func _on_run_finished(summary: Dictionary) -> void:
 	banner_label.text = "MISSION COMPLETE"
 	summary_label.text = _summary_text(summary)
 	objective_label.text = ""
+	stealth_label.text = ""
+	alert_meter.visible = false
 
 
 ## every line is something the player did, so the score can be explained back to them.
 func _summary_text(s: Dictionary) -> String:
+	var seen := int(s["detections"])
+	var stealth := "undetected" if seen == 0 else "spotted by %d" % seen
 	return "targets %d / %d          shots %d          accuracy %d%%
-time %s   (par %s)
+time %s   (par %s)          %s   +%d
 
 level %d          run %d" % [
 		int(s["targets"]), int(s["total"]), int(s["shots"]), int(round(float(s["accuracy"]) * 100.0)),
-		_clock(float(s["time"])), _clock(float(s["par"])),
+		_clock(float(s["time"])), _clock(float(s["par"])), stealth, int(s["stealth"]),
 		int(s["level_score"]), int(s["run_score"])]
 
 

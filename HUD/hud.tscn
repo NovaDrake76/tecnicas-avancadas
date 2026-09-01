@@ -49,9 +49,9 @@ vertical_alignment = 1
 [node name="Prompt" type="Label" parent="Root"]
 unique_name_in_owner = true
 anchor_left = 0.5
-anchor_top = 0.56
+anchor_top = 0.63
 anchor_right = 0.5
-anchor_bottom = 0.56
+anchor_bottom = 0.63
 offset_left = -320.0
 offset_top = -18.0
 offset_right = 320.0
@@ -61,6 +61,44 @@ theme_override_colors/font_color = Color(0.88, 0.94, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 19
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Alert" type="Control" parent="Root"]
+unique_name_in_owner = true
+anchor_left = 0.5
+anchor_top = 0.545
+anchor_right = 0.5
+anchor_bottom = 0.545
+offset_left = -70.0
+offset_right = 70.0
+offset_bottom = 10.0
+mouse_filter = 2
+
+[node name="Back" type="ColorRect" parent="Root/Alert"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.45)
+
+[node name="Fill" type="ColorRect" parent="Root/Alert"]
+unique_name_in_owner = true
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(1, 0.78, 0.35, 1)
+
+[node name="Stealth" type="Label" parent="Root"]
+unique_name_in_owner = true
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -320.0
+offset_top = 68.0
+offset_right = 320.0
+offset_bottom = 90.0
+mouse_filter = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 15
 horizontal_alignment = 1
 vertical_alignment = 1
 

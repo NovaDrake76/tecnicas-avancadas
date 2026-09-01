@@ -5,8 +5,10 @@ extends CharacterBody3D
 ## it alternates random idle clips with short walks to a random point near where it was placed.
 
 signal downed(kiwi: Kiwi)
+signal alerted(kiwi: Kiwi)
+signal awareness_changed(kiwi: Kiwi, value: float)
 
-enum State { IDLE, WALK, DOWN }
+enum State { IDLE, WALK, DOWN, FLEE }
 
 @export_group("Wander")
 ## radius of the patch it stays inside, measured from wherever it was placed.
@@ -19,9 +21,17 @@ enum State { IDLE, WALK, DOWN }
 ## chance of walking rather than idling again after each idle finishes.
 @export_range(0.0, 1.0) var walk_chance := 0.55
 
+@export_group("Stealth")
+## how far a burst carries. a kiwi with a clear line to one going down inside this raises the alarm.
+@export var witness_radius := 14.0
+@export var flee_speed := 3.4
+@export var flee_distance := 18.0
+@export var flee_time := 6.0
+
 @export_group("Clips")
 @export var idle_clips: Array[String] = ["IdleA", "IdleB", "IdleC", "IdleD"]
 @export var walk_clip := "walk"
+@export var run_clip := "run"
 ## a hit kiwi is out rather than dead, so it lies down.
 @export var down_clip := "Sleep"
 
@@ -48,6 +58,7 @@ enum State { IDLE, WALK, DOWN }
 
 @onready var model: Node3D = $Model
 @onready var health: Health = $Health
+@onready var vision: VisionCone = $Vision
 
 var _anim: AnimationPlayer
 var _clips := {}
@@ -55,6 +66,7 @@ var _state := State.IDLE
 var _timer := 0.0
 var _home := Vector3.ZERO
 var _target := Vector3.ZERO
+var _detected := false
 
 
 func _ready() -> void:
@@ -69,6 +81,8 @@ func _ready() -> void:
 		_resolve_clips()
 
 	health.died.connect(_go_down)
+	vision.spotted.connect(_on_spotted)
+	vision.awareness_changed.connect(_on_awareness_changed)
 	_begin_idle()
 
 
@@ -120,10 +134,15 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = 0.0
 
+	if _state != State.DOWN:
+		vision.poll(delta)
+
 	match _state:
 		State.DOWN:
 			velocity.x = 0.0
 			velocity.z = 0.0
+		State.FLEE:
+			_step_flee(delta)
 		State.IDLE:
 			velocity.x = move_toward(velocity.x, 0.0, walk_speed * 4.0 * delta)
 			velocity.z = move_toward(velocity.z, 0.0, walk_speed * 4.0 * delta)
@@ -137,11 +156,22 @@ func _physics_process(delta: float) -> void:
 
 
 func _step_walk(delta: float) -> void:
-	var to_target := _target - global_position
+	if _move_to(_target, walk_speed, delta):
+		_begin_idle()
+
+
+func _step_flee(delta: float) -> void:
+	_timer -= delta
+	if _move_to(_target, flee_speed, delta) or _timer <= 0.0:
+		_end_flee()
+
+
+## returns true once it has arrived, so each state decides for itself what that means.
+func _move_to(point: Vector3, speed: float, delta: float) -> bool:
+	var to_target := point - global_position
 	to_target.y = 0.0
 	if to_target.length() <= arrive_distance:
-		_begin_idle()
-		return
+		return true
 
 	var dir := to_target.normalized()
 	## the yaw whose -Z points along dir, turned into gradually so it does not snap.
@@ -149,10 +179,11 @@ func _step_walk(delta: float) -> void:
 	rotation.y = rotate_toward(rotation.y, desired, turn_speed * delta)
 
 	var forward := -global_transform.basis.z
-	velocity.x = forward.x * walk_speed
-	velocity.z = forward.z * walk_speed
+	velocity.x = forward.x * speed
+	velocity.z = forward.z * speed
 
 	StepClimb.try_step(self, forward, 4)
+	return false
 
 
 func _decide() -> void:
@@ -178,6 +209,62 @@ func _begin_walk() -> void:
 	_play(walk_clip)
 
 
+## the alarm goes up once per bird. after that it is already blown, so fleeing again costs nothing.
+func _on_spotted(target: Node3D) -> void:
+	if _state == State.DOWN:
+		return
+	if not _detected:
+		_detected = true
+		alerted.emit(self)
+	_begin_flee(target.global_position if target != null else global_position)
+
+
+func _on_awareness_changed(value: float) -> void:
+	awareness_changed.emit(self, value)
+
+
+func _begin_flee(away_from: Vector3) -> void:
+	var dir := global_position - away_from
+	dir.y = 0.0
+	if dir.length_squared() < 0.01:
+		dir = -global_transform.basis.z
+	_target = global_position + dir.normalized() * flee_distance
+	_timer = flee_time
+	_state = State.FLEE
+	_play(run_clip, 0.15)
+
+
+## still alarmed, but back to watching, so walking into its face again sends it running again.
+func _end_flee() -> void:
+	vision.rearm()
+	_home = global_position
+	_begin_idle()
+
+
+## an airsoft hit is quiet, so only a bird actually looking that way knows its neighbour dropped.
+## turning up behind them is what makes a silent clear possible.
+func _alert_witnesses() -> void:
+	var at := global_position + Vector3.UP * 0.3
+	for node in get_tree().get_nodes_in_group("kiwi"):
+		var other := node as Kiwi
+		if other == null or other == self or other.is_down():
+			continue
+		other.witness(at)
+
+
+func witness(at: Vector3) -> void:
+	if _state == State.DOWN or not vision.sees_point(at, witness_radius):
+		return
+	if not _detected:
+		_detected = true
+		alerted.emit(self)
+	_begin_flee(at)
+
+
+func was_detected() -> bool:
+	return _detected
+
+
 ## called by a BB that lands on us, an airsoft hit puts a target out rather than killing it.
 func take_bb_hit(damage := 1.0, _at := Vector3.INF) -> void:
 	if _state == State.DOWN:
@@ -198,6 +285,8 @@ func _go_down() -> void:
 	BurstFx.spawn(world, at, burst_light, burst_count, burst_speed)
 	BurstFx.spawn(world, at, burst_dark, int(burst_count * 0.6), burst_speed * 0.8)
 
+	_alert_witnesses()
+
 	## the signal goes out while we are still here, so a listener can read our position.
 	downed.emit(self)
 
@@ -213,3 +302,7 @@ func _go_down() -> void:
 
 func is_down() -> bool:
 	return _state == State.DOWN
+
+
+func is_fleeing() -> bool:
+	return _state == State.FLEE
