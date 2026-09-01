@@ -42,12 +42,10 @@ class Band:
 @export var clear_radius := 22.0
 @export var tree_count := 430
 ## sparse over the firing range so the grid stays readable, dense past its edge.
-## the carpet. short tufts everywhere, this is what the ground actually reads as.
-@export var ground_cover_count := 150000
-@export var range_grass_count := 2200
-@export var grass_count := 13000
-@export var rock_count := 120
-@export var fern_count := 450
+@export var range_grass_count := 900
+@export var grass_count := 1400
+@export var rock_count := 110
+@export var fern_count := 220
 @export var debris_count := 70
 
 @export_group("Tint")
@@ -87,9 +85,6 @@ func build() -> void:
 	_rng.seed = scatter_seed
 
 	var bands: Array[Band] = [
-		## short and everywhere, including the flat range, so no square of bare ground is left.
-		Band.new(["grass_a", "grass_b", "grass_c", "grass_d"],
-			ground_cover_count, 0.0, 215.0, 0.45, 1.0, 1.0, 0.03, grass_tint),
 		## trees start where the flat range ends so they never block a firing lane.
 		## trees start where the flat range ends so they never stand in a firing lane.
 		Band.new(["tree_pine_a", "tree_pine_b", "tree_a", "tree_b", "tree_c"],
@@ -221,8 +216,6 @@ func _emit(source: String, placements: Array[Transform3D], tint := Color.WHITE) 
 			node.material_override = _tinting_material(mesh)
 		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 		add_child(node)
-		if Engine.is_editor_hint():
-			node.owner = get_tree().edited_scene_root
 
 
 ## the exporter left every model on a blender layout grid, so the file origin is metres away from the
@@ -297,8 +290,6 @@ func _build_trunk_bodies(points: PackedVector3Array, scales: PackedFloat32Array)
 	body.collision_layer = 1
 	body.collision_mask = 0
 	add_child(body)
-	if Engine.is_editor_hint():
-		body.owner = get_tree().edited_scene_root
 
 	for i in points.size():
 		var shape := CollisionShape3D.new()
@@ -308,5 +299,3 @@ func _build_trunk_bodies(points: PackedVector3Array, scales: PackedFloat32Array)
 		shape.shape = cyl
 		shape.position = points[i] + Vector3.UP * (cyl.height * 0.5)
 		body.add_child(shape)
-		if Engine.is_editor_hint():
-			shape.owner = get_tree().edited_scene_root

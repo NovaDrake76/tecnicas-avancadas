@@ -120,14 +120,12 @@ func build() -> void:
 	shape.shape = concave
 	body.add_child(shape)
 	_attach(body)
-	if Engine.is_editor_hint():
-		shape.owner = get_tree().edited_scene_root
 
 
+## the geometry is GENERATED, never stored. setting owner here is what told godot to serialise
+## every vertex and every instance transform into level_01.tscn, and took it to 38 MB.
 func _attach(node: Node) -> void:
 	add_child(node)
-	if Engine.is_editor_hint():
-		node.owner = get_tree().edited_scene_root
 
 
 func _add_tri(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
