@@ -2,6 +2,7 @@
 
 [ext_resource type="Shader" uid="uid://cklqih7708id7" path="res://Shaders/grid_floor.gdshader" id="1_grid"]
 [ext_resource type="PackedScene" path="res://Guns/magazine/magazine_pickup.tscn" id="2_1jt1u"]
+[ext_resource type="PackedScene" path="res://Characters/kiwi.tscn" id="3_er0or"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bhunq"]
 size = Vector3(200, 1, 200)
@@ -37,6 +38,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.841454, 1.9073486e-06, 20
 
 [node name="MagazinePickup2" parent="StaticBody3D" unique_id=1378037850 instance=ExtResource("2_1jt1u")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.895088, 1.9073486e-06, 20.827642)
+
+[node name="Kiwi" parent="StaticBody3D" unique_id=756847431 instance=ExtResource("3_er0or")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.586499, 0.00090217753, 55.495514)
 
 [node name="PlayerSpawn" type="Marker3D" parent="." unique_id=1374215810 groups=["player_spawn"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 80)

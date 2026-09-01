@@ -14,6 +14,8 @@ enum FireBlock { NONE, NO_MAGAZINE, EMPTY, COOLDOWN }
 
 const BB_SCENE := preload("res://Guns/bb/bb.tscn")
 const DEFAULT_BB_MASS := 0.0002
+## world plus targets, the same set the bb itself collides with.
+const AIM_MASK := 0b1001
 
 const TRAIL_COLORS := [
 	Color(1.0, 0.85, 0.3),
@@ -42,6 +44,13 @@ const TRAIL_COLORS := [
 @export_group("Loadout")
 @export var magazine: Magazine
 @export var fire_mode: FireMode = FireMode.SEMI
+
+@export_group("Aim")
+## the muzzle sits right of and below the eye, so firing straight down the barrel never crosses the
+## crosshair. the shot is aimed at whatever the crosshair is actually on instead.
+@export var converge_on_crosshair := true
+@export var max_aim_distance := 300.0
+@export var min_aim_distance := 2.0
 
 @export_group("Muzzle")
 ## off by default, an aeg vents its air down the barrel and shows nothing.
@@ -221,6 +230,11 @@ func try_fire() -> bool:
 	return true
 
 
+## clears the cadence gate, for a harness that needs to fire twice in a row.
+func reset_cadence() -> void:
+	_next_shot_at = _clock
+
+
 func _reject(reason: FireBlock) -> void:
 	var message := block_message(reason)
 	fire_failed.emit(reason, message)
@@ -239,7 +253,7 @@ func _spawn_bb(mass_kg: float) -> void:
 
 	get_tree().current_scene.add_child(bb)
 	bb.global_transform = muzzle.global_transform
-	var dir := -muzzle.global_transform.basis.z.normalized()
+	var dir := aim_direction()
 	bb.linear_velocity = dir * speed
 
 	if muzzle_fx:
@@ -252,6 +266,36 @@ func _spawn_bb(mass_kg: float) -> void:
 		print("Shot %d | %.2f m/s | %.1f fps | %.2f g | hop-up %.5f | ammo %d/%d"
 			% [_shot, speed, speed * 3.28084, mass_kg * 1000.0, hopup,
 			   magazine.count, magazine.capacity])
+
+
+## where the shot should actually go, from the muzzle toward the point under the crosshair.
+func aim_direction() -> Vector3:
+	var barrel := -muzzle.global_transform.basis.z.normalized()
+	if not converge_on_crosshair:
+		return barrel
+
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return barrel
+
+	var from := cam.global_position
+	var forward := -cam.global_transform.basis.z.normalized()
+	var to := from + forward * max_aim_distance
+
+	var query := PhysicsRayQueryParameters3D.create(from, to, AIM_MASK)
+	query.collide_with_areas = false
+	var player := get_tree().get_first_node_in_group("player") as CollisionObject3D
+	if player != null:
+		query.exclude = [player.get_rid()]
+
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	var point: Vector3 = hit.position if not hit.is_empty() else to
+
+	## anything nearer than the eye to muzzle offset would aim the barrel back at ourselves.
+	if from.distance_to(point) < min_aim_distance:
+		point = from + forward * min_aim_distance
+
+	return (point - muzzle.global_position).normalized()
 
 
 func print_config() -> void:

@@ -25,6 +25,7 @@ func _ready() -> void:
 	ImpactFx.warm()
 	TracerFx.warm()
 	MuzzleFlashFx.warm()
+	BurstFx.warm()
 
 
 ## stamp a hole at point, projected into the surface whose outward normal is given.

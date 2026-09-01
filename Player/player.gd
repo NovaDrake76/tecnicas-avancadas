@@ -22,6 +22,7 @@ extends CharacterBody3D
 @onready var _col: CollisionShape3D = $CollisionShape3D
 @onready var _sm: StateMachine = $StateMachine
 @onready var _ceiling_check: ShapeCast3D = get_node_or_null("HeadClearance")
+@onready var _aim: AimScope = get_node_or_null("AimScope")
 
 var _jump_buffer := 0.0
 var _crouch_t := 0.0
@@ -50,9 +51,11 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var motion := event as InputEventMouseMotion
-		rotate_y(-motion.relative.x * mouse_sensitivity)
+		## aiming narrows the fov, so the look slows by the same ratio or fine aim is impossible.
+		var sens := mouse_sensitivity * (_aim.sensitivity_mult() if _aim != null else 1.0)
+		rotate_y(-motion.relative.x * sens)
 		var pitch: float = motion.relative.y if invert_look else -motion.relative.y
-		head.rotate_x(pitch * mouse_sensitivity)
+		head.rotate_x(pitch * sens)
 		var limit := deg_to_rad(pitch_limit_deg)
 		head.rotation.x = clampf(head.rotation.x, -limit, limit)
 	elif event.is_action_pressed("ui_cancel"):
@@ -85,11 +88,12 @@ func wish_dir() -> Vector3:
 
 
 func current_max_speed() -> float:
+	var base := movement.ground_max_speed
 	if _crouching:
-		return movement.crouch_max_speed
-	if Input.is_action_pressed("sprint"):
-		return movement.run_max_speed
-	return movement.ground_max_speed
+		base = movement.crouch_max_speed
+	elif Input.is_action_pressed("sprint"):
+		base = movement.run_max_speed
+	return base * (_aim.speed_mult() if _aim != null else 1.0)
 
 
 func wants_jump() -> bool:
@@ -105,6 +109,8 @@ func is_crouching() -> bool:
 
 
 func is_running() -> bool:
+	if _aim != null and _aim.is_aiming():
+		return false
 	if not _grounded or _crouching or not Input.is_action_pressed("sprint"):
 		return false
 	return Vector2(velocity.x, velocity.z).length() > 0.2

@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://bh7clxqxu8qbe"]
+[gd_scene load_steps=13 format=3 uid="uid://bh7clxqxu8qbe"]
 
 [ext_resource type="Script" uid="uid://bw74jtn6krfi4" path="res://Player/player.gd" id="1_q3lat"]
 [ext_resource type="PackedScene" uid="uid://ble4klsjtx5q2" path="res://Guns/gun/gun.tscn" id="2_tok1r"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://Components/interactor.gd" id="7_inter"]
 [ext_resource type="Script" path="res://Player/camera_effects.gd" id="8_camfx"]
 [ext_resource type="Script" path="res://Components/viewmodel_motion.gd" id="9_vm"]
+[ext_resource type="Script" path="res://Components/aim_scope.gd" id="10_aim"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_bhunq"]
 radius = 0.4
@@ -56,3 +57,6 @@ script = ExtResource("6_air")
 
 [node name="Interactor" type="Node" parent="."]
 script = ExtResource("7_inter")
+
+[node name="AimScope" type="Node" parent="."]
+script = ExtResource("10_aim")

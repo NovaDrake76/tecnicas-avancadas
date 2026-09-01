@@ -39,18 +39,25 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	if _impacted or state.get_contact_count() == 0:
 		return
 	_impacted = true
+	var hit_body := state.get_contact_collider_object(0)
 	var point := state.get_contact_collider_position(0)
 	var normal := state.get_contact_local_normal(0)
 	## force the normal to oppose the incoming velocity, the engine's sign varies by body pair.
 	if normal.dot(state.linear_velocity) > 0.0:
 		normal = -normal
-	_on_impact.call_deferred(point, normal)
+	_on_impact.call_deferred(point, normal, hit_body)
 
 
-func _on_impact(point: Vector3, normal: Vector3) -> void:
+func _on_impact(point: Vector3, normal: Vector3, hit_body: Object) -> void:
 	var world := get_tree().current_scene
 	ImpactFx.spawn(world, point, normal)
-	if mark_surface:
+
+	var target := hit_body != null and is_instance_valid(hit_body) and hit_body.has_method("take_bb_hit")
+	if target:
+		hit_body.take_bb_hit(1.0, point)
+
+	## decals belong on static world surfaces only, a hole stamped on a kiwi hangs in the air once it moves.
+	if mark_surface and not target:
 		BulletHoles.mark(point, normal)
 	if despawn_on_impact:
 		queue_free()

@@ -51,6 +51,12 @@ extends Node3D
 @export var air_pose_stiffness := 60.0
 @export var air_pose_damping := 10.0
 
+@export_group("Aim down sights")
+## where the gun sits when fully aimed, centred on the crosshair rather than off to the side.
+@export var sights_position := Vector3(0.0, -0.045, -0.2)
+## how much aiming damps sway and bob, a braced gun does not breathe like a hip held one.
+@export_range(0.0, 1.0) var ads_steadiness := 0.8
+
 @export_group("Wall avoidance")
 @export var wall_probe_dist := 0.85
 @export var wall_max_pullback := 0.45
@@ -91,9 +97,13 @@ var _wall_pos_vel := Vector3.ZERO
 
 var _player: CharacterBody3D
 var _head: Node3D
+var _gun: Node3D
+var _hip_position := Vector3.ZERO
+var _ads := 0.0
 
 
 func _ready() -> void:
+	add_to_group("viewmodel")
 	_noise.seed = randi()
 	_noise.frequency = 1.0
 	_bind.call_deferred()
@@ -106,6 +116,13 @@ func _bind() -> void:
 	var gun := get_tree().get_first_node_in_group("weapon") as Gun
 	if gun != null:
 		gun.fired.connect(_on_fired)
+		_gun = gun
+		_hip_position = gun.position
+
+
+## driven by AimScope, 0 at the hip and 1 fully aimed.
+func set_ads(t: float) -> void:
+	_ads = clampf(t, 0.0, 1.0)
 
 
 func _on_fired(_speed: float, _mass_kg: float) -> void:
@@ -231,8 +248,16 @@ func _process(delta: float) -> void:
 	_wall_pos = wp[0]
 	_wall_pos_vel = wp[1]
 
-	position = Vector3(_idle_x.x + _look_x.x + _bob_x.x, _idle_y.x + _look_y.x + _bob_y.x, 0.0) + _run_pos + _air_pos + _wall_pos + _recoil_pos
-	rotation = Vector3(_rot_pitch.x, _rot_yaw.x, _rot_roll.x) + _run_rot + _recoil_rot
+	## aiming damps the whole procedural layer as a scale on the sum, recoil is deliberately left out.
+	## a gun that kicked less because you were looking down it would be a free accuracy buff.
+	var steady := 1.0 - _ads * ads_steadiness
+	var sway := Vector3(_idle_x.x + _look_x.x + _bob_x.x, _idle_y.x + _look_y.x + _bob_y.x, 0.0)
+	position = (sway + _run_pos + _air_pos + _wall_pos) * steady + _recoil_pos
+	rotation = (Vector3(_rot_pitch.x, _rot_yaw.x, _rot_roll.x) + _run_rot) * steady + _recoil_rot
+
+	## the raise itself is on the gun, this node keeps carrying the procedural offsets on top.
+	if _gun != null:
+		_gun.position = _hip_position.lerp(sights_position, _ads)
 
 
 func _spring3(value: Vector3, velocity: Vector3, target: Vector3, stiffness: float, damping: float, delta: float) -> Array:
