@@ -8,14 +8,17 @@ const ALERT_COLOR := Color(1.0, 0.35, 0.3)
 @onready var mode_label: Label = %Mode
 @onready var hopup_label: Label = %Hopup
 @onready var message_label: Label = %Message
+@onready var prompt_label: Label = %Prompt
 
 var _weapon: Gun
+var _interactor: Interactor
 var _message_tween: Tween
 var _flash_tween: Tween
 
 
 func _ready() -> void:
 	message_label.text = ""
+	prompt_label.text = ""
 	_bind_weapon.call_deferred()
 
 
@@ -30,7 +33,29 @@ func _bind_weapon() -> void:
 	_weapon.fire_mode_changed.connect(_on_fire_mode_changed)
 	_weapon.hopup_changed.connect(_on_hopup_changed)
 	_weapon.fire_failed.connect(_on_fire_failed)
+	_weapon.magazine_rejected.connect(_on_magazine_rejected)
 	_weapon.emit_state()
+
+	_interactor = get_tree().get_first_node_in_group("interactor") as Interactor
+	if _interactor != null:
+		_interactor.focus_changed.connect(_on_focus_changed)
+		_interactor.focus_lost.connect(_on_focus_lost)
+
+
+func _on_focus_changed(text: String, action: StringName, _target: Node) -> void:
+	prompt_label.text = "[%s]  %s" % [_key_label(action), text]
+
+
+func _on_focus_lost() -> void:
+	prompt_label.text = ""
+
+
+## resolves the bound key so the prompt still reads correctly after a rebind.
+func _key_label(action: StringName) -> String:
+	for event in InputMap.action_get_events(action):
+		if event is InputEventKey:
+			return OS.get_keycode_string((event as InputEventKey).physical_keycode)
+	return String(action).to_upper()
 
 
 func _on_ammo_changed(count: int, capacity: int) -> void:
@@ -72,6 +97,10 @@ func flash_ammo() -> void:
 	ammo_label.modulate = ALERT_COLOR
 	_flash_tween = create_tween()
 	_flash_tween.tween_property(ammo_label, "modulate", Color.WHITE, 0.35)
+
+
+func _on_magazine_rejected(_offered: Magazine, message: String) -> void:
+	show_message(message)
 
 
 func show_message(text: String) -> void:

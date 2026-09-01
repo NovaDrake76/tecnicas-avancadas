@@ -7,11 +7,12 @@ signal fire_mode_changed(mode: FireMode)
 signal hopup_changed(value: float, min_value: float, max_value: float)
 signal fired(speed: float, mass_kg: float)
 signal fire_failed(reason: FireBlock, message: String)
+signal magazine_rejected(offered: Magazine, message: String)
 
 enum FireMode { SEMI, AUTO }
 enum FireBlock { NONE, NO_MAGAZINE, EMPTY, COOLDOWN }
 
-const BB_SCENE := preload("res://Guns/bb.tscn")
+const BB_SCENE := preload("res://Guns/bb/bb.tscn")
 const DEFAULT_BB_MASS := 0.0002
 
 const TRAIL_COLORS := [
@@ -41,6 +42,13 @@ const TRAIL_COLORS := [
 @export_group("Loadout")
 @export var magazine: Magazine
 @export var fire_mode: FireMode = FireMode.SEMI
+
+@export_group("Muzzle")
+## off by default, an aeg vents its air down the barrel and shows nothing.
+## turn it on for a gas blowback weapon, which really does puff propellant.
+@export var muzzle_fx := false
+@export var muzzle_fx_scale := 1.0
+@export var muzzle_fx_intensity := 0.4
 
 @export_group("Debug")
 @export var slow_motion: float = 1.0
@@ -101,6 +109,26 @@ func fire_mode_label() -> String:
 
 func accepts(mag: Magazine) -> bool:
 	return mag != null and mag.mag_type == accepted_mag
+
+
+func equip_magazine(mag: Magazine) -> bool:
+	if mag == null:
+		return false
+
+	if not accepts(mag):
+		var message := "%s magazine required - this one is %s" % [
+			Ordnance.type_name(accepted_mag), Ordnance.type_name(mag.mag_type)]
+		magazine_rejected.emit(mag, message)
+		if log_shots:
+			print("Rejected: %s" % message)
+		return false
+
+	magazine = mag.duplicate()
+	magazine_changed.emit(magazine)
+	ammo_changed.emit(magazine.count, magazine.capacity)
+	if log_shots:
+		print("Equipped: %s" % magazine.describe())
+	return true
 
 
 func block_message(reason: FireBlock) -> String:
@@ -211,7 +239,12 @@ func _spawn_bb(mass_kg: float) -> void:
 
 	get_tree().current_scene.add_child(bb)
 	bb.global_transform = muzzle.global_transform
-	bb.linear_velocity = -muzzle.global_transform.basis.z.normalized() * speed
+	var dir := -muzzle.global_transform.basis.z.normalized()
+	bb.linear_velocity = dir * speed
+
+	if muzzle_fx:
+		MuzzleFlashFx.spawn(get_tree().current_scene, muzzle.global_position, dir,
+			MuzzleFlashFx.GAS_COLOR, muzzle_fx_scale, muzzle_fx_intensity)
 
 	fired.emit(speed, mass_kg)
 

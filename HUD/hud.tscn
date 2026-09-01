@@ -46,6 +46,24 @@ theme_override_font_sizes/font_size = 26
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="Prompt" type="Label" parent="Root"]
+unique_name_in_owner = true
+anchor_left = 0.5
+anchor_top = 0.56
+anchor_right = 0.5
+anchor_bottom = 0.56
+offset_left = -320.0
+offset_top = -18.0
+offset_right = 320.0
+offset_bottom = 18.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.88, 0.94, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 19
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="Stats" type="VBoxContainer" parent="Root"]
 anchor_left = 1.0
 anchor_top = 1.0

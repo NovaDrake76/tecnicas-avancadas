@@ -5,6 +5,10 @@
 [ext_resource type="Script" uid="uid://dytwqbacucyvx" path="res://main.gd" id="3_main"]
 [ext_resource type="Shader" uid="uid://dowsb4pwaj2qi" path="res://Shaders/sky.gdshader" id="4_sky"]
 [ext_resource type="PackedScene" path="res://HUD/hud.tscn" id="5_hud"]
+[ext_resource type="Script" path="res://Components/kill_plane.gd" id="6_void"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_void"]
+size = Vector3(600, 10, 600)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("4_sky")
@@ -48,3 +52,12 @@ shadow_enabled = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 60)
 
 [node name="HUD" parent="." instance=ExtResource("5_hud")]
+
+[node name="KillPlane" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -50, 0)
+collision_layer = 0
+collision_mask = 6
+script = ExtResource("6_void")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="KillPlane"]
+shape = SubResource("BoxShape3D_void")

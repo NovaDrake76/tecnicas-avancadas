@@ -1,6 +1,6 @@
-[gd_scene load_steps=5 format=3 uid="uid://c0uupp4vvoisn"]
+[gd_scene format=3 uid="uid://c0uupp4vvoisn"]
 
-[ext_resource type="Script" uid="uid://yw61c1o1t1f8" path="res://Guns/bb.gd" id="1_515gt"]
+[ext_resource type="Script" uid="uid://yw61c1o1t1f8" path="res://Guns/bb/bb.gd" id="1_515gt"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_bhunq"]
 radius = 0.003

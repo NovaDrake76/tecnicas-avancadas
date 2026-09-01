@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://ble4klsjtx5q2"]
 
-[ext_resource type="Script" uid="uid://bvspvig8o52i4" path="res://Guns/gun.gd" id="1_a202f"]
-[ext_resource type="Resource" uid="uid://cj4v814hgajyy" path="res://Guns/mag_rifle.tres" id="2_2b3y3"]
+[ext_resource type="Script" uid="uid://bvspvig8o52i4" path="res://Guns/gun/gun.gd" id="1_a202f"]
+[ext_resource type="Resource" uid="uid://cj4v814hgajyy" path="res://Guns/resources/mag_rifle.tres" id="2_2b3y3"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_bhunq"]
 size = Vector3(0.06, 0.12, 0.55)

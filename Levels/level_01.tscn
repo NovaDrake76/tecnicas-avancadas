@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://btibewlgadtuq"]
+[gd_scene format=3 uid="uid://btibewlgadtuq"]
 
-[ext_resource type="Shader" path="res://Shaders/grid_floor.gdshader" id="1_grid"]
+[ext_resource type="Shader" uid="uid://cklqih7708id7" path="res://Shaders/grid_floor.gdshader" id="1_grid"]
+[ext_resource type="PackedScene" path="res://Guns/magazine/magazine_pickup.tscn" id="2_1jt1u"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bhunq"]
 size = Vector3(200, 1, 200)
@@ -9,7 +10,14 @@ size = Vector3(200, 1, 200)
 size = Vector3(200, 1, 200)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_floor"]
+render_priority = 0
 shader = ExtResource("1_grid")
+shader_parameter/base_color = Color(0.27, 0.3, 0.28, 1)
+shader_parameter/minor_color = Color(0.36, 0.4, 0.37, 1)
+shader_parameter/major_color = Color(0.56, 0.61, 0.57, 1)
+shader_parameter/minor_spacing = 1.0
+shader_parameter/major_spacing = 10.0
+shader_parameter/minor_fade_distance = 70.0
 
 [node name="Level01" type="Node3D" unique_id=1200984448]
 
@@ -24,5 +32,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 mesh = SubResource("BoxMesh_bhunq")
 surface_material_override/0 = SubResource("ShaderMaterial_floor")
 
-[node name="PlayerSpawn" type="Marker3D" parent="." groups=["player_spawn"]]
+[node name="MagazinePickup" parent="StaticBody3D" unique_id=149431386 instance=ExtResource("2_1jt1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.841454, 1.9073486e-06, 20.827642)
+
+[node name="MagazinePickup2" parent="StaticBody3D" unique_id=1378037850 instance=ExtResource("2_1jt1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.895088, 1.9073486e-06, 20.827642)
+
+[node name="PlayerSpawn" type="Marker3D" parent="." unique_id=1374215810 groups=["player_spawn"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 80)

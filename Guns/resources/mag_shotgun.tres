@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="Magazine" format=3 uid="uid://ddmrqm1pi5kwd"]
 
-[ext_resource type="Script" uid="uid://bruobxvt4tlf0" path="res://Guns/magazine.gd" id="1_iuob5"]
+[ext_resource type="Script" uid="uid://bruobxvt4tlf0" path="res://Guns/magazine/magazine.gd" id="1_iuob5"]
 
 [resource]
 script = ExtResource("1_iuob5")

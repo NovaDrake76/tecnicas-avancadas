@@ -1,24 +1,58 @@
-[gd_scene load_steps=4 format=3 uid="uid://bh7clxqxu8qbe"]
+[gd_scene load_steps=12 format=3 uid="uid://bh7clxqxu8qbe"]
 
 [ext_resource type="Script" uid="uid://bw74jtn6krfi4" path="res://Player/player.gd" id="1_q3lat"]
-[ext_resource type="PackedScene" uid="uid://ble4klsjtx5q2" path="res://Guns/gun.tscn" id="2_tok1r"]
+[ext_resource type="PackedScene" uid="uid://ble4klsjtx5q2" path="res://Guns/gun/gun.tscn" id="2_tok1r"]
+[ext_resource type="Resource" path="res://Components/resources/movement_default.tres" id="3_move"]
+[ext_resource type="Script" path="res://Components/StateMachine/state_machine.gd" id="4_sm"]
+[ext_resource type="Script" path="res://Player/States/grounded_state.gd" id="5_ground"]
+[ext_resource type="Script" path="res://Player/States/airborne_state.gd" id="6_air"]
+[ext_resource type="Script" path="res://Components/interactor.gd" id="7_inter"]
+[ext_resource type="Script" path="res://Player/camera_effects.gd" id="8_camfx"]
+[ext_resource type="Script" path="res://Components/viewmodel_motion.gd" id="9_vm"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_bhunq"]
 radius = 0.4
 height = 1.8
 
+[sub_resource type="SphereShape3D" id="SphereShape3D_head"]
+radius = 0.28
+
 [node name="Player" type="CharacterBody3D" unique_id=30225432]
 collision_layer = 2
-collision_mask = 1
 script = ExtResource("1_q3lat")
+movement = ExtResource("3_move")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1530185987]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_bhunq")
 
-[node name="Camera3D" type="Camera3D" parent="." unique_id=693236177]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
-far = 500.0
+[node name="HeadClearance" type="ShapeCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.72, 0)
+shape = SubResource("SphereShape3D_head")
+target_position = Vector3(0, 0.8, 0)
+collision_mask = 1
 
-[node name="Gun" parent="Camera3D" unique_id=321049290 instance=ExtResource("2_tok1r")]
+[node name="Head" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Head" unique_id=693236177]
+far = 500.0
+script = ExtResource("8_camfx")
+
+[node name="Viewmodel" type="Node3D" parent="Head/Camera3D"]
+script = ExtResource("9_vm")
+
+[node name="Gun" parent="Head/Camera3D/Viewmodel" unique_id=321049290 instance=ExtResource("2_tok1r")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, -0.22, -0.35)
+
+[node name="StateMachine" type="Node" parent="."]
+script = ExtResource("4_sm")
+
+[node name="Grounded" type="Node" parent="StateMachine"]
+script = ExtResource("5_ground")
+
+[node name="Airborne" type="Node" parent="StateMachine"]
+script = ExtResource("6_air")
+
+[node name="Interactor" type="Node" parent="."]
+script = ExtResource("7_inter")

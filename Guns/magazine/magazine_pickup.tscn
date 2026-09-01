@@ -1,0 +1,28 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://Guns/magazine/magazine_pickup.gd" id="1_pickup"]
+[ext_resource type="Resource" path="res://Guns/resources/mag_rifle.tres" id="2_mag"]
+[ext_resource type="Script" path="res://Components/interactable.gd" id="3_inter"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pick"]
+size = Vector3(0.35, 0.5, 0.35)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pick"]
+size = Vector3(0.09, 0.26, 0.045)
+
+[node name="MagazinePickup" type="Area3D"]
+collision_layer = 128
+collision_mask = 0
+script = ExtResource("1_pickup")
+magazine = ExtResource("2_mag")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
+shape = SubResource("BoxShape3D_pick")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
+mesh = SubResource("BoxMesh_pick")
+
+[node name="Interactable" type="Node" parent="."]
+script = ExtResource("3_inter")

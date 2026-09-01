@@ -8,6 +8,8 @@ const BB_RADIUS := 0.003
 @export_range(0.00001, 0.01, 0.00001, "or_greater") var bb_mass: float = 0.0002
 @export_range(0.0, 0.01, 0.00001, "or_greater") var BackspinDrag: float = 0.0002
 @export var lifetime: float = 5.0
+@export var despawn_on_impact := true
+@export var mark_surface := true
 
 @export var draw_trail: bool = true
 @export var trail_color: Color = Color(0.4, 0.9, 1.0)
@@ -16,6 +18,7 @@ const BB_RADIUS := 0.003
 
 var _area: float = PI * BB_RADIUS * BB_RADIUS
 var _frame := 0
+var _impacted := false
 var _crumb_mesh: SphereMesh
 var _crumb_mat: StandardMaterial3D
 
@@ -24,9 +27,33 @@ func _ready() -> void:
 	mass = bb_mass
 	linear_damp = 0.0
 	angular_damp = 0.0
+	contact_monitor = true
+	max_contacts_reported = 1
 	if draw_trail:
 		_build_crumb_assets()
 	get_tree().create_timer(lifetime).timeout.connect(queue_free)
+
+
+## the first contact is the shot landing, everything after it is a bounce we do not care about.
+func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
+	if _impacted or state.get_contact_count() == 0:
+		return
+	_impacted = true
+	var point := state.get_contact_collider_position(0)
+	var normal := state.get_contact_local_normal(0)
+	## force the normal to oppose the incoming velocity, the engine's sign varies by body pair.
+	if normal.dot(state.linear_velocity) > 0.0:
+		normal = -normal
+	_on_impact.call_deferred(point, normal)
+
+
+func _on_impact(point: Vector3, normal: Vector3) -> void:
+	var world := get_tree().current_scene
+	ImpactFx.spawn(world, point, normal)
+	if mark_surface:
+		BulletHoles.mark(point, normal)
+	if despawn_on_impact:
+		queue_free()
 
 
 func _physics_process(_delta: float) -> void:
