@@ -7,10 +7,16 @@ extends Node
 signal awareness_changed(value: float)
 signal spotted(target: Node3D)
 
+@export_group("Head")
+## the cone rides this bone, so the idle clips that turn the bird's head turn its cone with it.
+## anything without a matching bone falls back to the way its body is facing.
+@export var head_bone_hint := "head"
+
 @export_group("Cone")
 @export var sight_range := 20.0
 ## half angle, so 55 is a 110 degree cone in front of the bird.
 @export var half_angle_deg := 55.0
+## only used when there is no head bone to sit on.
 @export var eye_height := 0.45
 ## closer than this and neither the cone nor crouching helps you.
 @export var point_blank := 2.0
@@ -32,12 +38,17 @@ var alerted := false
 var _body: Node3D
 var _target: Node3D
 var _sent := 0.0
+var _skeleton: Skeleton3D
+var _bone := -1
+var _bone_forward := Vector3.FORWARD
 
 
 func _ready() -> void:
 	set_physics_process(false)
 	_body = get_parent() as Node3D
 	_find_target.call_deferred()
+	## deferred because the owner sets the model's yaw in its own _ready, which runs after ours.
+	_bind_head.call_deferred()
 
 
 func _find_target() -> void:
@@ -121,7 +132,54 @@ func level() -> float:
 	return awareness / maxf(notice_time, 0.001)
 
 
+## the rig's bone axes are the rigger's business, so nothing here assumes one. at rest the bird
+## looks where its body looks, and that one comparison fixes the direction for good.
+func _bind_head() -> void:
+	if _body == null:
+		return
+	for node in _body.find_children("*", "Skeleton3D", true, false):
+		_skeleton = node as Skeleton3D
+		break
+	if _skeleton == null:
+		return
+
+	var hint := head_bone_hint.to_lower()
+	for i in _skeleton.get_bone_count():
+		if hint in _skeleton.get_bone_name(i).to_lower():
+			_bone = i
+			break
+	if _bone < 0:
+		_skeleton = null
+		return
+
+	var rest := (_skeleton.global_transform.basis
+		* _skeleton.get_bone_global_rest(_bone).basis).orthonormalized()
+	_bone_forward = rest.inverse() * (-_body.global_transform.basis.z)
+
+
+func has_head() -> bool:
+	return _bone >= 0
+
+
+## where the eyes are pointing, flattened. pitch is left out on purpose: a bird that dips its
+## beak to peck would go blind, and the player cannot read that from behind.
+func facing() -> Vector3:
+	var forward := -_body.global_transform.basis.z
+	if _bone >= 0:
+		var head := (_skeleton.global_transform.basis
+			* _skeleton.get_bone_global_pose(_bone).basis).orthonormalized()
+		var looking := head * _bone_forward
+		if absf(looking.x) + absf(looking.z) > 0.05:
+			forward = looking
+	forward.y = 0.0
+	if forward.length_squared() < 0.0001:
+		return Vector3.FORWARD
+	return forward.normalized()
+
+
 func _eye() -> Vector3:
+	if _bone >= 0:
+		return (_skeleton.global_transform * _skeleton.get_bone_global_pose(_bone)).origin
 	return _body.global_position + Vector3.UP * eye_height
 
 
@@ -129,11 +187,7 @@ func _within_cone(to: Vector3) -> bool:
 	var flat := Vector3(to.x, 0.0, to.z)
 	if flat.length_squared() < 0.0001:
 		return true
-	var forward := -_body.global_transform.basis.z
-	forward.y = 0.0
-	if forward.length_squared() < 0.0001:
-		return true
-	return rad_to_deg(forward.normalized().angle_to(flat.normalized())) <= half_angle_deg
+	return rad_to_deg(facing().angle_to(flat.normalized())) <= half_angle_deg
 
 
 ## the hud draws this, so it may not fire every tick for every bird on the map.
