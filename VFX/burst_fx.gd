@@ -13,7 +13,7 @@ static func _pm(color: Color, speed: float) -> ParticleProcessMaterial:
 	if not _pms.has(key):
 		var pm := ParticleProcessMaterial.new()
 		pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
-		pm.emission_sphere_radius = 0.12
+		pm.emission_sphere_radius = 0.18
 		pm.direction = Vector3(0, 1, 0)
 		## a full hemisphere of spread is what makes it a puff rather than a spray.
 		pm.spread = 180.0
@@ -22,8 +22,8 @@ static func _pm(color: Color, speed: float) -> ParticleProcessMaterial:
 		pm.gravity = Vector3(0, -5.0, 0)
 		pm.damping_min = 1.5
 		pm.damping_max = 3.5
-		pm.scale_min = 0.6
-		pm.scale_max = 1.3
+		pm.scale_min = 0.7
+		pm.scale_max = 1.8
 		pm.angle_min = -180.0
 		pm.angle_max = 180.0
 		pm.angular_velocity_min = -220.0
@@ -44,7 +44,7 @@ static func _pm(color: Color, speed: float) -> ParticleProcessMaterial:
 static func warm() -> void:
 	if _quad == null:
 		_quad = QuadMesh.new()
-		_quad.size = Vector2(0.05, 0.05)
+		_quad.size = Vector2(0.1, 0.1)
 		var m := StandardMaterial3D.new()
 		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA

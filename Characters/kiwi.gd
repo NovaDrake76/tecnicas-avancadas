@@ -30,11 +30,16 @@ enum State { IDLE, WALK, DOWN }
 ## leave this on or the bird renders about a third too pale.
 @export var vertex_colors_are_srgb := true
 
+@export_group("Down")
+## a hit kiwi pops and is gone. turn this off to leave it lying in the sleep pose instead.
+@export var vanish_on_down := true
+@export var despawn_delay := 1.1
+
 @export_group("Down burst")
 @export var burst_light := Color(0.55, 0.4, 0.2)
 @export var burst_dark := Color(0.22, 0.15, 0.09)
-@export var burst_count := 18
-@export var burst_speed := 3.2
+@export var burst_count := 34
+@export var burst_speed := 3.8
 
 @export_group("Physics")
 @export var gravity := 20.0
@@ -187,14 +192,23 @@ func _go_down() -> void:
 	velocity = Vector3.ZERO
 	## nothing may hit us twice, and the body stops blocking anything it was blocking.
 	collision_layer = 0
-	_play(down_clip, 0.15)
 
 	var world := get_tree().current_scene
 	var at := global_position + Vector3.UP * 0.3
 	BurstFx.spawn(world, at, burst_light, burst_count, burst_speed)
 	BurstFx.spawn(world, at, burst_dark, int(burst_count * 0.6), burst_speed * 0.8)
 
+	## the signal goes out while we are still here, so a listener can read our position.
 	downed.emit(self)
+
+	if not vanish_on_down:
+		_play(down_clip, 0.15)
+		return
+
+	model.visible = false
+	set_physics_process(false)
+	## the node outlives the burst by a moment, the particles are parented to the world not to us.
+	get_tree().create_timer(despawn_delay).timeout.connect(queue_free)
 
 
 func is_down() -> bool:

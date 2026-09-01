@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" path="res://Characters/kiwi.tscn" id="3_er0or"]
 [ext_resource type="Script" path="res://Levels/hill_ring.gd" id="90_hills"]
 [ext_resource type="Script" path="res://Levels/foliage.gd" id="91_foliage"]
+[ext_resource type="PackedScene" path="res://Characters/meisho-doto-temp/meisho_doto.glb" id="92_doto"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bhunq"]
 size = Vector3(200, 1, 200)
@@ -53,3 +54,6 @@ script = ExtResource("90_hills")
 
 [node name="Foliage" type="Node3D" parent="."]
 script = ExtResource("91_foliage")
+
+[node name="MeishoDoto" parent="StaticBody3D" instance=ExtResource("92_doto")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.4, 0, 55.5)
