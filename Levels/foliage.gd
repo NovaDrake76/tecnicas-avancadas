@@ -20,9 +20,11 @@ class Band:
 	var scale_max: float
 	var slope_max: float
 	var sink: float
+	## multiplies the model's own albedo. white leaves it alone.
+	var tint: Color
 
 	func _init(s: Array[String], c: int, i: float, o: float, smin: float, smax: float,
-			slope := 1.0, sk := 0.05) -> void:
+			slope := 1.0, sk := 0.05, tone := Color.WHITE) -> void:
 		scenes = s
 		count = c
 		inner = i
@@ -31,6 +33,7 @@ class Band:
 		scale_max = smax
 		slope_max = slope
 		sink = sk
+		tint = tone
 
 
 @export_group("Layout")
@@ -39,11 +42,19 @@ class Band:
 @export var clear_radius := 22.0
 @export var tree_count := 430
 ## sparse over the firing range so the grid stays readable, dense past its edge.
+## the carpet. short tufts everywhere, this is what the ground actually reads as.
+@export var ground_cover_count := 150000
 @export var range_grass_count := 2200
 @export var grass_count := 13000
 @export var rock_count := 120
-@export var fern_count := 1100
+@export var fern_count := 450
 @export var debris_count := 70
+
+@export_group("Tint")
+## the psx grass textures are dry straw. this multiplies them toward a living green, so values
+## above 1 on the green channel are deliberate.
+@export var grass_tint := Color(0.62, 1.35, 0.5)
+@export_range(0.0, 0.5) var tint_variation := 0.18
 
 @export_group("Collision")
 ## trunks block movement. one body carrying many shapes, not many bodies.
@@ -76,16 +87,19 @@ func build() -> void:
 	_rng.seed = scatter_seed
 
 	var bands: Array[Band] = [
+		## short and everywhere, including the flat range, so no square of bare ground is left.
+		Band.new(["grass_a", "grass_b", "grass_c", "grass_d"],
+			ground_cover_count, 0.0, 215.0, 0.45, 1.0, 1.0, 0.03, grass_tint),
 		## trees start where the flat range ends so they never block a firing lane.
 		## trees start where the flat range ends so they never stand in a firing lane.
 		Band.new(["tree_pine_a", "tree_pine_b", "tree_a", "tree_b", "tree_c"],
 			tree_count, 98.0, 210.0, 0.9, 1.8, 0.55, 0.35),
 		## short sparse tufts on the range itself. the grid is the ruler, it has to stay legible.
 		Band.new(["grass_a", "grass_b", "grass_c", "grass_d"],
-			range_grass_count, clear_radius, 98.0, 0.7, 1.2, 1.0, 0.02),
+			range_grass_count, clear_radius, 98.0, 0.7, 1.2, 1.0, 0.02, grass_tint),
 		## and proper meadow past the edge, where nothing is being measured.
 		Band.new(["grass_a", "grass_b", "grass_c", "grass_d"],
-			grass_count, 96.0, 210.0, 1.2, 2.5, 1.0, 0.02),
+			grass_count, 96.0, 210.0, 1.2, 2.5, 1.0, 0.02, grass_tint),
 		Band.new(["fern_a", "fern_b"], fern_count, 92.0, 210.0, 1.0, 2.0, 0.9, 0.04),
 		Band.new(["stone_a", "stone_b"], rock_count, 90.0, 210.0, 0.7, 2.4, 0.8, 0.2),
 		Band.new(["log_a", "stump_a"], debris_count, 100.0, 210.0, 0.9, 1.6, 0.65, 0.12),
@@ -99,7 +113,7 @@ func build() -> void:
 		var per_species: int = maxi(1, band.count / band.scenes.size())
 		for source in band.scenes:
 			var placements := _place(band, per_species)
-			_emit(source, placements)
+			_emit(source, placements, band.tint)
 			if is_tree and tree_collision:
 				for t in placements:
 					trunks.append(t.origin)
@@ -125,8 +139,9 @@ func _find_hills() -> HillRing:
 	return null
 
 
+## the MESH surface height, not the smooth function, or props float over every bulge.
 func _ground(x: float, z: float) -> float:
-	return _hills.height_at(x, z) if _hills != null else 0.0
+	return _hills.surface_height_at(x, z) if _hills != null else 0.0
 
 
 ## rejects a point that is too close to the middle, or on a slope too steep to stand a tree on.
@@ -166,7 +181,7 @@ func _slope(x: float, z: float) -> float:
 
 
 ## one MultiMeshInstance3D per surface of the source model, all sharing the same instance transforms.
-func _emit(source: String, placements: Array[Transform3D]) -> void:
+func _emit(source: String, placements: Array[Transform3D], tint := Color.WHITE) -> void:
 	if placements.is_empty():
 		return
 	var packed := load(NATURE % source) as PackedScene
@@ -182,12 +197,19 @@ func _emit(source: String, placements: Array[Transform3D]) -> void:
 		var part: Array = parts[index]
 		var mesh: Mesh = part[0]
 		var local: Transform3D = part[1]
+		## a tint only works on a single surface model, where one material override cannot lose a texture.
+		var tinted := tint != Color.WHITE and mesh.get_surface_count() == 1
+
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.use_colors = tinted
 		mm.mesh = mesh
 		mm.instance_count = placements.size()
 		for i in placements.size():
 			mm.set_instance_transform(i, placements[i] * local)
+			if tinted:
+				var jitter := _rng.randf_range(-tint_variation, tint_variation)
+				mm.set_instance_color(i, Color(tint.r + jitter, tint.g + jitter, tint.b + jitter))
 
 		var node := MultiMeshInstance3D.new()
 		node.name = "%s_%d" % [source, index]
@@ -195,6 +217,8 @@ func _emit(source: String, placements: Array[Transform3D]) -> void:
 		## a multimesh assembled in code reports an EMPTY aabb, so godot culls every instance and
 		## nothing draws at all. the real bounds have to be handed over explicitly.
 		node.custom_aabb = _bounds_of(mesh, local, placements)
+		if tinted:
+			node.material_override = _tinting_material(mesh)
 		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 		add_child(node)
 		if Engine.is_editor_hint():
@@ -231,6 +255,15 @@ func _collect_meshes(root: Node3D) -> Array:
 	for part in found:
 		part[1] = rebase * part[1]
 	return found
+
+
+## the model's own material, copied and told to multiply by the instance colour.
+## overriding with a fresh material instead would throw the grass texture away.
+func _tinting_material(mesh: Mesh) -> Material:
+	var source := mesh.surface_get_material(0) as StandardMaterial3D
+	var mat: StandardMaterial3D = source.duplicate() if source != null else StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	return mat
 
 
 func _bounds_of(mesh: Mesh, local: Transform3D, placements: Array[Transform3D]) -> AABB:

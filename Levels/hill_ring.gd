@@ -26,8 +26,7 @@ extends Node3D
 @export var detail_amount := 1.8
 
 @export_group("Look")
-@export var low_color := Color(0.24, 0.33, 0.18)
-@export var high_color := Color(0.40, 0.42, 0.28)
+@export var grass_shader: Shader = preload("res://Shaders/terrain_grass.gdshader")
 
 @export_group("Build")
 ## flip this in the editor to rebuild after changing anything above.
@@ -99,10 +98,6 @@ func build() -> void:
 			var c := Vector3(x1, height_at(x1, z1), z1)
 			var d := Vector3(x0, height_at(x0, z1), z1)
 
-			## a fully flat quad sits over the gridded floor, which already draws that ground.
-			if is_zero_approx(a.y) and is_zero_approx(b.y) and is_zero_approx(c.y) and is_zero_approx(d.y):
-				continue
-
 			_add_tri(surface, a, b, c)
 			_add_tri(surface, a, c, d)
 			faces.append_array([a, b, c, a, c, d])
@@ -137,18 +132,39 @@ func _attach(node: Node) -> void:
 
 func _add_tri(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
 	for v in [a, b, c]:
-		surface.set_color(low_color.lerp(high_color, clampf(v.y / maxf(height, 0.001), 0.0, 1.0)))
 		surface.add_vertex(v)
 
 
-func _make_material() -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	## the colours above are written the way a colour picker shows them, which is gamma encoded.
-	## without this godot reads them as linear and the hills come out about a third too pale.
-	if "vertex_color_is_srgb" in mat:
-		mat.vertex_color_is_srgb = true
-	mat.albedo_color = Color.WHITE
-	mat.roughness = 1.0
-	mat.specular = 0.05
+func _make_material() -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = grass_shader
 	return mat
+
+
+## the height of the MESH surface, which is not the same as height_at on a curved slope.
+## the mesh is flat triangles between grid corners, so a prop placed with the smooth function
+## floats above the ground wherever the surface bulges, and sinks where it dips.
+func surface_height_at(x: float, z: float) -> float:
+	var step := extent / float(resolution)
+	var half := extent * 0.5
+	var fx := (x + half) / step
+	var fz := (z + half) / step
+	var ix := clampi(int(floor(fx)), 0, resolution - 1)
+	var iz := clampi(int(floor(fz)), 0, resolution - 1)
+	var u := fx - float(ix)
+	var v := fz - float(iz)
+
+	var x0 := -half + float(ix) * step
+	var z0 := -half + float(iz) * step
+	var x1 := x0 + step
+	var z1 := z0 + step
+
+	var ha := height_at(x0, z0)
+	var hb := height_at(x1, z0)
+	var hc := height_at(x1, z1)
+	var hd := height_at(x0, z1)
+
+	## the quad is split a-b-c and a-c-d, so which triangle a point lands in decides the plane.
+	if u >= v:
+		return ha + (hb - ha) * u + (hc - hb) * v
+	return ha + (hc - hd) * u + (hd - ha) * v

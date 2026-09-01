@@ -19,6 +19,9 @@ height = 1.8
 radius = 0.28
 
 [node name="Player" type="CharacterBody3D" unique_id=30225432]
+floor_constant_speed = true
+floor_snap_length = 0.4
+floor_max_angle = 0.9
 collision_layer = 2
 script = ExtResource("1_q3lat")
 movement = ExtResource("3_move")

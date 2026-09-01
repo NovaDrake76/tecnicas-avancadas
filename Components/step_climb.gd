@@ -21,7 +21,13 @@ static func try_step(body: CharacterBody3D, wish: Vector3, samples := 8) -> bool
 
 	var dir := flat.normalized()
 	var here := body.global_transform
-	if not body.test_move(here, dir * LOOK_AHEAD):
+	var ahead := KinematicCollision3D.new()
+	if not body.test_move(here, dir * LOOK_AHEAD, ahead):
+		return false
+
+	## a walkable slope is NOT a step. lifting onto a ramp the body could simply walk up is what
+	## makes a hillside feel like a road full of potholes, because it fires again every tick.
+	if ahead.get_normal().angle_to(Vector3.UP) <= body.floor_max_angle:
 		return false
 
 	for i in samples:
