@@ -22,6 +22,9 @@ shader_parameter/minor_spacing = 1.0
 shader_parameter/major_spacing = 10.0
 shader_parameter/minor_fade_distance = 70.0
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_jpqib"]
+size = Vector3(0.5, 100, 200)
+
 [node name="Level01" type="Node3D" unique_id=1200984448]
 
 [node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=2027949597]
@@ -51,8 +54,24 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.586499, 0.00090217753, 26
 [node name="Kiwi3" parent="StaticBody3D" unique_id=1019559954 instance=ExtResource("3_er0or")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.902871, 0.00090217753, 26.581268)
 
+[node name="InvisibleWall" type="CollisionShape3D" parent="StaticBody3D" unique_id=1055804114]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100, 0.5, 0)
+shape = SubResource("BoxShape3D_jpqib")
+
+[node name="InvisibleWall2" type="CollisionShape3D" parent="StaticBody3D" unique_id=330751774]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100, 0.5, 0)
+shape = SubResource("BoxShape3D_jpqib")
+
+[node name="InvisibleWall3" type="CollisionShape3D" parent="StaticBody3D" unique_id=872450630]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0.5, 100)
+shape = SubResource("BoxShape3D_jpqib")
+
+[node name="InvisibleWall4" type="CollisionShape3D" parent="StaticBody3D" unique_id=1865952853]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0.5, -100)
+shape = SubResource("BoxShape3D_jpqib")
+
 [node name="PlayerSpawn" type="Marker3D" parent="." unique_id=1374215810 groups=["player_spawn"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6317444, 2.3296192, 136.36572)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.632, 2.33, 90)
 
 [node name="HillRing" type="Node3D" parent="." unique_id=848698716]
 script = ExtResource("90_hills")
