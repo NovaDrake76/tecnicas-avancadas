@@ -115,11 +115,14 @@ func _weapon_signals() -> Array:
 	]
 
 
-func _on_level_started(index: int, name: String) -> void:
+## no level title on the way in: the board already named the mission and showed its picture, so the
+## banner was telling the player something they had just read. the message line is cleared rather than
+## left alone, or the safe house hint could still be fading when the level starts.
+func _on_level_started(_index: int, _name: String) -> void:
 	report_card.hide_card()
 	_on_detections_changed(0)
 	alert_ring.clear()
-	show_message("Level %d  %s" % [index + 1, name])
+	_clear_message()
 
 
 func _on_armory_entered(next_index: int, name: String) -> void:
@@ -305,6 +308,14 @@ func flash_ammo() -> void:
 
 func _on_magazine_rejected(_offered: Magazine, message: String) -> void:
 	show_message(message)
+
+
+## drops whatever is on the message line right now, mid fade included.
+func _clear_message() -> void:
+	if _message_tween != null and _message_tween.is_valid():
+		_message_tween.kill()
+	message_label.text = ""
+	message_label.modulate.a = 1.0
 
 
 func show_message(text: String) -> void:
