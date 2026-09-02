@@ -125,13 +125,15 @@ func _on_level_started(_index: int, _name: String) -> void:
 	_clear_message()
 
 
-func _on_armory_entered(next_index: int, name: String) -> void:
+## nothing is announced here either. the safe house says what it is by what is in it: a bench, a board
+## and a range, each with its own prompt when you look at it.
+func _on_armory_entered(_next_index: int, _name: String) -> void:
 	report_card.hide_card()
 	timer_label.text = ""
 	stealth_label.text = ""
 	alert_ring.clear()
 	objective_label.text = "ARMORY"
-	show_message("Bench: your kit.   Board: pick a mission.   Range: test it.")
+	_clear_message()
 
 
 func _on_targets_changed(_down: int, _total: int) -> void:
