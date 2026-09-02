@@ -62,6 +62,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.841454, 1.9073486e-06, 20
 
 [node name="MagazinePickup2" parent="StaticBody3D" unique_id=1378037850 instance=ExtResource("2_1jt1u")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.895088, 1.9073486e-06, 20.827642)
+quantity = 3
 
 [node name="Kiwi" parent="StaticBody3D" unique_id=756847431 instance=ExtResource("3_er0or")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.586499, 0.00090217753, 55.495514)
@@ -176,6 +177,7 @@ model = ExtResource("m_toolbox")
 
 [node name="ShellsPickup" parent="StaticBody3D" instance=ExtResource("2_1jt1u")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 0, 33.0)
+quantity = 3
 magazine = ExtResource("mg_shot")
 
 [node name="Pickup1911" parent="StaticBody3D" instance=ExtResource("2_1jt1u")]

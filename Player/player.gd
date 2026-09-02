@@ -43,7 +43,10 @@ func _ready() -> void:
 	Settings.changed.connect(_apply_settings)
 	if movement == null:
 		movement = MovementConfig.new()
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	## capturing an unfocused window warps the real cursor and drags focus over, so the mouse is taken
+	## only once the window has it. a launch that lands unfocused captures on the first click or focus.
+	if DisplayServer.window_is_focused():
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 	## a unique capsule, otherwise resizing for crouch mutates the shared sub resource.
 	_col.shape = _col.shape.duplicate()
@@ -56,7 +59,15 @@ func _ready() -> void:
 	_sm.setup(self)
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN and not get_tree().paused:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED 			and DisplayServer.window_is_focused():
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var motion := event as InputEventMouseMotion
 		## aiming narrows the fov, so the look slows by the same ratio or fine aim is impossible.

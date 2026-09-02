@@ -39,7 +39,9 @@ func _process(delta: float) -> void:
 	if not _ready_ok:
 		return
 
-	var want := Input.is_action_pressed("aim") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	## the pause menu stops this node, so the action alone decides. tying it to the captured mouse
+	## made aiming impossible in an unfocused window, which is where the screenshots are taken.
+	var want := Input.is_action_pressed("aim")
 	if want != _aiming:
 		_aiming = want
 		aim_changed.emit(_aiming)

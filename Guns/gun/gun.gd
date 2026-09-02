@@ -9,9 +9,13 @@ signal fired(speed: float, mass_kg: float)
 signal fire_failed(reason: FireBlock, message: String)
 signal magazine_rejected(offered: Magazine, message: String)
 signal mode_refused(message: String)
+signal reload_started(duration: float)
+signal reload_finished(mag: Magazine)
+signal reload_cancelled
+signal reload_failed(message: String)
 
 enum FireMode { SEMI, AUTO }
-enum FireBlock { NONE, NO_MAGAZINE, EMPTY, COOLDOWN }
+enum FireBlock { NONE, NO_MAGAZINE, EMPTY, COOLDOWN, RELOADING }
 ## how the weapon cycles. the cadence formula is the same for all three, rpm over sixty n, the
 ## brief's own. an aeg has a real motor and gearbox; for a gas or pump action rpm is the cyclic rate
 ## the action can manage and n is one. that is the documented conversion the brief asks for.
@@ -74,6 +78,11 @@ const TRAIL_COLORS := [
 @export var muzzle_fx_scale := 1.0
 @export var muzzle_fx_intensity := 0.4
 
+@export_group("Reload")
+## the weapon is out of frame for this long, then the fullest spare of its type goes in and the old
+## magazine is gone, rounds and all. the brief allows the old one to simply be replaced.
+@export var reload_time := 2.2
+
 @export_group("Sound")
 ## the pump rack or the slide coming back, a moment after the shot. optional.
 @export var cycle_delay := 0.25
@@ -90,6 +99,8 @@ const TRAIL_COLORS := [
 var _shot := 0
 var _clock := 0.0
 var _next_shot_at := 0.0
+var _reload_until := -1.0
+var _reload_began := 0.0
 
 
 func _ready() -> void:
@@ -195,6 +206,8 @@ func block_message(reason: FireBlock) -> String:
 			return "Magazine empty"
 		FireBlock.COOLDOWN:
 			return "Cycling"
+		FireBlock.RELOADING:
+			return "Reloading"
 	return ""
 
 
@@ -207,11 +220,17 @@ func emit_state() -> void:
 
 func _physics_process(delta: float) -> void:
 	_clock += delta
-	if fire_mode == FireMode.AUTO and is_ready() and Input.is_action_pressed("fire"):
+	if is_reloading() and _clock >= _reload_until:
+		_finish_reload()
+	if fire_mode == FireMode.AUTO and is_ready() and not is_reloading() and Input.is_action_pressed("fire"):
 		try_fire()
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("reload"):
+		start_reload()
+		return
+
 	if event.is_action_pressed("toggle_fire_mode"):
 		toggle_fire_mode()
 		return
@@ -269,6 +288,10 @@ func toggle_fire_mode() -> void:
 ## one unit of ammunition per pull, exactly, and only if the shot happens. how many bbs that unit
 ## lets out is the weapon's business, the magazine only counts units.
 func try_fire() -> bool:
+	if is_reloading():
+		_reject(FireBlock.RELOADING)
+		return false
+
 	if not is_ready():
 		_reject(FireBlock.COOLDOWN)
 		return false
@@ -288,6 +311,68 @@ func try_fire() -> bool:
 		get_tree().create_timer(cycle_delay).timeout.connect(cycle_sfx.play_one)
 	ammo_changed.emit(magazine.count, magazine.capacity)
 	return true
+
+
+func is_reloading() -> bool:
+	return _reload_until >= 0.0
+
+
+## 0 as the weapon goes down, 1 as the fresh magazine seats.
+func reload_fraction() -> float:
+	if not is_reloading():
+		return 0.0
+	var span := maxf(_reload_until - _reload_began, 0.001)
+	return clampf((_clock - _reload_began) / span, 0.0, 1.0)
+
+
+func _pouch() -> MagazinePouch:
+	return get_tree().get_first_node_in_group("pouch") as MagazinePouch
+
+
+## only starts if there is a spare to put in. asking first is what keeps a failed reload free: the
+## weapon never leaves the frame for nothing.
+func start_reload() -> bool:
+	if is_reloading():
+		return false
+	var pouch := _pouch()
+	if pouch == null or pouch.count(accepted_mag) == 0:
+		var message := "No spare %s magazines" % Ordnance.type_name(accepted_mag)
+		reload_failed.emit(message)
+		if log_shots:
+			print("Reload refused: %s" % message)
+		return false
+	_reload_began = _clock
+	_reload_until = _clock + reload_time
+	reload_started.emit(reload_time)
+	if log_shots:
+		print("Reloading %s, %.1f s" % [weapon_model, reload_time])
+	return true
+
+
+## switching weapons mid reload. nothing changed hands, the half magazine is still in.
+func cancel_reload() -> void:
+	if not is_reloading():
+		return
+	_reload_until = -1.0
+	reload_cancelled.emit()
+
+
+func _finish_reload() -> void:
+	_reload_until = -1.0
+	var pouch := _pouch()
+	var fresh: Magazine = pouch.take(accepted_mag) if pouch != null else null
+	if fresh == null:
+		reload_cancelled.emit()
+		return
+	if log_shots and magazine != null and magazine.count > 0:
+		print("Discarded %s with %d left" % [magazine.type_label(), magazine.count])
+	magazine = fresh
+	mag_sfx.play_one()
+	reload_finished.emit(magazine)
+	magazine_changed.emit(magazine)
+	ammo_changed.emit(magazine.count, magazine.capacity)
+	if log_shots:
+		print("Loaded: %s" % magazine.describe())
 
 
 ## clears the cadence gate, for a harness that needs to fire twice in a row.

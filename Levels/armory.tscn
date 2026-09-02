@@ -1,0 +1,139 @@
+[gd_scene load_steps=19 format=3]
+
+[ext_resource type="Script" path="res://Levels/armory_room.gd" id="1_room"]
+[ext_resource type="Shader" path="res://Shaders/grid_floor.gdshader" id="2_grid"]
+[ext_resource type="Script" path="res://Components/interactable.gd" id="3_inter"]
+[ext_resource type="Script" path="res://Levels/range_target.gd" id="4_target"]
+[ext_resource type="Script" path="res://Props/prop.gd" id="5_prop"]
+[ext_resource type="Script" path="res://Levels/mission_board_3d.gd" id="6_board"]
+[ext_resource type="PackedScene" path="res://Models/Props/wall_hr_1.glb" id="m_wall"]
+[ext_resource type="PackedScene" path="res://Models/Props/toolbox_mx_1.glb" id="m_toolbox"]
+[ext_resource type="PackedScene" path="res://Models/Props/supply_crate_1.glb" id="m_supply"]
+[ext_resource type="PackedScene" path="res://Models/Props/wooden_crate_1.glb" id="m_crate1"]
+[ext_resource type="PackedScene" path="res://Models/Props/barricade_b_4.glb" id="m_bar"]
+[ext_resource type="PackedScene" path="res://Models/Props/shipping_container_mx_1.glb" id="m_container"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
+size = Vector3(60, 1, 90)
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(60, 1, 90)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_floor"]
+shader = ExtResource("2_grid")
+shader_parameter/base_color = Color(0.24, 0.25, 0.23, 1)
+shader_parameter/minor_color = Color(0.3, 0.32, 0.3, 1)
+shader_parameter/major_color = Color(0.48, 0.52, 0.48, 1)
+shader_parameter/minor_spacing = 1.0
+shader_parameter/major_spacing = 5.0
+shader_parameter/minor_fade_distance = 60.0
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bench"]
+size = Vector3(1.6, 0.9, 0.7)
+
+[sub_resource type="BoxMesh" id="BoxMesh_bench"]
+size = Vector3(1.6, 0.9, 0.7)
+
+[sub_resource type="StandardMaterial3D" id="Material_bench"]
+albedo_color = Color(0.3, 0.22, 0.14, 1)
+roughness = 0.9
+
+[node name="Armory" type="Node3D"]
+script = ExtResource("1_room")
+
+[node name="Floor" type="StaticBody3D" parent="."]
+
+[node name="Shape" type="CollisionShape3D" parent="Floor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -15)
+shape = SubResource("BoxShape3D_floor")
+
+[node name="Mesh" type="MeshInstance3D" parent="Floor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -15)
+mesh = SubResource("BoxMesh_floor")
+surface_material_override/0 = SubResource("ShaderMaterial_floor")
+
+[node name="PlayerSpawn" type="Marker3D" parent="." groups=["player_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 12)
+
+[node name="Bench" type="StaticBody3D" parent="."]
+transform = Transform3D(0.94, 0, 0.342, 0, 1, 0, -0.342, 0, 0.94, 3.2, 0, 9.5)
+
+[node name="Shape" type="CollisionShape3D" parent="Bench"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+shape = SubResource("BoxShape3D_bench")
+
+[node name="Mesh" type="MeshInstance3D" parent="Bench"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+mesh = SubResource("BoxMesh_bench")
+surface_material_override/0 = SubResource("Material_bench")
+
+[node name="Toolbox" type="StaticBody3D" parent="Bench"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0.9, 0)
+script = ExtResource("5_prop")
+model = ExtResource("m_toolbox")
+
+[node name="Interactable" type="Node" parent="Bench"]
+script = ExtResource("3_inter")
+prompt = "Open the bench"
+
+[node name="Targets" type="Node3D" parent="."]
+
+[node name="Target10" type="StaticBody3D" parent="Targets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 2)
+script = ExtResource("4_target")
+distance_label = "10 m"
+
+[node name="Target25" type="StaticBody3D" parent="Targets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -13)
+script = ExtResource("4_target")
+distance_label = "25 m"
+
+[node name="Target40" type="StaticBody3D" parent="Targets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -28)
+script = ExtResource("4_target")
+distance_label = "40 m"
+
+[node name="Target60" type="StaticBody3D" parent="Targets"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -48)
+script = ExtResource("4_target")
+distance_label = "60 m"
+
+[node name="Props" type="Node3D" parent="."]
+
+[node name="Backstop" type="StaticBody3D" parent="Props"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, -56)
+script = ExtResource("5_prop")
+model = ExtResource("m_container")
+
+[node name="Divider1" type="StaticBody3D" parent="Props"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -7, 0, 6)
+script = ExtResource("5_prop")
+model = ExtResource("m_bar")
+
+[node name="Divider2" type="StaticBody3D" parent="Props"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 7, 0, 6)
+script = ExtResource("5_prop")
+model = ExtResource("m_bar")
+
+[node name="Crate1" type="StaticBody3D" parent="Props"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 11)
+script = ExtResource("5_prop")
+model = ExtResource("m_supply")
+
+[node name="Crate2" type="StaticBody3D" parent="Props"]
+transform = Transform3D(0.866, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866, -5.5, 0, 12.2)
+script = ExtResource("5_prop")
+model = ExtResource("m_crate1")
+
+[node name="BoardWall" type="StaticBody3D" parent="Props"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -6.5, 0, 9)
+script = ExtResource("5_prop")
+model = ExtResource("m_wall")
+
+[node name="Board" type="StaticBody3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -6.2, 1.55, 9)
+script = ExtResource("6_board")
+
+[node name="Interactable" type="Node" parent="Board"]
+script = ExtResource("3_inter")
+prompt = "Open the mission board"

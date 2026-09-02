@@ -15,6 +15,7 @@ var _t := 0.0
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Fade.uncover()
 	_rest = _cam.position
 	_cam.look_at(focus)
 	## the body's forward is -Z, which is what look_at points, so this is all it takes.

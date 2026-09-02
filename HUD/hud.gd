@@ -7,6 +7,8 @@ const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 @onready var ammo_label: Label = %Ammo
 @onready var mass_label: Label = %Mass
 @onready var mode_label: Label = %Mode
+@onready var mode_icon: FireModeIcon = %ModeIcon
+@onready var mode_hint: Label = %ModeHint
 @onready var hopup_label: Label = %Hopup
 @onready var message_label: Label = %Message
 @onready var prompt_label: Label = %Prompt
@@ -17,12 +19,17 @@ const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 @onready var alert_ring: AlertRing = %AlertRing
 @onready var stealth_label: Label = %Stealth
 @onready var crosshair: Label = %Crosshair
+@onready var spare_label: Label = %Spare
+@onready var reload_ring: ReloadRing = %ReloadRing
 
 var _weapon: Gun
 var _interactor: Interactor
 var _message_tween: Tween
 var _flash_tween: Tween
 var _aim_tween: Tween
+var _spare_tween: Tween
+var _aiming := false
+var _pouch: MagazinePouch
 
 
 func _ready() -> void:
@@ -37,6 +44,7 @@ func _ready() -> void:
 	alert_ring.clear()
 
 	Run.level_started.connect(_on_level_started)
+	Run.armory_entered.connect(_on_armory_entered)
 	Run.targets_changed.connect(_on_targets_changed)
 	Run.time_changed.connect(_on_time_changed)
 	Run.level_cleared.connect(_on_level_cleared)
@@ -66,6 +74,13 @@ func _bind_weapon() -> void:
 	if scope != null:
 		scope.aim_changed.connect(_on_aim_changed)
 
+	_pouch = get_tree().get_first_node_in_group("pouch") as MagazinePouch
+	if _pouch != null:
+		_pouch.changed.connect(_update_spare)
+		_pouch.refused.connect(_on_pouch_refused)
+		_pouch.added.connect(_on_spare_added)
+	_update_spare()
+
 
 ## the hud listens to exactly one weapon at a time. switching moves every connection over,
 ## and the new one is asked to state itself so nothing shows stale.
@@ -82,6 +97,8 @@ func _follow_weapon(gun: Gun) -> void:
 		var sig: Signal = _weapon.get(pair[0])
 		sig.connect(pair[1])
 	_weapon.emit_state()
+	reload_ring.watch(_weapon)
+	_update_spare()
 	show_message(_weapon.weapon_model)
 
 
@@ -94,6 +111,10 @@ func _weapon_signals() -> Array:
 		["fire_failed", _on_fire_failed],
 		["magazine_rejected", _on_magazine_rejected],
 		["mode_refused", show_message],
+		["reload_started", _on_reload_started],
+		["reload_finished", _on_reload_finished],
+		["reload_cancelled", _on_reload_cancelled],
+		["reload_failed", _on_reload_failed],
 	]
 
 
@@ -103,6 +124,16 @@ func _on_level_started(index: int, name: String) -> void:
 	_on_detections_changed(0)
 	alert_ring.clear()
 	show_message("Level %d  %s" % [index + 1, name])
+
+
+func _on_armory_entered(next_index: int, name: String) -> void:
+	banner_label.text = ""
+	summary_label.text = ""
+	timer_label.text = ""
+	stealth_label.text = ""
+	alert_ring.clear()
+	objective_label.text = "ARMORY"
+	show_message("Bench: your kit.   Board: pick a mission.   Range: test it.")
 
 
 func _on_targets_changed(_down: int, _total: int) -> void:
@@ -125,13 +156,13 @@ func _on_detections_changed(count: int) -> void:
 
 
 func _on_level_cleared(_index: int, summary: Dictionary) -> void:
-	banner_label.text = "LEVEL CLEAR"
+	banner_label.text = "MISSION CLEAR"
 	summary_label.text = _summary_text(summary)
 	alert_ring.clear()
 
 
 func _on_run_finished(summary: Dictionary) -> void:
-	banner_label.text = "MISSION COMPLETE"
+	banner_label.text = "ALL MISSIONS COMPLETE"
 	summary_label.text = _summary_text(summary)
 	objective_label.text = ""
 	stealth_label.text = ""
@@ -145,10 +176,10 @@ func _summary_text(s: Dictionary) -> String:
 	return "targets %d / %d          shots %d          accuracy %d%%
 time %s   (par %s)          %s   +%d
 
-level %d          run %d" % [
+score %d          earned $%d          best $%d" % [
 		int(s["targets"]), int(s["total"]), int(s["shots"]), int(round(float(s["accuracy"]) * 100.0)),
 		_clock(float(s["time"])), _clock(float(s["par"])), stealth, int(s["stealth"]),
-		int(s["level_score"]), int(s["run_score"])]
+		int(s["level_score"]), int(s.get("gained", 0)), int(s.get("best", 0))]
 
 
 func _clock(seconds: float) -> String:
@@ -186,6 +217,10 @@ func _on_magazine_changed(mag: Magazine) -> void:
 
 func _on_fire_mode_changed(mode: Gun.FireMode) -> void:
 	mode_label.text = "AUTO" if mode == Gun.FireMode.AUTO else "SEMI"
+	var can_auto := _weapon != null and _weapon.allow_auto
+	mode_icon.set_state(mode, can_auto)
+	## the key hint fades on a weapon that has no second mode, so nobody hunts for a broken key
+	mode_hint.modulate.a = 1.0 if can_auto else 0.35
 
 
 func _on_hopup_changed(value: float, min_value: float, max_value: float) -> void:
@@ -207,10 +242,69 @@ func _on_fire_failed(reason: Gun.FireBlock, message: String) -> void:
 ## the iron sights are the aiming device once you are looking down them, and the crosshair would
 ## sit right on the front post. it goes out faster than the weapon comes up.
 func _on_aim_changed(aiming: bool) -> void:
+	_aiming = aiming
+	_show_crosshair(not aiming and not (reload_ring != null and reload_ring.is_showing()))
+
+
+func _show_crosshair(on: bool) -> void:
 	if _aim_tween != null and _aim_tween.is_valid():
 		_aim_tween.kill()
 	_aim_tween = create_tween()
-	_aim_tween.tween_property(crosshair, "modulate:a", 0.0 if aiming else 1.0, 0.07)
+	_aim_tween.tween_property(crosshair, "modulate:a", 1.0 if on else 0.0, 0.07)
+
+
+## the ring takes the crosshair's place for the duration, then hands it back unless the player is aiming.
+func _on_reload_started(_duration: float) -> void:
+	_show_crosshair(false)
+
+
+func _on_reload_finished(_mag: Magazine) -> void:
+	_show_crosshair(not _aiming)
+	_update_spare()
+
+
+func _on_reload_cancelled() -> void:
+	_show_crosshair(not _aiming)
+
+
+func _on_spare_added(mag: Magazine) -> void:
+	show_message("+1 %s magazine  %.2f g" % [mag.type_label(), mag.mass_grams()])
+
+
+## the count is already on screen and it says x0. pointing at it beats a sentence saying the same.
+func _on_reload_failed(_message: String) -> void:
+	blink_spare()
+	buzz()
+
+
+## a full pouch keeps its sentence: the limit is a number the player sees nowhere else.
+func _on_pouch_refused(message: String) -> void:
+	show_message(message)
+	blink_spare()
+	buzz()
+
+
+func blink_spare() -> void:
+	if _spare_tween != null and _spare_tween.is_valid():
+		_spare_tween.kill()
+	spare_label.modulate = ALERT_COLOR
+	_spare_tween = create_tween()
+	for _i in 3:
+		_spare_tween.tween_property(spare_label, "modulate", Color.WHITE, 0.12)
+		_spare_tween.tween_property(spare_label, "modulate", ALERT_COLOR, 0.12)
+	_spare_tween.tween_property(spare_label, "modulate", Color.WHITE, 0.12)
+
+
+func buzz() -> void:
+	UiSfx.play("error")
+
+
+## how many spares the weapon in hand can still reload from. the pouch owns the number.
+func _update_spare() -> void:
+	if _weapon == null or _pouch == null:
+		spare_label.text = ""
+		return
+	spare_label.text = _pouch.describe(_weapon.accepted_mag)
 
 
 func flash_ammo() -> void:

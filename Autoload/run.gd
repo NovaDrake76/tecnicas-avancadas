@@ -7,9 +7,11 @@ extends Node
 ## in a script with no class_name, an enum used as a PARAMETER type resolves to "run.gd.State"
 ## while the annotation resolves to "State", and every call fails to parse. the enum stays as
 ## named constants and anything typed takes a plain int, which is what a gdscript enum is.
-enum State { IDLE, PLAYING, CLEARED, FINISHED }
+enum State { IDLE, PLAYING, CLEARED, FINISHED, ARMORY }
 
 signal level_started(index: int, name: String)
+## the safe house is up. index and name are the level the player will deploy into next.
+signal armory_entered(next_index: int, name: String)
 signal targets_changed(down: int, total: int)
 signal time_changed(seconds: float)
 signal level_cleared(index: int, summary: Dictionary)
@@ -20,11 +22,22 @@ signal watcher_changed(kiwi: Node3D, value: float)
 signal detections_changed(count: int)
 
 ## a level is a scene path and the time you are expected to need. beating par is worth points.
+## a mission is a scene, a name, the time you are expected to need (beating it is worth points), a
+## brief for the board and a picture for it. the pictures are shots of the level itself.
 const LEVELS := [
-	{"path": "res://Levels/level_01.tscn", "name": "North Field", "par": 90.0},
-	{"path": "res://Levels/level_02.tscn", "name": "The Woods", "par": 110.0},
-	{"path": "res://Levels/level_03.tscn", "name": "The Summit", "par": 130.0},
+	{"path": "res://Levels/level_01.tscn", "name": "North Field", "par": 90.0,
+		"brief": "A supply camp on open ground: a container, barricades, three sentries who wander. Learn the cone, the crouch and the reload where the cover is generous.",
+		"image": "res://UI/missions/level_01.png"},
+	{"path": "res://Levels/level_02.tscn", "name": "The Woods", "par": 110.0,
+		"brief": "Five birds in the open with the trees for cover and nothing else. Longer shots, so the drop of your BB starts to matter.",
+		"image": "res://UI/missions/level_02.png"},
+	{"path": "res://Levels/level_03.tscn", "name": "The Summit", "par": 130.0,
+		"brief": "A walled compound with a watchtower and a sentry on it who sees the whole approach. Seven kiwis. Take the tower or never be where it looks.",
+		"image": "res://UI/missions/level_03.png"},
 ]
+
+## how many missions are open before anyone has cleared one. every clear opens one more.
+const OPEN_AT_START := 2
 
 const POINTS_PER_TARGET := 100
 const ACCURACY_BONUS := 250
@@ -43,6 +56,8 @@ var targets_total := 0
 var targets_down := 0
 var detections := 0
 var run_score := 0
+## mission index -> best score. a mission is complete when it is in here.
+var completed := {}
 
 var _level_score := 0
 var _gun_bound := false
@@ -72,6 +87,7 @@ func level_path() -> String:
 func start_run() -> void:
 	level_index = 0
 	run_score = 0
+	completed.clear()
 	## the gun lives on the player, and quitting to the menu freed that player with its gun.
 	_gun_bound = false
 	_set_state(State.IDLE)
@@ -127,6 +143,51 @@ func objective_text() -> String:
 	return "Take out the kiwis  %d / %d" % [targets_down, targets_total]
 
 
+## the unlock rule: the first OPEN_AT_START missions are open; each clear opens the next one. mission
+## i needs i + 1 - OPEN_AT_START clears, any missions, so a stuck player has somewhere else to go.
+func is_unlocked(index: int) -> bool:
+	return index >= 0 and index < LEVELS.size() and index < OPEN_AT_START + completed.size()
+
+
+func unlock_needs(index: int) -> int:
+	return maxi(0, index + 1 - OPEN_AT_START - completed.size())
+
+
+func best(index: int) -> int:
+	return int(completed.get(index, 0))
+
+
+func all_done() -> bool:
+	return completed.size() >= LEVELS.size()
+
+
+## the board picks a mission. locked ones are refused, replays are welcome.
+func select_level(index: int) -> bool:
+	if not is_unlocked(index):
+		return false
+	level_index = index
+	return true
+
+
+## books a clear: the best score is kept, and what the wallet earns is only the IMPROVEMENT over the
+## previous best, so replaying pays for getting better, never for grinding the same mission.
+func record_result(index: int, score: int) -> int:
+	var previous := best(index)
+	var gained := maxi(0, score - previous)
+	completed[index] = maxi(previous, score)
+	return gained
+
+
+## the armory is not a level: nothing is counted, the clock does not run, and no kiwi is bound.
+func enter_armory() -> void:
+	_set_state(State.ARMORY)
+	armory_entered.emit(level_index, String(current()["name"]))
+
+
+func in_armory() -> bool:
+	return state == State.ARMORY
+
+
 func advance() -> bool:
 	if level_index + 1 >= LEVELS.size():
 		_set_state(State.FINISHED)
@@ -150,7 +211,8 @@ func _bind_gun() -> void:
 		return
 	var rack := get_tree().get_first_node_in_group("weapon_rack") as WeaponRack
 	if rack != null:
-		for g in rack.weapons():
+		## every weapon on the rack, not just the carried ones: the loadout changes between levels.
+		for g in rack.all_weapons():
 			g.fired.connect(_on_shot_fired)
 		_gun_bound = true
 		return
@@ -211,9 +273,16 @@ func _on_target_down(kiwi) -> void:
 
 func _clear_level() -> void:
 	_level_score = _score_level()
-	run_score += _level_score
+	var was_done := all_done()
+	_last_gained = record_result(level_index, _level_score)
+	run_score += _last_gained
 	_set_state(State.CLEARED)
 	level_cleared.emit(level_index, _summary())
+	if all_done() and not was_done:
+		run_finished.emit(_summary())
+
+
+var _last_gained := 0
 
 
 ## every term is something the player did, so the number can be explained back to them.
@@ -253,7 +322,12 @@ func _summary() -> Dictionary:
 		"detections": detections,
 		"stealth": stealth_points(),
 		"level_score": _level_score,
+		"gained": _last_gained,
+		"best": best(level_index),
 		"run_score": run_score,
+		"cleared": completed.size(),
+		"missions": LEVELS.size(),
+		"all_done": all_done(),
 		"last": level_index + 1 >= LEVELS.size(),
 	}
 

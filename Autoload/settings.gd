@@ -45,6 +45,11 @@ func _apply_video() -> void:
 	Engine.max_fps = max_fps
 	if DisplayServer.get_name() == "headless":
 		return
+	## a game launched minimized stays minimized. forcing the saved fullscreen on it would drag a
+	## window nobody asked to see over whatever is on the screen.
+	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_MINIMIZED:
+		DisplayServer.window_set_vsync_mode(VSYNC_MODES[clampi(vsync, 0, 2)])
+		return
 	match window_mode:
 		WindowMode.FULLSCREEN:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)

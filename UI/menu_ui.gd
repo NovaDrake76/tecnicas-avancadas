@@ -22,7 +22,7 @@ func _ready() -> void:
 	_menu = MenuStyle.column(_root)
 	MenuStyle.title(_menu, TITLE)
 	MenuStyle.label(_menu, "Total Kiwi Death", MenuStyle.T_LABEL)
-	MenuStyle.spacer(_menu, 24)
+	MenuStyle.spacer(_menu, 40)
 	MenuStyle.button(_menu, "PLAY", start_game)
 	MenuStyle.button(_menu, "OPTIONS", func() -> void: _show(_options))
 	MenuStyle.button(_menu, "QUIT", func() -> void: get_tree().quit())
@@ -34,6 +34,7 @@ func _ready() -> void:
 
 
 func start_game() -> void:
+	await Fade.cover()
 	get_tree().change_scene_to_file(GAME_SCENE)
 
 

@@ -52,6 +52,14 @@ extends Node3D
 @export var air_pose_stiffness := 60.0
 @export var air_pose_damping := 10.0
 
+@export_group("Reload pose")
+## there is no reload animation. the weapon drops out of frame, turned in and muzzle down, and comes
+## back loaded. the springs make it a movement rather than a cut.
+@export var reload_pose_offset := Vector3(0.02, -0.36, 0.10)
+@export var reload_pose_tilt_deg := Vector3(-38.0, 30.0, 12.0)
+@export var reload_pose_stiffness := 42.0
+@export var reload_pose_damping := 9.5
+
 @export_group("Aim down sights")
 ## drag these two in the editor to say where the weapon sits. the gun's own transform is
 ## overwritten every frame, so these markers are the only thing that decides the pose.
@@ -123,6 +131,11 @@ var _run_rot := Vector3.ZERO
 var _run_rot_vel := Vector3.ZERO
 var _air_pos := Vector3.ZERO
 var _air_pos_vel := Vector3.ZERO
+var _reload_pos := Vector3.ZERO
+var _reload_pos_vel := Vector3.ZERO
+var _reload_rot := Vector3.ZERO
+var _reload_rot_vel := Vector3.ZERO
+var _reloading := false
 var _recoil_pos := Vector3.ZERO
 var _recoil_pos_vel := Vector3.ZERO
 var _recoil_rot := Vector3.ZERO
@@ -259,6 +272,9 @@ func _bind() -> void:
 		_gun = rack
 		for g in rack.weapons():
 			g.fired.connect(_on_fired)
+			g.reload_started.connect(func(_d: float) -> void: set_reloading(true))
+			g.reload_finished.connect(func(_m: Magazine) -> void: set_reloading(false))
+			g.reload_cancelled.connect(func() -> void: set_reloading(false))
 	else:
 		var gun := get_tree().get_first_node_in_group("weapon") as Gun
 		if gun != null:
@@ -267,6 +283,10 @@ func _bind() -> void:
 	if _gun != null:
 		_hip_position = _gun.position
 		_hip_pitch = _gun.rotation.x
+
+
+func set_reloading(on: bool) -> void:
+	_reloading = on
 
 
 ## driven by AimScope, 0 at the hip and 1 fully aimed.
@@ -298,6 +318,12 @@ func _process(delta: float) -> void:
 	var run_pos_target := Vector3.ZERO
 	var run_rot_target := Vector3.ZERO
 	var air_pos_target := Vector3.ZERO
+	var reload_pos_target := Vector3.ZERO
+	var reload_rot_target := Vector3.ZERO
+	if _reloading:
+		reload_pos_target = reload_pose_offset
+		reload_rot_target = Vector3(deg_to_rad(reload_pose_tilt_deg.x),
+			deg_to_rad(reload_pose_tilt_deg.y), deg_to_rad(reload_pose_tilt_deg.z))
 	var wall_target := Vector3.ZERO
 
 	if _player != null:
@@ -387,6 +413,12 @@ func _process(delta: float) -> void:
 	var ap := _spring3(_air_pos, _air_pos_vel, air_pos_target, air_pose_stiffness, air_pose_damping, delta)
 	_air_pos = ap[0]
 	_air_pos_vel = ap[1]
+	var rlp := _spring3(_reload_pos, _reload_pos_vel, reload_pos_target, reload_pose_stiffness, reload_pose_damping, delta)
+	_reload_pos = rlp[0]
+	_reload_pos_vel = rlp[1]
+	var rlr := _spring3(_reload_rot, _reload_rot_vel, reload_rot_target, reload_pose_stiffness, reload_pose_damping, delta)
+	_reload_rot = rlr[0]
+	_reload_rot_vel = rlr[1]
 	var kp := _spring3(_recoil_pos, _recoil_pos_vel, Vector3.ZERO, recoil_stiffness, recoil_damping, delta)
 	_recoil_pos = kp[0]
 	_recoil_pos_vel = kp[1]
@@ -403,8 +435,9 @@ func _process(delta: float) -> void:
 	var steady := 1.0 - _ads * ads_steadiness
 	var travel := lerpf(1.0, ads_recoil_travel, _ads)
 	var sway := Vector3(_idle_x.x + _look_x.x + _bob_x.x, _idle_y.x + _look_y.x + _bob_y.x, 0.0)
-	position = (sway + _run_pos + _air_pos + _wall_pos) * steady + _recoil_pos * travel
-	rotation = (Vector3(_rot_pitch.x, _rot_yaw.x, _rot_roll.x) + _run_rot) * steady + _recoil_rot
+	## the reload pose is outside the aiming damp on purpose: a reload takes the weapon down even aimed.
+	position = (sway + _run_pos + _air_pos + _wall_pos) * steady + _recoil_pos * travel + _reload_pos
+	rotation = (Vector3(_rot_pitch.x, _rot_yaw.x, _rot_roll.x) + _run_rot) * steady + _recoil_rot + _reload_rot
 
 	## the raise itself is on the gun, this node keeps carrying the procedural offsets on top.
 	if _gun != null:

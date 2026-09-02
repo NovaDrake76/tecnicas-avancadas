@@ -49,3 +49,11 @@ script = ExtResource("4_sfx")
 clip_paths = PackedStringArray("res://Sounds/pistol_mag_in_1.ogg")
 pitch_range = Vector2(0.95, 1.05)
 base_db = -6.0
+
+[node name="Anchors" type="Node3D" parent="."]
+
+[node name="Spring" type="Marker3D" parent="Anchors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, -0.09)
+
+[node name="Magazine" type="Marker3D" parent="Anchors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.035, 0.02)

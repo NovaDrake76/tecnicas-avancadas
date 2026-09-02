@@ -14,9 +14,9 @@ var _pages: Array[Control] = []
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_TOP_LEFT)
-	position = Vector2(84, 64)
-	custom_minimum_size = Vector2(560, 0)
-	add_theme_constant_override("separation", 12)
+	position = Vector2(140, 106)
+	custom_minimum_size = Vector2(920, 0)
+	add_theme_constant_override("separation", 20)
 
 	MenuStyle.title(self, "OPTIONS", MenuStyle.T_HEADING)
 
@@ -25,7 +25,7 @@ func _ready() -> void:
 	add_child(row)
 	for i in TABS.size():
 		var b := MenuStyle.button(row, TABS[i], _select_tab.bind(i))
-		b.custom_minimum_size = Vector2(150, 40)
+		b.custom_minimum_size = Vector2(250, 66)
 		_tab_buttons.append(b)
 
 	_pages = [_video(), _audio(), _controls()]
@@ -93,8 +93,8 @@ func _controls() -> Control:
 
 func _page() -> VBoxContainer:
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 12)
-	v.custom_minimum_size = Vector2(540, 0)
+	v.add_theme_constant_override("separation", 20)
+	v.custom_minimum_size = Vector2(900, 0)
 	return v
 
 
@@ -105,7 +105,7 @@ func _slider(parent: Control, text: String, value: float, lo: float, hi: float, 
 	s.max_value = hi
 	s.step = 0.05
 	s.value = value
-	s.custom_minimum_size = Vector2(300, 22)
+	s.custom_minimum_size = Vector2(500, 36)
 	s.value_changed.connect(on_change)
 	parent.add_child(s)
 	return s
@@ -117,7 +117,7 @@ func _dropdown(parent: Control, text: String, items: Array, selected: int, on_ch
 	for item in items:
 		ob.add_item(str(item))
 	ob.select(clampi(selected, 0, items.size() - 1))
-	ob.custom_minimum_size = Vector2(300, 32)
+	ob.custom_minimum_size = Vector2(500, 52)
 	ob.add_theme_font_size_override("font_size", MenuStyle.T_LABEL)
 	ob.item_selected.connect(on_change)
 	parent.add_child(ob)

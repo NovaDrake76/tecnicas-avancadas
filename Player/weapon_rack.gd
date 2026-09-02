@@ -15,6 +15,9 @@ signal weapon_changed(gun: Gun)
 			_apply()
 
 var _gun: Gun
+## indices into the children that the player actually carries. empty means all of them, which is what
+## the editor and a player with no armory see.
+var _carried: Array[int] = []
 
 
 func _ready() -> void:
@@ -25,12 +28,41 @@ func _ready() -> void:
 	_apply()
 
 
-func weapons() -> Array[Gun]:
+## every weapon node on the rack, carried or not. the armory configures all of them.
+func all_weapons() -> Array[Gun]:
 	var out: Array[Gun] = []
 	for child in get_children():
 		if child is Gun:
 			out.append(child)
 	return out
+
+
+## the weapons the player carries. everything that switches, binds or takes a magazine uses this.
+func weapons() -> Array[Gun]:
+	var all := all_weapons()
+	if _carried.is_empty() or Engine.is_editor_hint():
+		return all
+	var out: Array[Gun] = []
+	for i in _carried:
+		if i >= 0 and i < all.size():
+			out.append(all[i])
+	return out
+
+
+## the loadout: which of the rack's weapons are carried, in slot order. the first becomes active.
+func set_carried(indices: Array[int]) -> void:
+	_carried = indices.duplicate()
+	active = 0
+	if not is_inside_tree():
+		return
+	_apply()
+	if _gun != null:
+		weapon_changed.emit(_gun)
+		_gun.emit_state()
+
+
+func carried() -> Array[int]:
+	return _carried.duplicate()
 
 
 func current() -> Gun:
@@ -85,7 +117,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	else:
 		for i in 4:
 			if event.is_action_pressed("weapon_%d" % (i + 1)):
-				select(i)
+				if i < weapons().size():
+					select(i)
 				return
 
 
@@ -97,9 +130,10 @@ func _apply() -> void:
 	## a local, never the property: writing active here would re-enter its own setter forever.
 	var index := wrapi(active, 0, guns.size())
 	var editor := Engine.is_editor_hint()
-	for i in guns.size():
-		var g := guns[i]
-		var on := i == index
+	var chosen := guns[index]
+	## a weapon left at the armory is treated exactly like a holstered one, just never selectable.
+	for g in all_weapons():
+		var on := g == chosen
 		g.visible = on
 		if editor:
 			continue
@@ -113,7 +147,9 @@ func _apply() -> void:
 	if editor:
 		return
 	var was := _gun
-	_gun = guns[index]
+	_gun = chosen
+	if was != null and was != _gun and is_instance_valid(was):
+		was.cancel_reload()
 	if was != _gun:
 		weapon_changed.emit(_gun)
 		_gun.emit_state()

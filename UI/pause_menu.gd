@@ -25,11 +25,11 @@ func _ready() -> void:
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(dim)
-	MenuStyle.scrim(_root, 640.0, 0.55)
+	MenuStyle.scrim(_root, 1060.0, 0.55)
 
 	_menu = MenuStyle.column(_root)
 	MenuStyle.title(_menu, "PAUSED", MenuStyle.T_HEADING)
-	MenuStyle.spacer(_menu, 24)
+	MenuStyle.spacer(_menu, 40)
 	MenuStyle.button(_menu, "CONTINUE", close)
 	MenuStyle.button(_menu, "OPTIONS", func() -> void: _show(_options))
 	MenuStyle.button(_menu, "QUIT TO MENU", quit_to_menu)
@@ -66,6 +66,7 @@ func open() -> void:
 	_options.reset_view()
 	_show(_menu)
 	visible = true
+	UiSfx.play("switch")
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
@@ -74,9 +75,10 @@ func close() -> void:
 	if not visible:
 		return
 	visible = false
+	UiSfx.play("back")
 	get_tree().paused = false
 	## the cursor goes back only if there is a game to give it to.
-	if can_pause():
+	if can_pause() and DisplayServer.window_is_focused():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
@@ -85,6 +87,7 @@ func quit_to_menu() -> void:
 	visible = false
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	await Fade.cover()
 	get_tree().change_scene_to_file(MENU_SCENE)
 
 

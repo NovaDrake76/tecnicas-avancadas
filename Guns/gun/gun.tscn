@@ -55,3 +55,14 @@ script = ExtResource("6_sfx")
 clip_paths = PackedStringArray("res://Sounds/mag_in_1.ogg", "res://Sounds/mag_in_2.ogg", "res://Sounds/mag_in_3.ogg", "res://Sounds/mag_in_4.ogg")
 pitch_range = Vector2(0.95, 1.05)
 base_db = -6.0
+
+[node name="Anchors" type="Node3D" parent="."]
+
+[node name="Spring" type="Marker3D" parent="Anchors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0.02)
+
+[node name="Motor" type="Marker3D" parent="Anchors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.075, 0.075)
+
+[node name="Magazine" type="Marker3D" parent="Anchors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, -0.018)
