@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://HUD/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://HUD/alert_ring.gd" id="2_ring"]
 [ext_resource type="Script" path="res://HUD/reload_ring.gd" id="3_reload"]
 [ext_resource type="Script" path="res://HUD/fire_mode_icon.gd" id="4_mode"]
+[ext_resource type="Script" path="res://HUD/report_card.gd" id="5_report"]
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_hud")
@@ -233,38 +234,9 @@ theme_override_font_sizes/font_size = 27
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Banner" type="Label" parent="Root"]
+[node name="ReportCard" type="Control" parent="Root"]
 unique_name_in_owner = true
-anchor_left = 0.5
-anchor_top = 0.32
-anchor_right = 0.5
-anchor_bottom = 0.32
-offset_left = -667.0
-offset_top = -67.0
-offset_right = 667.0
-offset_bottom = 67.0
+anchor_right = 1.0
+anchor_bottom = 1.0
 mouse_filter = 2
-theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
-theme_override_constants/outline_size = 13
-theme_override_font_sizes/font_size = 87
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Summary" type="Label" parent="Root"]
-unique_name_in_owner = true
-anchor_left = 0.5
-anchor_top = 0.32
-anchor_right = 0.5
-anchor_bottom = 0.32
-offset_left = -667.0
-offset_top = 73.0
-offset_right = 667.0
-offset_bottom = 317.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.92, 0.96, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
-theme_override_constants/outline_size = 8
-theme_override_font_sizes/font_size = 37
-horizontal_alignment = 1
-vertical_alignment = 0
+script = ExtResource("5_report")

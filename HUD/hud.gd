@@ -14,8 +14,7 @@ const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 @onready var prompt_label: Label = %Prompt
 @onready var objective_label: Label = %Objective
 @onready var timer_label: Label = %Timer
-@onready var banner_label: Label = %Banner
-@onready var summary_label: Label = %Summary
+@onready var report_card: ReportCard = %ReportCard
 @onready var alert_ring: AlertRing = %AlertRing
 @onready var stealth_label: Label = %Stealth
 @onready var crosshair: Label = %Crosshair
@@ -36,8 +35,6 @@ func _ready() -> void:
 	add_to_group("hud")
 	message_label.text = ""
 	prompt_label.text = ""
-	banner_label.text = ""
-	summary_label.text = ""
 	objective_label.text = ""
 	timer_label.text = ""
 	stealth_label.text = ""
@@ -119,16 +116,14 @@ func _weapon_signals() -> Array:
 
 
 func _on_level_started(index: int, name: String) -> void:
-	banner_label.text = ""
-	summary_label.text = ""
+	report_card.hide_card()
 	_on_detections_changed(0)
 	alert_ring.clear()
 	show_message("Level %d  %s" % [index + 1, name])
 
 
 func _on_armory_entered(next_index: int, name: String) -> void:
-	banner_label.text = ""
-	summary_label.text = ""
+	report_card.hide_card()
 	timer_label.text = ""
 	stealth_label.text = ""
 	alert_ring.clear()
@@ -156,30 +151,23 @@ func _on_detections_changed(count: int) -> void:
 
 
 func _on_level_cleared(_index: int, summary: Dictionary) -> void:
-	banner_label.text = "MISSION CLEAR"
-	summary_label.text = _summary_text(summary)
+	_clear_field_readout()
+	report_card.play(summary, "MISSION CLEAR")
 	alert_ring.clear()
 
 
 func _on_run_finished(summary: Dictionary) -> void:
-	banner_label.text = "ALL MISSIONS COMPLETE"
-	summary_label.text = _summary_text(summary)
-	objective_label.text = ""
-	stealth_label.text = ""
+	_clear_field_readout()
+	report_card.play(summary, "ALL MISSIONS COMPLETE")
 	alert_ring.clear()
 
 
-## every line is something the player did, so the score can be explained back to them.
-func _summary_text(s: Dictionary) -> String:
-	var seen := int(s["detections"])
-	var stealth := "undetected" if seen == 0 else "spotted by %d" % seen
-	return "targets %d / %d          shots %d          accuracy %d%%
-time %s   (par %s)          %s   +%d
-
-score %d          earned $%d          best $%d" % [
-		int(s["targets"]), int(s["total"]), int(s["shots"]), int(round(float(s["accuracy"]) * 100.0)),
-		_clock(float(s["time"])), _clock(float(s["par"])), stealth, int(s["stealth"]),
-		int(s["level_score"]), int(s.get("gained", 0)), int(s.get("best", 0))]
+## the card carries the objective, the clock and the stealth line itself, so the field readout that
+## was showing them stands down rather than competing with it.
+func _clear_field_readout() -> void:
+	objective_label.text = ""
+	timer_label.text = ""
+	stealth_label.text = ""
 
 
 func _clock(seconds: float) -> String:

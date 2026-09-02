@@ -45,8 +45,23 @@ const TIME_BONUS_PER_SECOND := 4
 ## the stealth reward. a bb that misses is silent, so the only way to lose this is to be seen.
 const STEALTH_BONUS := 400
 
-## seconds the clear banner stays up before the next level loads.
-const CLEAR_PAUSE := 3.5
+## the letter rates the run; the points are the wage, and they are different questions. a mission with
+## seven kiwis pays more than one with three, so a grade built on the total would say the big mission
+## was played better. these three terms are fractions of what was achievable, so the same play earns
+## the same letter on any mission. COMPLETION is deliberately not a term: a mission only clears when
+## every kiwi is down, so it would be 1.0 on every run and rate nothing.
+const GRADE_STEALTH := 0.40
+const GRADE_ACCURACY := 0.30
+const GRADE_TIME := 0.30
+## full marks at half par, nothing left at double par, a straight line between.
+const GRADE_TIME_FULL := 0.5
+const GRADE_TIME_ZERO := 2.0
+## highest first. a clean, one-shot-each, unhurried run is a B; speed is what takes it to an A.
+const GRADES := [["A+", 0.95], ["A", 0.85], ["B", 0.70], ["C", 0.55], ["D", 0.35], ["F", 0.0]]
+
+## seconds the report card stays up before the safe house loads. the card plays for about two of
+## them, so this is the reading time plus the animation.
+const CLEAR_PAUSE := 5.5
 
 var state := State.IDLE
 var level_index := 0
@@ -58,6 +73,8 @@ var detections := 0
 var run_score := 0
 ## mission index -> best score. a mission is complete when it is in here.
 var completed := {}
+## mission index -> best grade ratio. its own record: a slower run that was cleaner keeps its letter.
+var best_grades := {}
 
 var _level_score := 0
 var _gun_bound := false
@@ -88,6 +105,7 @@ func start_run() -> void:
 	level_index = 0
 	run_score = 0
 	completed.clear()
+	best_grades.clear()
 	## the gun lives on the player, and quitting to the menu freed that player with its gun.
 	_gun_bound = false
 	_set_state(State.IDLE)
@@ -157,6 +175,45 @@ func best(index: int) -> int:
 	return int(completed.get(index, 0))
 
 
+func best_grade(index: int) -> float:
+	return float(best_grades.get(index, 0.0))
+
+
+## one shot per kiwi is perfect. a shotgun shell counts once whatever it lets out, which is the same
+## unit of ammunition the brief spends.
+func accuracy_ratio() -> float:
+	if targets_down <= 0:
+		return 0.0
+	return clampf(float(targets_down) / float(maxi(shots_fired, targets_down)), 0.0, 1.0)
+
+
+## the same squared curve the stealth bonus pays on, so the letter and the money agree about being seen.
+func stealth_ratio() -> float:
+	if targets_total <= 0:
+		return 0.0
+	var unseen := float(maxi(targets_total - detections, 0)) / float(targets_total)
+	return unseen * unseen
+
+
+func time_ratio() -> float:
+	var par := float(current()["par"])
+	if par <= 0.0:
+		return 0.0
+	return clampf((GRADE_TIME_ZERO * par - elapsed) / ((GRADE_TIME_ZERO - GRADE_TIME_FULL) * par), 0.0, 1.0)
+
+
+## 0 to 1. the letter is only this number read off the table.
+func grade_ratio() -> float:
+	return GRADE_STEALTH * stealth_ratio() + GRADE_ACCURACY * accuracy_ratio() + GRADE_TIME * time_ratio()
+
+
+func grade_letter(ratio: float) -> String:
+	for step in GRADES:
+		if ratio >= float(step[1]):
+			return String(step[0])
+	return String(GRADES[GRADES.size() - 1][0])
+
+
 func all_done() -> bool:
 	return completed.size() >= LEVELS.size()
 
@@ -171,10 +228,12 @@ func select_level(index: int) -> bool:
 
 ## books a clear: the best score is kept, and what the wallet earns is only the IMPROVEMENT over the
 ## previous best, so replaying pays for getting better, never for grinding the same mission.
-func record_result(index: int, score: int) -> int:
+## a negative ratio means "grade the run that is on the clock right now", which is every real call.
+func record_result(index: int, score: int, ratio := -1.0) -> int:
 	var previous := best(index)
 	var gained := maxi(0, score - previous)
 	completed[index] = maxi(previous, score)
+	best_grades[index] = maxf(best_grade(index), grade_ratio() if ratio < 0.0 else ratio)
 	return gained
 
 
@@ -321,6 +380,12 @@ func _summary() -> Dictionary:
 		"par": float(current()["par"]),
 		"detections": detections,
 		"stealth": stealth_points(),
+		"grade": grade_ratio(),
+		"letter": grade_letter(grade_ratio()),
+		"grade_stealth": stealth_ratio(),
+		"grade_accuracy": accuracy_ratio(),
+		"grade_time": time_ratio(),
+		"best_grade": best_grade(level_index),
 		"level_score": _level_score,
 		"gained": _last_gained,
 		"best": best(level_index),

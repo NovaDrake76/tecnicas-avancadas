@@ -105,6 +105,15 @@ static func column(parent: Control) -> VBoxContainer:
 ## from the same cloth. sizes are 1080p pixels.
 
 const OK := Color(0.55, 0.85, 0.6)
+## the letter carries its own colour wherever it is drawn: the report card, its ring, its term bars.
+const GRADE_COLORS := {
+	"A+": Color(1.0, 0.86, 0.35), "A": Color(1.0, 0.86, 0.35), "B": Color(0.55, 0.85, 0.6),
+	"C": Color(0.88, 0.92, 0.96), "D": Color(1.0, 0.62, 0.28), "F": Color(1.0, 0.35, 0.3),
+}
+
+
+static func grade_color(letter: String) -> Color:
+	return GRADE_COLORS.get(letter, BRIGHT)
 
 
 static func sheet_text(parent: Control, text: String, size: int, colour: Color, wrap := false) -> Label:

@@ -105,11 +105,9 @@ func open() -> void:
 		hud.visible = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	visible = true
-	## open on the newest mission you can play, the one you most likely came for
+	## always the first mission. opening on the newest unlocked one made the board look like it had
+	## skipped past the others, which is the opposite of what a list of missions is for.
 	_selected = 0
-	for i in Run.level_count():
-		if Run.is_unlocked(i):
-			_selected = i
 	_refresh()
 
 
@@ -191,7 +189,7 @@ func _refresh() -> void:
 			var need: int = Run.unlock_needs(i)
 			MenuStyle.sheet_text(col, "LOCKED   %d more clear%s" % [need, "" if need == 1 else "s"], 13, MenuStyle.ACCENT, true)
 		elif Run.best(i) > 0:
-			MenuStyle.sheet_text(col, "CLEARED   BEST $%s" % MenuStyle.thousands(Run.best(i)), 13, MenuStyle.OK, true)
+			MenuStyle.sheet_text(col, "CLEARED   %s   BEST $%s" % [Run.grade_letter(Run.best_grade(i)), MenuStyle.thousands(Run.best(i))], 13, MenuStyle.OK, true)
 		else:
 			MenuStyle.sheet_text(col, "OPEN", 13, MenuStyle.ACCENT, true)
 
@@ -209,6 +207,7 @@ func _refresh() -> void:
 	MenuStyle.sheet_gap(_right, 14)
 	MenuStyle.sheet_section(_right, "INTEL")
 	MenuStyle.sheet_kv(_right, "PAR TIME", "%d:%02d" % [int(float(sel["par"])) / 60, int(float(sel["par"])) % 60])
+	MenuStyle.sheet_kv(_right, "BEST GRADE", Run.grade_letter(Run.best_grade(_selected)) if Run.best(_selected) > 0 else "none yet")
 	MenuStyle.sheet_kv(_right, "BEST SCORE", "$%s" % MenuStyle.thousands(Run.best(_selected)) if Run.best(_selected) > 0 else "none yet")
 	MenuStyle.sheet_kv(_right, "REWARD", "the score, minus what this mission already paid")
 	if not open:
