@@ -117,10 +117,16 @@ func _ready() -> void:
 	_begin_idle()
 
 
+func _enable_vertex_colors() -> void:
+	enable_vertex_colors(model, vertex_colors_are_srgb)
+
+
 ## the model carries its colours as vertex data and ships no texture at all.
 ## StandardMaterial3D discards vertex colour unless this flag is on, which is why it rendered white.
-func _enable_vertex_colors() -> void:
-	for node in model.find_children("*", "MeshInstance3D", true, false):
+## static, because anything that shows this model raw needs it: the loading screen learned that the
+## hard way and rendered a white bird.
+static func enable_vertex_colors(root: Node, srgb := true) -> void:
+	for node in root.find_children("*", "MeshInstance3D", true, false):
 		var mi := node as MeshInstance3D
 		if mi.mesh == null:
 			continue
@@ -134,7 +140,7 @@ func _enable_vertex_colors() -> void:
 
 			mat.vertex_color_use_as_albedo = true
 			if "vertex_color_is_srgb" in mat:
-				mat.vertex_color_is_srgb = vertex_colors_are_srgb
+				mat.vertex_color_is_srgb = srgb
 			## the exporter also left a grey base factor that would tint every vertex colour down.
 			mat.albedo_color = Color.WHITE
 			mi.set_surface_override_material(i, mat)

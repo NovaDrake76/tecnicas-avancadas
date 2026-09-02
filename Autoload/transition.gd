@@ -12,11 +12,17 @@ signal uncovered
 @export var min_black := 0.55
 
 const KIWI_SCENE := "res://Models/kiwi.glb"
+## the bird runs ABOVE the word, not across it. both boxes hang off the bottom right corner, and the
+## kiwi's floor sits clear of the label's ceiling so they can never share a pixel.
+const KIWI_BOX := Rect2(-340.0, -320.0, 260.0, 200.0)
+const LABEL_BOX := Rect2(-340.0, -104.0, 260.0, 52.0)
 
 var _rect: ColorRect
 var _label: Label
-var _kiwi_view: Control
 var _tween: Tween
+var _kiwi: Node3D
+var _kiwi_view: Control
+var _clip := ""
 var _covered_at := 0.0
 var _busy := false
 
@@ -35,10 +41,9 @@ func _ready() -> void:
 	_label.text = "Loading..."
 	_label.add_theme_font_size_override("font_size", 30)
 	_label.add_theme_color_override("font_color", Color(0.85, 0.88, 0.84))
-	_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	_label.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_label.position = Vector2(-72.0 - 190.0, -64.0 - 40.0)
+	_corner(_label, LABEL_BOX)
+	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_rect.add_child(_label)
 
@@ -50,49 +55,59 @@ func _ready() -> void:
 
 ## a small viewport with the kiwi running on the spot, side on, no ai attached.
 func _build_kiwi() -> Control:
-	if DisplayServer.get_name() == "headless" or not ResourceLoader.exists(KIWI_SCENE):
+	if not ResourceLoader.exists(KIWI_SCENE):
 		return null
 	var scene := load(KIWI_SCENE) as PackedScene
 	if scene == null:
 		return null
 	var holder := Control.new()
-	holder.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	holder.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	holder.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	holder.size = Vector2(240, 180)
-	holder.position = Vector2(-60.0 - 240.0, -40.0 - 180.0)
+	_corner(holder, KIWI_BOX)
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var vp := SubViewport.new()
 	vp.own_world_3d = true
 	vp.transparent_bg = true
-	vp.size = Vector2i(240, 180)
+	vp.size = Vector2i(KIWI_BOX.size)
+	## the curtain starts hidden, and a viewport that only draws WHEN_VISIBLE never woke up again.
+	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	holder.add_child(vp)
 	var env := WorldEnvironment.new()
 	env.environment = Environment.new()
 	env.environment.background_mode = Environment.BG_COLOR
 	env.environment.background_color = Color(0, 0, 0, 0)
 	env.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.environment.ambient_light_color = Color(0.8, 0.8, 0.8)
-	env.environment.ambient_light_energy = 0.7
+	env.environment.ambient_light_color = Color(0.85, 0.85, 0.9)
+	env.environment.ambient_light_energy = 0.5
+	## without tonemapping the lit side clips straight to white and the vertex colours are lost again.
+	env.environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	vp.add_child(env)
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-40, 30, 0)
-	sun.light_energy = 1.4
+	sun.light_energy = 1.0
 	vp.add_child(sun)
 	var kiwi := scene.instantiate() as Node3D
 	vp.add_child(kiwi)
+	## the glb ships its colours as VERTEX data with the flag off, so raw it renders white.
+	Kiwi.enable_vertex_colors(kiwi)
+	## turned to run towards the word rather than away from it. the BIRD is turned, not the camera,
+	## so the sun keeps lighting the side we are looking at.
+	kiwi.rotation_degrees.y = 180.0
+	_kiwi = kiwi
 	var anim := kiwi.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if anim != null:
 		for name in anim.get_animation_list():
 			if String(name).to_lower().ends_with("run"):
 				anim.get_animation(name).loop_mode = Animation.LOOP_LINEAR
 				anim.play(name)
+				_clip = String(name)
 				break
 	var cam := Camera3D.new()
+	## side on from +x. the angle is set outright rather than with look_at, which needs the node in the
+	## tree and this whole subtree is built before it is added.
+	cam.position = Vector3(1.7, 0.30, 0.0)
+	cam.rotation_degrees = Vector3(0.0, 90.0, 0.0)
+	cam.fov = 34.0
 	vp.add_child(cam)
-	## the kiwi faces -z; from +x its nose points to screen right, running towards the label
-	cam.look_at_from_position(Vector3(2.4, 0.5, 0.0), Vector3(0.0, 0.42, 0.0), Vector3.UP)
-	cam.fov = 32.0
+	cam.make_current()
 	var rect := TextureRect.new()
 	rect.texture = vp.get_texture()
 	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -100,6 +115,35 @@ func _build_kiwi() -> Control:
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	holder.add_child(rect)
 	return holder
+
+
+## anchors a box to the bottom right corner. the offsets are negative, so the box hangs inward from
+## the corner and the numbers read as "this far from the right, this far up".
+func _corner(node: Control, box: Rect2) -> void:
+	node.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	node.offset_left = box.position.x
+	node.offset_top = box.position.y
+	node.offset_right = box.position.x + box.size.x
+	node.offset_bottom = box.position.y + box.size.y
+
+
+## what the loading screen built, for the probe: the running clip and whether the bird is coloured.
+func kiwi_clip() -> String:
+	return _clip
+
+
+func kiwi_is_coloured() -> bool:
+	if _kiwi == null:
+		return false
+	for node in _kiwi.find_children("*", "MeshInstance3D", true, false):
+		var mi := node as MeshInstance3D
+		if mi.mesh == null:
+			continue
+		for i in mi.mesh.get_surface_count():
+			var mat := mi.get_surface_override_material(i) as StandardMaterial3D
+			if mat == null or not mat.vertex_color_use_as_albedo:
+				return false
+	return true
 
 
 func is_covering() -> bool:
