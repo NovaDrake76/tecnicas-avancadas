@@ -21,7 +21,7 @@ func _ready() -> void:
 
 	_menu = MenuStyle.column(_root)
 	MenuStyle.title(_menu, TITLE)
-	MenuStyle.label(_menu, "Total Kiwi Death", MenuStyle.T_LABEL)
+	MenuStyle.label(_menu, "Ghost Kiwi Recon", MenuStyle.T_LABEL)
 	MenuStyle.spacer(_menu, 40)
 	MenuStyle.button(_menu, "PLAY", start_game)
 	MenuStyle.button(_menu, "OPTIONS", func() -> void: _show(_options))
