@@ -115,7 +115,12 @@ func sees_point(point: Vector3, max_distance: float) -> bool:
 ## so this is what decides whether an 0.85 m barricade at your side hides you. it does, crouched.
 static func sight_point(target: Node3D) -> Vector3:
 	var crouched: bool = target.has_method("is_crouching") and target.is_crouching()
-	return target.global_position + Vector3.UP * (0.55 if crouched else 1.2)
+	var at := target.global_position + Vector3.UP * (0.55 if crouched else 1.2)
+	## a lean moves the head, not the body, so the point tested moves with it. without this a
+	## player could see round a corner from inside cover and never be seen back.
+	if target.has_method("lean_offset"):
+		at += target.lean_offset() as Vector3
+	return at
 
 
 func has_line_to(point: Vector3) -> bool:

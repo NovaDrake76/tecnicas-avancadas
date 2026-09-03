@@ -18,6 +18,14 @@ const SPAWN_CLEARANCE := 0.15
 @export var crouch_eye := 0.95
 @export var crouch_lerp_speed := 12.0
 
+@export_group("Lean")
+## how far the head slides sideways, how far the view tips with it, and how fast it gets there.
+@export var lean_reach := 0.45
+@export var lean_roll_deg := 12.0
+@export var lean_speed := 7.0
+## how close the head is allowed to get to a wall it is leaning into.
+@export var lean_clearance := 0.28
+
 @export_group("Landing")
 @export var fall_velocity_threshold := -7.5
 
@@ -34,6 +42,8 @@ var _base_sensitivity := 0.0022
 var _crouching := false
 var _grounded := false
 var _peak_fall_vy := 0.0
+var _pitch := 0.0
+var _lean := 0.0
 
 
 func _ready() -> void:
@@ -81,9 +91,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		var sens := mouse_sensitivity * (_aim.sensitivity_mult() if _aim != null else 1.0)
 		rotate_y(-motion.relative.x * sens)
 		var pitch: float = motion.relative.y if invert_look else -motion.relative.y
-		head.rotate_x(pitch * sens)
 		var limit := deg_to_rad(pitch_limit_deg)
-		head.rotation.x = clampf(head.rotation.x, -limit, limit)
+		_pitch = clampf(_pitch + pitch * sens, -limit, limit)
+		_apply_head()
 
 
 func _physics_process(delta: float) -> void:
@@ -100,13 +110,18 @@ func _physics_process(delta: float) -> void:
 		_peak_fall_vy = 0.0
 
 	_update_crouch(delta)
+	_update_lean(delta)
 	_update_jump_buffer(delta)
 	_sm.physics_tick(delta)
 
 
 func wish_dir() -> Vector3:
-	var input2 := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-	var d := global_transform.basis * Vector3(input2.x, 0.0, input2.y)
+	var strafe := Input.get_axis("move_left", "move_right")
+	var forward := Input.get_axis("move_forward", "move_back")
+	## in lean mode A and D are the lean, so the peek happens in place instead of stepping out.
+	if Input.is_action_pressed("lean_mode"):
+		strafe = 0.0
+	var d := global_transform.basis * Vector3(strafe, 0.0, forward)
 	d.y = 0.0
 	return d.normalized()
 
@@ -130,6 +145,25 @@ func is_grounded() -> bool:
 
 func is_crouching() -> bool:
 	return _crouching
+
+
+## the one way in for anything that places the view instead of the mouse. writing head.rotation
+## from outside would be overwritten the moment a lean moved the head.
+func look_at_pitch(radians: float) -> void:
+	var limit := deg_to_rad(pitch_limit_deg)
+	_pitch = clampf(radians, -limit, limit)
+	_apply_head()
+
+
+## -1 fully left, +1 fully right, and every value between while the head is on its way.
+func lean_amount() -> float:
+	return _lean
+
+
+## where the head sits relative to the body, in world axes. the kiwis add this to the point
+## they test, so leaning out to see is also leaning out to be seen.
+func lean_offset() -> Vector3:
+	return global_transform.basis.x * head.position.x
 
 
 func is_running() -> bool:
@@ -212,6 +246,45 @@ func _update_crouch(delta: float) -> void:
 	(_col.shape as CapsuleShape3D).height = h
 	_col.position.y = h * 0.5
 	head.position.y = lerpf(stand_eye, crouch_eye, _crouch_t)
+
+
+## the body never moves: only the head slides out and the view tips with it, so the capsule
+## stays in cover while the eyes clear it. lean has no keys of its own -- ALT turns the two
+## strafe keys into it, so nothing had to be taken off the keyboard to make room, and the key
+## you already use to step left is the one that leans left. holding both is a lean of zero,
+## which is what get_axis already says.
+func _update_lean(delta: float) -> void:
+	var want := 0.0
+	if Input.is_action_pressed("lean_mode"):
+		want = Input.get_axis("move_left", "move_right")
+	if not is_zero_approx(want):
+		want = signf(want) * minf(absf(want), _lean_room(signf(want)))
+	if is_equal_approx(_lean, want):
+		return
+	_lean = move_toward(_lean, want, lean_speed * delta)
+	_apply_head()
+
+
+## how much of a full lean fits before the wall on that side. measured from where the head
+## would be with no lean at all: casting from the head as it stands would re-measure from a
+## position the last tick already moved, and the eye would creep into the wall a bit per tick.
+func _lean_room(dir: float) -> float:
+	var from := global_position + Vector3.UP * head.position.y
+	var to := from + global_transform.basis.x * dir * (lean_reach + lean_clearance)
+	var query := PhysicsRayQueryParameters3D.create(from, to, 1)
+	query.exclude = [get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return 1.0
+	var room := from.distance_to(hit["position"] as Vector3) - lean_clearance
+	return clampf(room / maxf(lean_reach, 0.01), 0.0, 1.0)
+
+
+## pitch and lean are written together, outright. rotate_x on a head the lean has already
+## rolled turns about a tilted axis, so the aim would drift sideways a little per mouse move.
+func _apply_head() -> void:
+	head.position.x = _lean * lean_reach
+	head.rotation = Vector3(_pitch, 0.0, -_lean * deg_to_rad(lean_roll_deg))
 
 
 ## a short forgiveness window so an early jump press still fires on landing.
