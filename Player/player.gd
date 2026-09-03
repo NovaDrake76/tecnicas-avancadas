@@ -59,13 +59,20 @@ func _ready() -> void:
 	_sm.setup(self)
 
 
+## the mouse is the player's only while nothing on screen owns it: not the pause menu (the tree is
+## paused) and not a bench or a board (they join "holds_mouse" while open). alt-tabbing back with the
+## bench up used to recapture the cursor over the sheet, which then had no pointer until escape.
+func may_capture() -> bool:
+	return not get_tree().paused and get_tree().get_first_node_in_group("holds_mouse") == null
+
+
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_APPLICATION_FOCUS_IN and not get_tree().paused:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN and may_capture():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED 			and DisplayServer.window_is_focused():
+	if event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED 			and DisplayServer.window_is_focused() and may_capture():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:

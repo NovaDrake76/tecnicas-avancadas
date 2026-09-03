@@ -11,6 +11,7 @@ signal deploy_pressed
 signal closed
 
 const WEAPON_VIEW := preload("res://UI/weapon_view.gd")
+const STAT_BARS := preload("res://UI/stat_bars.gd")
 const BG := Color(0.04, 0.042, 0.04)
 
 const KIND_NAMES := {
@@ -38,6 +39,9 @@ var _slot := 0
 var _part := "spring"
 var _part_cards := {}
 var _player: Node
+var _bars: Control
+## true while a purchase installs itself, so the till rings once and the install click stays quiet
+var _hush_install := false
 
 
 func _ready() -> void:
@@ -131,7 +135,9 @@ func _ready() -> void:
 	Armory.changed.connect(_refresh)
 	Armory.refused.connect(_say)
 	Armory.bought.connect(func(_p: Part) -> void: UiSfx.play("buy"))
-	Armory.part_installed.connect(func(_p: Part) -> void: UiSfx.play("install"))
+	Armory.part_installed.connect(func(_p: Part) -> void:
+		if not _hush_install:
+			UiSfx.play("install"))
 
 
 func _process(_delta: float) -> void:
@@ -163,6 +169,8 @@ func open() -> void:
 	if hud != null:
 		hud.visible = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	## the cursor is this screen's until it closes; the player will not take it back on a focus-in
+	add_to_group("holds_mouse")
 	visible = true
 	_page = Page.LOADOUT
 	_refresh()
@@ -173,6 +181,7 @@ func close(silent := false) -> void:
 		return
 	if not silent:
 		UiSfx.play("back")
+	remove_from_group("holds_mouse")
 	visible = false
 	var hud := get_tree().get_first_node_in_group("hud")
 	if hud != null:
@@ -363,11 +372,14 @@ func _build_platform_right(model: String) -> void:
 	_text(_right, model, 44, MenuStyle.BRIGHT)
 	_gap(_right, 10)
 	_section(_right, "PLATFORM")
-	_kv(_right, "MAGAZINE", "%s   %d" % [Ordnance.type_name(gun.accepted_mag).to_upper(), gun.ammo_capacity()])
+	_kv(_right, "MAGAZINE", "%s   %d   %.2f g" % [Ordnance.type_name(gun.accepted_mag).to_upper(), gun.ammo_capacity(), gun.equipped_mass() * 1000.0])
 	_kv(_right, "ENERGY", "%.2f J" % gun.muzzle_energy())
-	_kv(_right, "VELOCITY", "%.0f m/s   %.2f g" % [gun.muzzle_speed(gun.equipped_mass()), gun.equipped_mass() * 1000.0])
-	_kv(_right, "CADENCE", "%.1f BB/s" % gun.shots_per_second())
 	_kv(_right, "FIRE MODES", "SEMI / AUTO" if gun.allow_auto else "SEMI")
+	_gap(_right, 14)
+	_section(_right, "PERFORMANCE")
+	_bars = STAT_BARS.new()
+	_right.add_child(_bars)
+	_bars.set_current(_stats_for(gun, {}))
 	_gap(_right, 14)
 	_section(_right, "PARTS")
 	for key in _part_keys(model):
@@ -447,14 +459,14 @@ func _build_options_right(model: String) -> void:
 				_text(row, mag_part.title, 20, MenuStyle.BRIGHT, true)
 				_small(row, "Buy one more for $%s" % _thousands(mag_part.price), _buy.bind(mag_part.id), Armory.can_afford(mag_part.id))
 	_gap(_right, 18)
-	_section(_right, "ON THE BENCH")
-	_kv(_right, "ENERGY", "%.2f J" % gun.muzzle_energy())
-	_kv(_right, "VELOCITY", "%.0f m/s   %.2f g" % [gun.muzzle_speed(gun.equipped_mass()), gun.equipped_mass() * 1000.0])
-	_kv(_right, "CADENCE", "%.1f BB/s   every %.3f s" % [gun.shots_per_second(), gun.shot_interval()])
+	_section(_right, "PERFORMANCE")
+	_bars = STAT_BARS.new()
+	_right.add_child(_bars)
+	_bars.set_current(_stats_for(gun, {}))
 
 
 func _option(model: String, p: Part, title: String, detail: String, installed: bool) -> void:
-	var row := _row(_right)
+	var row := _row(_right, _hover_part.bind(model, p))
 	var col := VBoxContainer.new()
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	col.add_theme_constant_override("separation", 0)
@@ -470,7 +482,7 @@ func _option(model: String, p: Part, title: String, detail: String, installed: b
 
 
 func _bb_option(t: Ordnance.MagType, p: Part, detail: String, loaded: bool) -> void:
-	var row := _row(_right)
+	var row := _row(_right, _hover_part.bind(_selected_model(), p))
 	var col := VBoxContainer.new()
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	col.add_theme_constant_override("separation", 0)
@@ -543,8 +555,89 @@ func _cycle_slot(slot: int) -> void:
 	_say("Nothing else to carry. Buy a weapon in the arsenal.")
 
 
+## a bought part goes straight onto the weapon on the bench, a bought lot straight into its magazines,
+## a bought weapon straight into the slot being looked at. the tester bought a spring and then hunted
+## for it, which is what an INSTALL step is for and why it is gone.
 func _buy(id: String) -> void:
-	Armory.buy(id)
+	var p := Armory.part(id)
+	if p == null or not Armory.buy(id):
+		return
+	var model := _selected_model()
+	_hush_install = true
+	match p.kind:
+		Part.Kind.SPRING, Part.Kind.MOTOR:
+			if p.fits_weapon(model):
+				Armory.install(model, id)
+		Part.Kind.BB_LOT:
+			var t := _type_of(model)
+			if t >= 0:
+				Armory.choose_bb(t, id)
+		Part.Kind.WEAPON:
+			Armory.set_slot(_slot, p.weapon_model)
+	_hush_install = false
+
+
+## the same as clicking the price on a card, for the probe.
+func buy_here(id: String) -> void:
+	_buy(id)
+
+
+## ---------------------------------------------------------------- what a weapon does, as numbers
+
+## the weapon's figures with some of its parts swapped on paper: k and x for a spring, rpm for a motor,
+## mass for a bb lot. energy and velocity are the gun's own formulas; reach, impact and flight time are
+## the bb's own flight, so nothing here can say what the range would not.
+func _stats_for(gun: Gun, over: Dictionary) -> Dictionary:
+	var k := float(over.get("k", gun.spring_constant))
+	var x := float(over.get("x", gun.spring_compression))
+	var rpm := float(over.get("rpm", gun.motor_rpm))
+	var mass := float(over.get("mass", gun.equipped_mass()))
+	var energy := 0.5 * k * x * x / float(maxi(1, gun.pellets))
+	var v0 := sqrt(2.0 * energy / maxf(mass, 0.00001))
+	var flight := BB.flight(v0, mass, gun.hopup)
+	return {
+		"v0": v0,
+		"cadence": rpm / (60.0 * float(maxi(1, gun.rotations_per_shot))),
+		"reach": float(flight["reach"]),
+		"impact": float(flight["impact"]),
+		"time": float(flight["time"]),
+	}
+
+
+func _stats_with_part(gun: Gun, p: Part) -> Dictionary:
+	var over := {}
+	match p.kind:
+		Part.Kind.SPRING:
+			over = {"k": p.spring_k, "x": p.spring_x}
+		Part.Kind.MOTOR:
+			over = {"rpm": p.rpm}
+		Part.Kind.BB_LOT:
+			over = {"mass": p.bb_mass_kg}
+	return _stats_for(gun, over)
+
+
+func _hover_part(on: bool, model: String, p: Part) -> void:
+	if _bars == null or not is_instance_valid(_bars):
+		return
+	var gun := _gun_named(model)
+	if not on or gun == null:
+		_bars.set_preview({})
+		return
+	_bars.set_preview(_stats_with_part(gun, p))
+
+
+## the probe's hand on the mouse: previews a part by id on the weapon on the bench, "" to stop.
+func preview_part(id: String) -> void:
+	var p := Armory.part(id)
+	_hover_part(p != null, _selected_model(), p)
+
+
+func preview_stats() -> Dictionary:
+	return _bars.preview() if _bars != null else {}
+
+
+func current_stats() -> Dictionary:
+	return _bars.current() if _bars != null else {}
 
 
 func _install(model: String, id: String) -> void:
@@ -751,7 +844,8 @@ func _card(parent: Control, selected: bool, on_click: Callable) -> VBoxContainer
 	return col
 
 
-func _row(parent: Control) -> HBoxContainer:
+## on_hover, when given, is called with true as the mouse arrives and false as it leaves.
+func _row(parent: Control, on_hover := Callable()) -> HBoxContainer:
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0, 0, 0, 0)
@@ -764,6 +858,23 @@ func _row(parent: Control) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	panel.add_child(row)
+	if on_hover.is_valid():
+		panel.mouse_filter = Control.MOUSE_FILTER_STOP
+		var enter := func() -> void:
+			style.bg_color = Color(1, 1, 1, 0.03)
+			on_hover.call(true)
+		var leave := func() -> void:
+			style.bg_color = Color(0, 0, 0, 0)
+			on_hover.call(false)
+		panel.mouse_entered.connect(enter)
+		panel.mouse_exited.connect(leave)
+		## godot hands the hover to the topmost control under the mouse, so a BUTTON in the row takes it
+		## away from the row and the preview vanished exactly where the player was about to click. the
+		## buttons that land in the row report their hover too; leaving a button into the row re-enters it.
+		row.child_entered_tree.connect(func(c: Node) -> void:
+			if c is BaseButton:
+				c.mouse_entered.connect(enter)
+				c.mouse_exited.connect(leave))
 	return row
 
 

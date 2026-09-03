@@ -87,6 +87,51 @@ func _physics_process(_delta: float) -> void:
 		apply_central_force(lift_dir * lift_mag)
 
 
+## the same flight, on paper: drag, backspin lift and gravity integrated in the vertical plane, with the
+## constants and the lift formula this node uses in _physics_process. the bench asks this so the bars it
+## shows are the game's own physics and not a second opinion of it. returns metres, seconds and joules.
+## reach is how far the bb flies before it has dropped half a metre below the line of fire.
+static func flight(speed: float, mass_kg: float, backspin: float, at_distance := 30.0) -> Dictionary:
+	var area := PI * BB_RADIUS * BB_RADIUS
+	var dt := 1.0 / 240.0
+	var pos := Vector2.ZERO
+	var vel := Vector2(speed, 0.0)
+	var t := 0.0
+	var reach := -1.0
+	var at := {}
+	var m := maxf(mass_kg, 0.00001)
+	while t < 4.0:
+		var v := vel.length()
+		if v < 5.0:
+			break
+		var dir := vel / v
+		var drag := 0.5 * AIR_DENSITY * DRAG_COEFF * area * v * v
+		var lift := sqrt(v) * backspin
+		var accel := -dir * (drag / m) + Vector2(-dir.y, dir.x) * (lift / m) + Vector2(0.0, -9.81)
+		vel += accel * dt
+		var next := pos + vel * dt
+		if at.is_empty() and next.x >= at_distance:
+			var frac := (at_distance - pos.x) / maxf(next.x - pos.x, 0.000001)
+			var y := lerpf(pos.y, next.y, frac)
+			var vv := vel.length()
+			at = {"drop": -y, "time": t + dt * frac, "impact": 0.5 * m * vv * vv, "speed": vv}
+		pos = next
+		t += dt
+		if reach < 0.0 and pos.y < -0.5:
+			reach = pos.x
+	if reach < 0.0:
+		reach = pos.x
+	return {
+		"v0": speed,
+		"reach": reach,
+		"drop": float(at.get("drop", 99.0)),
+		"time": float(at.get("time", 9.0)),
+		"impact": float(at.get("impact", 0.0)),
+		"speed_at": float(at.get("speed", 0.0)),
+		"distance": at_distance,
+	}
+
+
 func _build_crumb_assets() -> void:
 	_crumb_mesh = SphereMesh.new()
 	_crumb_mesh.radius = 0.12

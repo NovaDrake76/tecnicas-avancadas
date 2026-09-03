@@ -104,6 +104,8 @@ func open() -> void:
 	if hud != null:
 		hud.visible = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	## the cursor is this screen's until it closes; the player will not take it back on a focus-in
+	add_to_group("holds_mouse")
 	visible = true
 	## always the first mission. opening on the newest unlocked one made the board look like it had
 	## skipped past the others, which is the opposite of what a list of missions is for.
@@ -116,6 +118,7 @@ func close(silent := false) -> void:
 		return
 	if not silent:
 		UiSfx.play("back")
+	remove_from_group("holds_mouse")
 	visible = false
 	var hud := get_tree().get_first_node_in_group("hud")
 	if hud != null:
