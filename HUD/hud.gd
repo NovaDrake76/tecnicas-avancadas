@@ -20,6 +20,7 @@ const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 @onready var crosshair: Label = %Crosshair
 @onready var spare_label: Label = %Spare
 @onready var reload_ring: ReloadRing = %ReloadRing
+@onready var vitals: Vitals = %Vitals
 
 var _weapon: Gun
 var _interactor: Interactor
@@ -49,6 +50,7 @@ func _ready() -> void:
 	Run.targets_changed.connect(_on_targets_changed)
 	Run.time_changed.connect(_on_time_changed)
 	Run.level_cleared.connect(_on_level_cleared)
+	Run.level_failed.connect(_on_level_failed)
 	Run.run_finished.connect(_on_run_finished)
 	Run.watcher_changed.connect(_on_watcher_changed)
 	Run.detections_changed.connect(_on_detections_changed)
@@ -65,6 +67,8 @@ func _bind_weapon() -> void:
 		_follow_weapon(get_tree().get_first_node_in_group("weapon") as Gun)
 	if _weapon == null:
 		push_warning("hud.gd: no weapon to follow; HUD will stay blank.")
+
+	vitals.watch(get_tree().get_first_node_in_group("player"))
 
 	_interactor = get_tree().get_first_node_in_group("interactor") as Interactor
 	if _interactor != null:
@@ -162,6 +166,13 @@ func _on_detections_changed(count: int) -> void:
 func _on_level_cleared(_index: int, summary: Dictionary) -> void:
 	_clear_field_readout()
 	report_card.play(summary, "MISSION CLEAR")
+	alert_ring.clear()
+
+
+## the same card, a different heading. the numbers still say what happened before the laser found you.
+func _on_level_failed(_index: int, summary: Dictionary) -> void:
+	_clear_field_readout()
+	report_card.play(summary, "MISSION FAILED")
 	alert_ring.clear()
 
 

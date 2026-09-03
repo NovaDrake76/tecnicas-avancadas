@@ -268,6 +268,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 
+func heading() -> String:
+	return _title.text
+
+
 ## fills the card in from the summary, then plays it.
 func play(s: Dictionary, title: String) -> void:
 	_kill()

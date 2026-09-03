@@ -3,6 +3,7 @@
 [ext_resource type="Shader" path="res://Shaders/grid_floor.gdshader" id="1_grid"]
 [ext_resource type="PackedScene" path="res://Guns/magazine/magazine_pickup.tscn" id="2_1jt1u"]
 [ext_resource type="PackedScene" path="res://Characters/kiwi.tscn" id="3_er0or"]
+[ext_resource type="PackedScene" path="res://Characters/laser_kiwi.tscn" id="4_laser"]
 [ext_resource type="Script" path="res://Levels/hill_ring.gd" id="90_hills"]
 [ext_resource type="Script" path="res://Levels/foliage.gd" id="91_foliage"]
 [ext_resource type="Script" path="res://Props/prop.gd" id="100_prop"]
@@ -56,7 +57,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.900, 0.00000, 118.000)
 [node name="Kiwi" parent="StaticBody3D" instance=ExtResource("3_er0or")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 49.000, 0.00090, -37.080)
 
-[node name="Kiwi2" parent="StaticBody3D" instance=ExtResource("3_er0or")]
+[node name="LaserKiwi" parent="StaticBody3D" instance=ExtResource("4_laser")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.865, 0.00090, -14.800)
 
 [node name="Kiwi3" parent="StaticBody3D" instance=ExtResource("3_er0or")]

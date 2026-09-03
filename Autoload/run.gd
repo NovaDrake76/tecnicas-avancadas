@@ -7,7 +7,7 @@ extends Node
 ## in a script with no class_name, an enum used as a PARAMETER type resolves to "run.gd.State"
 ## while the annotation resolves to "State", and every call fails to parse. the enum stays as
 ## named constants and anything typed takes a plain int, which is what a gdscript enum is.
-enum State { IDLE, PLAYING, CLEARED, FINISHED, ARMORY }
+enum State { IDLE, PLAYING, CLEARED, FINISHED, ARMORY, FAILED }
 
 signal level_started(index: int, name: String)
 ## the safe house is up. index and name are the level the player will deploy into next.
@@ -15,6 +15,8 @@ signal armory_entered(next_index: int, name: String)
 signal targets_changed(down: int, total: int)
 signal time_changed(seconds: float)
 signal level_cleared(index: int, summary: Dictionary)
+## the player went down. nothing is booked, the same card shows the run, and it goes home like a clear.
+signal level_failed(index: int, summary: Dictionary)
 ## the player has read the report card and pressed the key. main takes the run home on this.
 signal results_dismissed
 signal run_finished(summary: Dictionary)
@@ -31,10 +33,10 @@ const LEVELS := [
 		"brief": "A supply camp on open ground: a container, barricades, three sentries who wander. Learn the cone, the crouch and the reload where the cover is generous.",
 		"image": "res://UI/missions/level_01.png"},
 	{"path": "res://Levels/level_02.tscn", "name": "The Woods", "par": 110.0,
-		"brief": "Five birds in the open with the trees for cover and nothing else. Longer shots, so the drop of your BB starts to matter.",
+		"brief": "Five birds in the open with the trees for cover and nothing else. Longer shots, so the drop of your BB starts to matter. One of them has laser eyes and does not run: if it sees you, it comes for you.",
 		"image": "res://UI/missions/level_02.png"},
 	{"path": "res://Levels/level_03.tscn", "name": "The Summit", "par": 130.0,
-		"brief": "A walled compound with a watchtower and a sentry on it who sees the whole approach. Seven kiwis. Take the tower or never be where it looks.",
+		"brief": "A walled compound with a watchtower and a sentry on it who sees the whole approach. Seven kiwis, one of them a laser kiwi inside the walls. Take the tower or never be where it looks.",
 		"image": "res://UI/missions/level_03.png"},
 ]
 
@@ -249,10 +251,10 @@ func in_armory() -> bool:
 	return state == State.ARMORY
 
 
-## the report card is done with. only a cleared run can be dismissed, so a stray key in a level does
-## nothing.
+## the report card is done with. only a finished run, cleared or failed, can be dismissed, so a stray
+## key in a level does nothing.
 func dismiss_results() -> void:
-	if state == State.CLEARED:
+	if state == State.CLEARED or state == State.FAILED:
 		results_dismissed.emit()
 
 
@@ -337,6 +339,22 @@ func _on_target_down(kiwi) -> void:
 	targets_changed.emit(targets_down, targets_total)
 	if targets_down >= targets_total:
 		_clear_level()
+
+
+## the player is down. a failed mission is an F on everything: there is no partial credit for the
+## kiwis taken out before the laser found you, and nothing reaches the wallet or the records.
+func fail_level() -> void:
+	if state != State.PLAYING:
+		return
+	_level_score = 0
+	_last_gained = 0
+	_set_state(State.FAILED)
+	var s := _summary()
+	for key in ["grade", "grade_stealth", "grade_accuracy", "grade_time"]:
+		s[key] = 0.0
+	s["letter"] = "F"
+	s["failed"] = true
+	level_failed.emit(level_index, s)
 
 
 func _clear_level() -> void:

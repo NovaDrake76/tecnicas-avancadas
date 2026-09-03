@@ -12,7 +12,9 @@ var _level: Node
 
 
 func _ready() -> void:
-	Run.level_cleared.connect(_on_level_cleared)
+	Run.level_cleared.connect(_on_level_over)
+	Run.level_failed.connect(_on_level_over)
+	player.health.died.connect(Run.fail_level)
 	Armory.deploy_requested.connect(_on_deploy)
 	Run.start_run()
 	Armory.reset()
@@ -39,6 +41,7 @@ func _settle_armory() -> void:
 	await get_tree().physics_frame
 	move_player_to_spawn()
 	player.process_mode = Node.PROCESS_MODE_INHERIT
+	player.restore()
 	Armory.apply_to_player(player)
 	Run.enter_armory()
 	Fade.uncover()
@@ -76,6 +79,7 @@ func _begin() -> void:
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	move_player_to_spawn()
+	player.restore()
 	Run.begin_level(_level)
 	Fade.uncover()
 
@@ -86,10 +90,10 @@ func move_player_to_spawn() -> void:
 		player.respawn_from_void()
 
 
-## every clear goes back to the safe house; the board says what opened. the player is frozen under the
-## report card and the run waits for them to press the key; headless, where nobody can, it waits the
-## old fixed pause instead. then the curtain falls and the armory swaps in underneath it.
-func _on_level_cleared(_index: int, _summary: Dictionary) -> void:
+## every clear, and every failure, goes back to the safe house; the board says what opened. the player is
+## frozen under the report card and the run waits for them to press the key; headless, where nobody
+## can, it waits the old fixed pause instead. then the curtain falls and the armory swaps in underneath.
+func _on_level_over(_index: int, _summary: Dictionary) -> void:
 	player.process_mode = Node.PROCESS_MODE_DISABLED
 	if DisplayServer.get_name() == "headless":
 		await get_tree().create_timer(Run.CLEAR_PAUSE).timeout

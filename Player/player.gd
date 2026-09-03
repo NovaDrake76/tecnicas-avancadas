@@ -1,5 +1,8 @@
 extends CharacterBody3D
 
+## something hit the player. the hud and the camera answer this; nothing in here decides what it means.
+signal hurt(amount: float, from: Vector3)
+
 ## how far above and below a spawn marker to look for ground, and how far to stand clear of it.
 const SPAWN_PROBE := 300.0
 const SPAWN_CLEARANCE := 0.15
@@ -29,12 +32,19 @@ const SPAWN_CLEARANCE := 0.15
 @export_group("Landing")
 @export var fall_velocity_threshold := -7.5
 
+@export_group("Health")
+## health comes back on its own once nothing has hit you for a while. a fight you break off is a
+## fight you recover from, which is what makes breaking line of sight the right answer to a laser.
+@export var regen_delay := 4.0
+@export var regen_rate := 15.0
+
 @onready var head: Node3D = $Head
 @onready var camera: CameraEffects = $Head/Camera3D
 @onready var _col: CollisionShape3D = $CollisionShape3D
 @onready var _sm: StateMachine = $StateMachine
 @onready var _ceiling_check: ShapeCast3D = get_node_or_null("HeadClearance")
 @onready var _aim: AimScope = get_node_or_null("AimScope")
+@onready var health: Health = $Health
 
 var _jump_buffer := 0.0
 var _crouch_t := 0.0
@@ -44,6 +54,8 @@ var _grounded := false
 var _peak_fall_vy := 0.0
 var _pitch := 0.0
 var _lean := 0.0
+var _since_hurt := 999.0
+var _hit_sound: AudioStreamPlayer
 
 
 func _ready() -> void:
@@ -67,6 +79,12 @@ func _ready() -> void:
 		_ceiling_check.target_position = Vector3(0.0, stand_height - crouch_height, 0.0)
 
 	_sm.setup(self)
+
+	## the hit is heard in the head, not in the world, so it is a plain player and not a 3d one.
+	_hit_sound = AudioStreamPlayer.new()
+	_hit_sound.stream = LaserSfx.hit()
+	_hit_sound.volume_db = -4.0
+	add_child(_hit_sound)
 
 
 ## the mouse is the player's only while nothing on screen owns it: not the pause menu (the tree is
@@ -112,6 +130,7 @@ func _physics_process(delta: float) -> void:
 	_update_crouch(delta)
 	_update_lean(delta)
 	_update_jump_buffer(delta)
+	_update_health(delta)
 	_sm.physics_tick(delta)
 
 
@@ -145,6 +164,41 @@ func is_grounded() -> bool:
 
 func is_crouching() -> bool:
 	return _crouching
+
+
+## a laser found you. the damage goes to the health component, the kick and the shake to the camera.
+func take_laser_hit(amount: float, from: Vector3) -> void:
+	if health == null or not health.is_alive():
+		return
+	health.take_damage(amount)
+	_since_hurt = 0.0
+	## the kick scales with the hit: a beam is many small hits a second and a full kick on each
+	## would be a shaking camera rather than a struck one.
+	var k := clampf(amount / 7.0, 0.12, 1.0)
+	if camera != null:
+		camera.add_damage_kick(2.2 * k, 1.6 * k, from)
+		camera.add_screen_shake(0.35 * k, 0.22)
+	if _hit_sound != null and not _hit_sound.playing:
+		_hit_sound.pitch_scale = randf_range(0.9, 1.1)
+		_hit_sound.play()
+	hurt.emit(amount, from)
+
+
+func is_alive() -> bool:
+	return health == null or health.is_alive()
+
+
+## a fresh start: full health, nothing hurting. main calls it on every level and on the way home.
+func restore() -> void:
+	_since_hurt = 999.0
+	if health != null:
+		health.revive()
+
+
+func _update_health(delta: float) -> void:
+	_since_hurt += delta
+	if health != null and health.is_alive() and _since_hurt > regen_delay:
+		health.heal(regen_rate * delta)
 
 
 ## the one way in for anything that places the view instead of the mouse. writing head.rotation
