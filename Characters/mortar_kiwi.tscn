@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://Characters/kiwi.tscn" id="1_kiwi"]
+[ext_resource type="Script" path="res://Characters/mortar_kiwi.gd" id="2_mortar"]
+
+[node name="MortarKiwi" instance=ExtResource("1_kiwi")]
+script = ExtResource("2_mortar")
+wander_radius = 0.0
+walk_chance = 0.0

@@ -35,8 +35,12 @@ const SPAWN_CLEARANCE := 0.15
 @export_group("Health")
 ## health comes back on its own once nothing has hit you for a while. a fight you break off is a
 ## fight you recover from, which is what makes breaking line of sight the right answer to a laser.
-@export var regen_delay := 4.0
+## six seconds means genuinely disengaging, not ducking.
+@export var regen_delay := 6.0
 @export var regen_rate := 15.0
+## regeneration stops here; the rest comes back at the armoury. a fight you break off leaves a mark
+## that lasts the level, so the second fight is worse than the first and pushing on is a decision.
+@export_range(0.0, 1.0) var regen_cap := 0.70
 
 @onready var head: Node3D = $Head
 @onready var camera: CameraEffects = $Head/Camera3D
@@ -198,7 +202,9 @@ func restore() -> void:
 func _update_health(delta: float) -> void:
 	_since_hurt += delta
 	if health != null and health.is_alive() and _since_hurt > regen_delay:
-		health.heal(regen_rate * delta)
+		var ceiling := health.max_health * regen_cap
+		if health.current < ceiling:
+			health.heal(minf(regen_rate * delta, ceiling - health.current))
 
 
 ## the one way in for anything that places the view instead of the mouse. writing head.rotation

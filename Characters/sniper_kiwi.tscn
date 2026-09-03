@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://Characters/laser_kiwi.tscn" id="1_laser"]
+[ext_resource type="Script" path="res://Characters/sniper_kiwi.gd" id="2_sniper"]
+
+[node name="SniperKiwi" instance=ExtResource("1_laser")]
+script = ExtResource("2_sniper")
+hunt_speed = 0.0
+attack_range = 60.0
+hunt_sight = 70.0
+pulses = 0
+charge_time = 2.0
+beam_time = 0.35
+beam_dps = 90.0
+beam_recover = 1.2
+beam_track = 0.0
+beam_chance = 1.0
+beam_cooldown = 3.5
+laser_range = 80.0

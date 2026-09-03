@@ -15,6 +15,7 @@ func _ready() -> void:
 	Run.level_cleared.connect(_on_level_over)
 	Run.level_failed.connect(_on_level_over)
 	player.health.died.connect(Run.fail_level)
+	Alarm.reinforcements_due.connect(_on_reinforcements_due)
 	Armory.deploy_requested.connect(_on_deploy)
 	Run.start_run()
 	Armory.reset()
@@ -78,10 +79,37 @@ func _begin() -> void:
 	## before that reads the ground of the level we just left, or no ground at all.
 	await get_tree().physics_frame
 	await get_tree().physics_frame
+	## the props have built their collision by now, so this is the first moment the mesh can be right.
+	## behind the curtain, before the run counts, before any kiwi has somewhere to go.
+	NavBake.bake(_level, _level)
 	move_player_to_spawn()
 	player.restore()
 	Run.begin_level(_level)
 	Fade.uncover()
+
+
+## the alarm's countdown ran out: the gunship comes in, from the level's HeliApproach marker if it
+## has one, else from eighty metres out and thirty up on the far side of the trouble. it is a child of
+## the level so it goes with it, and it is in no kiwi group: reinforcements never count towards the
+## mission, or an alarm would make a mission longer the more trouble you were in, which is backwards.
+func _on_reinforcements_due(at: Vector3) -> void:
+	if _level == null or not is_instance_valid(_level) or Run.state != Run.State.PLAYING:
+		return
+	if get_tree().get_first_node_in_group("gunship") != null:
+		return
+	var from := Vector3.ZERO
+	var marker := get_tree().get_first_node_in_group("heli_approach") as Node3D
+	if marker != null:
+		from = marker.global_position
+	else:
+		var origin: Vector3 = (_level as Node3D).global_position if _level is Node3D else Vector3.ZERO
+		var out: Vector3 = at - origin
+		out.y = 0.0
+		out = out.normalized() if out.length_squared() > 1.0 else Vector3.BACK
+		from = at + out * 80.0 + Vector3.UP * 30.0
+	var ship := Gunship.new()
+	_level.add_child(ship)
+	ship.dispatch(from, at)
 
 
 ## the lookup lives on the player so KillPlane and this share one implementation.

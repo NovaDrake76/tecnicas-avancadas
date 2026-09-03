@@ -9,6 +9,10 @@ extends Node3D
 
 const LENGTH := 1.1
 
+## a heavier round draws fatter and longer. the sniper's is a slug, not a spark.
+var thickness := 1.0
+var tail := LENGTH
+
 var _dir := Vector3.FORWARD
 var _speed := 38.0
 var _left := 40.0
@@ -53,6 +57,7 @@ func _physics_process(delta: float) -> void:
 	var from := global_position
 	var to := from + _dir * step
 	var query := PhysicsRayQueryParameters3D.create(from, to, 3)
+	query.hit_from_inside = true
 	if _shooter != null and is_instance_valid(_shooter):
 		query.exclude = [_shooter.get_rid()]
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
@@ -80,8 +85,8 @@ func _physics_process(delta: float) -> void:
 func _draw() -> void:
 	if _core == null:
 		return
-	var tail := global_position - _dir * minf(LENGTH, _travelled)
+	var back := global_position - _dir * minf(tail, _travelled)
 	var core_r: float = _eyes.bolt_core_radius if _eyes != null and is_instance_valid(_eyes) else 0.016
 	var glow_r: float = _eyes.bolt_glow_radius if _eyes != null and is_instance_valid(_eyes) else 0.05
-	LaserEyes.stretch(_core, tail, global_position, core_r)
-	LaserEyes.stretch(_glow, tail, global_position, glow_r)
+	LaserEyes.stretch(_core, back, global_position, core_r * thickness)
+	LaserEyes.stretch(_glow, back, global_position, glow_r * thickness)

@@ -282,9 +282,17 @@ func play(s: Dictionary, title: String) -> void:
 	_stats[1].text = "%d" % int(s.get("shots", 0))
 	_stats[2].text = "%d%%" % int(round(float(s.get("accuracy", 0.0)) * 100.0))
 	_stats[3].text = "%s  (par %s)" % [_clock(float(s.get("time", 0.0))), _clock(float(s.get("par", 0.0)))]
-	_stats[4].text = "undetected" if seen == 0 else "spotted by %d" % seen
+	## what the stealth term measures is time hot, so that is the number shown. a run that never woke
+	## the compound says so in one word, seen or not; a bird that spotted you but never told anyone
+	## is exactly the kind of trouble that costs nothing here.
+	var hot := float(s.get("alarm_time", 0.0))
+	var ghost := bool(s.get("ghost", hot <= 0.0))
+	if ghost:
+		_stats[4].text = "ghost" if seen == 0 else "ghost, seen by %d" % seen
+	else:
+		_stats[4].text = "alarm %.0f s / %.0f" % [hot, float(s.get("alarm_budget", 0.0))]
 	_stats[4].add_theme_color_override("font_color",
-		MenuStyle.OK if seen == 0 else Color(1.0, 0.45, 0.4))
+		MenuStyle.OK if ghost else Color(1.0, 0.45, 0.4))
 	_earned.text = "EARNED  $%s" % MenuStyle.thousands(int(s.get("gained", 0)))
 	_best.text = "BEST  $%s" % MenuStyle.thousands(int(s.get("best", 0)))
 

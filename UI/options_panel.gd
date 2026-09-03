@@ -19,6 +19,7 @@ const KEYS := [
 	["FIRE", ["fire"]],
 	["AIM", ["aim"]],
 	["RELOAD", ["reload"]],
+	["THROW MAGAZINE", ["throw"]],
 	["FIRE MODE", ["toggle_fire_mode"]],
 	["INTERACT", ["interact"]],
 	["CYCLE WEAPON", ["weapon_next", "weapon_prev"]],

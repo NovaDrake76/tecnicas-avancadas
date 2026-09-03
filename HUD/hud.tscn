@@ -69,6 +69,10 @@ mouse_filter = 2
 unique_name_in_owner = true
 mouse_filter = 2
 
+[node name="Alarm" type="Label" parent="Root/Mission"]
+unique_name_in_owner = true
+mouse_filter = 2
+
 [node name="Status" type="Label" parent="Root"]
 unique_name_in_owner = true
 anchor_left = 0.5
@@ -199,6 +203,12 @@ vertical_alignment = 1
 unique_name_in_owner = true
 mouse_filter = 2
 text = "HOP-UP  --"
+vertical_alignment = 1
+
+[node name="Gear" type="Label" parent="Root/Stats/Footer"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
 vertical_alignment = 1
 
 [node name="Vitals" type="Control" parent="Root"]

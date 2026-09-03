@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://bufn6abaxlns0" path="res://Levels/hill_ring.gd" id="90_hills"]
 [ext_resource type="Script" uid="uid://bb0mpba02qew7" path="res://Levels/foliage.gd" id="91_foliage"]
 [ext_resource type="Script" path="res://Props/prop.gd" id="100_prop"]
+[ext_resource type="Script" path="res://Props/alarm_horn.gd" id="101_horn"]
 [ext_resource type="PackedScene" path="res://Models/Props/shipping_container_mx_1.glb" id="m_container"]
 [ext_resource type="PackedScene" path="res://Models/Props/gate_1.glb" id="m_gate"]
 [ext_resource type="PackedScene" path="res://Models/Props/barricade_a_2.glb" id="m_bar_a2"]
@@ -174,6 +175,10 @@ model = ExtResource("m_pallet")
 transform = Transform3D(0.9063, 0, 0.4226, 0, 1, 0, -0.4226, 0, 0.9063, -13.600, 0.000, 57.400)
 script = ExtResource("100_prop")
 model = ExtResource("m_toolbox")
+
+[node name="AlarmHorn" type="StaticBody3D" parent="Camp"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.0, 0.0, 40.0)
+script = ExtResource("101_horn")
 
 [node name="ShellsPickup" parent="StaticBody3D" instance=ExtResource("2_1jt1u")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 0, 33.0)

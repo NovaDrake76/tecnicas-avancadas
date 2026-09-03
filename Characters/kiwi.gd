@@ -9,8 +9,10 @@ signal alerted(kiwi: Kiwi)
 signal awareness_changed(kiwi: Kiwi, value: float)
 
 ## HUNT and ATTACK belong to the laser kiwi; a plain kiwi never enters them, but the states live in
-## one enum so every guard in here can name them.
-enum State { IDLE, WALK, DOWN, FLEE, LOOK, HUNT, ATTACK, SUSPECT }
+## one enum so every guard in here can name them. RUNNER is a bird carrying the alarm to the horn or
+## to a friend, HORN is the moment it spends pulling the lever, FLEE is what is left once the whole
+## compound already knows.
+enum State { IDLE, WALK, DOWN, FLEE, LOOK, HUNT, ATTACK, SUSPECT, RUNNER, HORN, INVESTIGATE }
 
 @export_group("Wander")
 ## radius of the patch it stays inside, measured from wherever it was placed.
@@ -31,6 +33,14 @@ enum State { IDLE, WALK, DOWN, FLEE, LOOK, HUNT, ATTACK, SUSPECT }
 ## how far off a noise it will settle for. it turns, it does not walk over to investigate.
 @export var look_turn_speed := 2.6
 
+@export_group("Investigate")
+## a thrown object is an event where a footstep is ambient: the bird WALKS OVER. it stops this short
+## of the spot, never strays further than this from its post, looks about for this long, and goes home.
+@export var stop_short := 1.5
+@export var investigate_range := 20.0
+@export var investigate_look := 3.0
+@export var investigate_speed := 1.6
+
 @export_group("Suspicion")
 ## clips that hold the head perfectly still. measured with probe_headsweep: IdleA and IdleC sweep
 ## the cone 0.0 degrees, IdleB 55.7 and IdleD 167.8.
@@ -46,6 +56,26 @@ enum State { IDLE, WALK, DOWN, FLEE, LOOK, HUNT, ATTACK, SUSPECT }
 @export var flee_speed := 3.4
 @export var flee_distance := 18.0
 @export var flee_time := 6.0
+
+@export_group("Alarm run")
+## the alarm is a bird crossing the map on foot, and the player can shoot it on the way. it runs to
+## the nearest horn, failing that to the nearest calm bird, failing that away, and a bird alone in a
+## field still has a radio: after this long it raises the alarm anyway.
+@export var lone_runner_time := 8.0
+## how long it stands at the horn pulling the lever. the last window the player gets.
+@export var horn_time := 1.2
+@export var horn_reach := 1.4
+@export var tell_reach := 2.5
+## a runner shouts as it goes. every calm bird inside this hears about you and runs too, so the
+## alarm is contagious along the runner's path and killing it early is worth more than killing it late.
+@export var shout_radius := 12.0
+@export var shout_interval := 0.6
+## a runner that a wall has stopped for this long gives up on the errand and uses the radio instead.
+@export var runner_stuck_time := 1.5
+## how far it will go for a horn, and for a friend. a bird does not cross the whole map to tell
+## someone; past these it is on its own and the radio is the answer.
+@export var horn_search_radius := 70.0
+@export var tell_search_radius := 40.0
 
 @export_group("Voice")
 ## one recording, resampled. pitch_scale moves speed and pitch together, which is what turns a
@@ -100,15 +130,27 @@ var _clips := {}
 var _state := State.IDLE
 var _timer := 0.0
 var _home := Vector3.ZERO
+## where it was placed. _home drifts with a flee; this is the post it walks back to when the
+## compound stands down.
+var _post := Vector3.ZERO
 var _target := Vector3.ZERO
 var _detected := false
 var _call_timer := 0.0
 var _suspect_at := Vector3.ZERO
+var _alarm_from := Vector3.ZERO
+var _goal_horn: Node3D
+var _goal_bird: Kiwi
+var _shout_timer := 0.0
+var _runner_stuck := 0.0
+var _look_at := Vector3.ZERO
+var _investigating_walk := false
+var _returning := false
 
 
 func _ready() -> void:
 	add_to_group("kiwi")
 	_home = global_position
+	_post = _home
 	model.rotation.y = deg_to_rad(model_yaw_deg)
 
 	_enable_vertex_colors()
@@ -201,6 +243,14 @@ func _physics_process(delta: float) -> void:
 			velocity.z = 0.0
 		State.FLEE:
 			_step_flee(delta)
+		State.RUNNER:
+			_step_runner(delta)
+		State.HORN:
+			velocity.x = move_toward(velocity.x, 0.0, walk_speed * 8.0 * delta)
+			velocity.z = move_toward(velocity.z, 0.0, walk_speed * 8.0 * delta)
+			_timer -= delta
+			if _timer <= 0.0:
+				_pull_horn()
 		State.SUSPECT:
 			velocity.x = move_toward(velocity.x, 0.0, walk_speed * 8.0 * delta)
 			velocity.z = move_toward(velocity.z, 0.0, walk_speed * 8.0 * delta)
@@ -215,6 +265,8 @@ func _physics_process(delta: float) -> void:
 			_timer -= delta
 			if _timer <= 0.0:
 				_begin_idle()
+		State.INVESTIGATE:
+			_step_investigate(delta)
 		State.IDLE:
 			velocity.x = move_toward(velocity.x, 0.0, walk_speed * 4.0 * delta)
 			velocity.z = move_toward(velocity.z, 0.0, walk_speed * 4.0 * delta)
@@ -238,14 +290,18 @@ func _step_flee(delta: float) -> void:
 		_end_flee()
 
 
-## returns true once it has arrived, so each state decides for itself what that means.
+## returns true once it has arrived, so each state decides for itself what that means. the bird
+## walks the navigation mesh when the level has one (main bakes it on load), so a runner inside a
+## compound goes round the wall instead of into it; with no mesh under it, in the sky probes and the
+## safe house, it takes the straight line it always took.
 func _move_to(point: Vector3, speed: float, delta: float) -> bool:
 	var to_target := point - global_position
 	to_target.y = 0.0
 	if to_target.length() <= arrive_distance:
+		_path = PackedVector3Array()
 		return true
 
-	_turn_to(point, turn_speed, delta)
+	_turn_to(_next_waypoint(point, delta), turn_speed, delta)
 
 	var forward := -global_transform.basis.z
 	velocity.x = forward.x * speed
@@ -253,6 +309,43 @@ func _move_to(point: Vector3, speed: float, delta: float) -> bool:
 
 	StepClimb.try_step(self, forward, 4)
 	return false
+
+
+## seconds between path refreshes while the goal stays put. a moving goal refreshes when it has moved.
+const PATH_REFRESH := 0.5
+const WAYPOINT_REACH := 0.6
+
+var _path := PackedVector3Array()
+var _path_goal := Vector3.INF
+var _path_age := 0.0
+var _path_index := 0
+
+
+## the next corner of the path to `point`, or `point` itself when there is no mesh worth following.
+## a path is trusted only if it starts near the bird: a bird parked in the sky over a level would
+## otherwise be handed the ground's path and walk the level's detours two hundred metres up.
+func _next_waypoint(point: Vector3, delta: float) -> Vector3:
+	_path_age += delta
+	if _path.is_empty() or _path_age > PATH_REFRESH or _path_goal.distance_to(point) > 1.0:
+		_path_goal = point
+		_path_age = 0.0
+		_path_index = 0
+		_path = PackedVector3Array()
+		var map := get_world_3d().navigation_map
+		if not NavigationServer3D.map_get_regions(map).is_empty():
+			var found := NavigationServer3D.map_get_path(map, global_position, point, true)
+			if found.size() >= 2 and found[0].distance_to(global_position) < 2.0:
+				_path = found
+	if _path.is_empty():
+		return point
+	while _path_index < _path.size() - 1 \
+			and Vector2(_path[_path_index].x - global_position.x, _path[_path_index].z - global_position.z).length() < WAYPOINT_REACH:
+		_path_index += 1
+	return _path[_path_index]
+
+
+func path_length() -> int:
+	return _path.size()
 
 
 ## the yaw whose -Z points at the spot, turned into gradually so it never snaps.
@@ -296,7 +389,7 @@ func _begin_suspect() -> void:
 ## a bird that is already peering at something is not turned by a footstep: the eyes are the sense
 ## that raises the alarm, so nothing may pull them off a target they have already half caught.
 func hear(at: Vector3, radius: float) -> void:
-	if not hearing or _state == State.DOWN or _state == State.FLEE or _state == State.SUSPECT:
+	if not hearing or not _can_notice() or _state == State.SUSPECT:
 		return
 	if global_position.distance_to(at) > radius:
 		return
@@ -310,6 +403,59 @@ func hear(at: Vector3, radius: float) -> void:
 
 func is_listening() -> bool:
 	return _state == State.LOOK
+
+
+## something was THROWN nearby. unlike a footstep this is an event, and the bird walks over to look:
+## to a point stop_short of it, no further than investigate_range from its post, then it looks about
+## and walks home. it raises no alarm and touches no alarm stage, ever; but its eyes stay open on the
+## way, so a player in its path is caught, and that is the risk that keeps the tool from being free.
+func investigate(at: Vector3) -> void:
+	if not hearing or not can_be_told():
+		return
+	var from_post := at - _post
+	from_post.y = 0.0
+	if from_post.length() > investigate_range:
+		at = _post + from_post.normalized() * investigate_range
+	var to := at - global_position
+	to.y = 0.0
+	if to.length() > stop_short:
+		at = at - to.normalized() * stop_short
+	_target = at
+	_look_at = at + to.normalized() * stop_short if to.length() > 0.01 else at
+	_timer = investigate_look
+	_investigating_walk = true
+	_returning = false
+	_state = State.INVESTIGATE
+	_play(walk_clip)
+
+
+func _step_investigate(delta: float) -> void:
+	if _investigating_walk:
+		if _move_to(_target, investigate_speed, delta):
+			_investigating_walk = false
+			velocity.x = 0.0
+			velocity.z = 0.0
+			if not idle_clips.is_empty():
+				_play(idle_clips[randi() % idle_clips.size()])
+		return
+	if _returning:
+		if _move_to(_post, investigate_speed, delta):
+			_returning = false
+			_home = _post
+			_begin_idle()
+		return
+	velocity.x = move_toward(velocity.x, 0.0, walk_speed * 4.0 * delta)
+	velocity.z = move_toward(velocity.z, 0.0, walk_speed * 4.0 * delta)
+	_turn_to(_look_at, look_turn_speed, delta)
+	_timer -= delta
+	if _timer <= 0.0:
+		## back to the post at the same pace it left it: a sentry hurrying back, not strolling
+		_returning = true
+		_play(walk_clip)
+
+
+func is_investigating() -> bool:
+	return _state == State.INVESTIGATE
 
 
 func is_suspicious() -> bool:
@@ -346,23 +492,196 @@ func _on_spotted(target: Node3D) -> void:
 	if not _detected:
 		_detected = true
 		alerted.emit(self)
-	_begin_flee(target.global_position if target != null else global_position)
+	_on_alarmed(target.global_position if target != null else global_position)
 
 
 func _on_awareness_changed(value: float) -> void:
 	awareness_changed.emit(self, value)
 
 
-func _begin_flee(away_from: Vector3) -> void:
-	var dir := global_position - away_from
+## what this bird does about trouble at a point: the player it saw, the neighbour it saw drop, the
+## spot a runner shouted about. a plain kiwi carries the alarm; the laser kiwi overrides this to hunt.
+func _on_alarmed(from: Vector3) -> void:
+	_begin_alarm_run(from)
+
+
+## the alarm travels on foot. the bird tells the compound to start looking, then runs to raise the
+## full alarm: at the nearest horn, or to the nearest calm bird, or if it is alone, away, with the
+## radio after a while. the player can stop every one of those by putting it down first, which is
+## the whole point: the alarm is a physical thing crossing the map at 3.4 m/s. once the compound is
+## already under full alarm there is nothing left to raise, so it simply runs for it.
+func _begin_alarm_run(from: Vector3) -> void:
+	_alarm_from = from
+	Alarm.raise_search(from)
+	speak(alert_pitch, alert_db)
+	_play(run_clip, 0.15)
+	if Alarm.stage == Alarm.Stage.ALARM:
+		_begin_flee(from)
+		return
+	_goal_horn = _nearest_horn()
+	_goal_bird = null if _goal_horn != null else _nearest_calm_bird()
+	if _goal_horn == null and _goal_bird == null:
+		_flee_target(from)
+	_timer = lone_runner_time
+	_shout_timer = 0.0
+	_runner_stuck = 0.0
+	_state = State.RUNNER
+
+
+func _step_runner(delta: float) -> void:
+	_shout_timer -= delta
+	if _shout_timer <= 0.0:
+		_shout_timer = shout_interval
+		_shout()
+
+	if _goal_horn != null and (not is_instance_valid(_goal_horn) or not _goal_horn.is_usable()):
+		_goal_horn = _nearest_horn()
+		if _goal_horn == null:
+			_goal_bird = _nearest_calm_bird()
+			if _goal_bird == null:
+				_flee_target(_alarm_from)
+	if _goal_bird != null and (not is_instance_valid(_goal_bird) or _goal_bird.is_down() or not _goal_bird.can_be_told()):
+		_goal_bird = _nearest_calm_bird()
+		if _goal_bird == null:
+			_flee_target(_alarm_from)
+
+	var goal := _target
+	var reach := arrive_distance
+	if _goal_horn != null:
+		goal = _goal_horn.global_position
+		reach = horn_reach
+	elif _goal_bird != null:
+		goal = _goal_bird.global_position
+		reach = tell_reach
+
+	var flat := goal - global_position
+	flat.y = 0.0
+	var arrived := flat.length() <= reach
+	if not arrived:
+		_move_to(goal, flee_speed, delta)
+		var moved := get_position_delta().length() / maxf(delta, 0.0001) > 0.3
+		_runner_stuck = 0.0 if moved else _runner_stuck + delta
+	else:
+		velocity.x = 0.0
+		velocity.z = 0.0
+
+	if _goal_horn != null:
+		if arrived:
+			_state = State.HORN
+			_timer = horn_time
+			if not idle_clips.is_empty():
+				_play(idle_clips[0], 0.15)
+		elif _runner_stuck > runner_stuck_time:
+			_use_radio()
+		return
+	if _goal_bird != null:
+		if arrived:
+			_goal_bird.told(_alarm_from)
+			Alarm.raise_alarm(global_position)
+			_after_run()
+		elif _runner_stuck > runner_stuck_time:
+			_use_radio()
+		return
+	## alone: run, and use the radio when the time is up
+	_timer -= delta
+	if _timer <= 0.0:
+		Alarm.raise_alarm(global_position)
+		_after_run()
+
+
+## a runner that cannot get where it was going still gets the word out, just later.
+func _use_radio() -> void:
+	_goal_horn = null
+	_goal_bird = null
+	_flee_target(_alarm_from)
+	_timer = minf(_timer, lone_runner_time * 0.5)
+	_runner_stuck = 0.0
+
+
+func _pull_horn() -> void:
+	if _goal_horn != null and is_instance_valid(_goal_horn) and _goal_horn.is_usable():
+		_goal_horn.raise(self)
+	else:
+		Alarm.raise_alarm(global_position)
+	_after_run()
+
+
+## the errand is done: back to watching from wherever it ended up, still knowing it was seen.
+func _after_run() -> void:
+	_goal_horn = null
+	_goal_bird = null
+	vision.rearm()
+	_home = global_position
+	_begin_idle()
+
+
+## every calm bird inside the shout hears about you and runs too.
+func _shout() -> void:
+	for node in get_tree().get_nodes_in_group("kiwi"):
+		var other := node as Kiwi
+		if other == null or other == self or other.is_down() or not other.can_be_told():
+			continue
+		if other.global_position.distance_to(global_position) <= shout_radius:
+			other.told(_alarm_from)
+
+
+func _nearest_horn() -> Node3D:
+	var best: Node3D = null
+	var best_d := INF
+	for node in get_tree().get_nodes_in_group("alarm_horn"):
+		var horn := node as Node3D
+		if horn == null or not horn.has_method("is_usable") or not horn.is_usable():
+			continue
+		var d := horn.global_position.distance_to(global_position)
+		if d < best_d and d <= horn_search_radius:
+			best_d = d
+			best = horn
+	return best
+
+
+func _nearest_calm_bird() -> Kiwi:
+	var best: Kiwi = null
+	var best_d := INF
+	for node in get_tree().get_nodes_in_group("kiwi"):
+		var other := node as Kiwi
+		if other == null or other == self or other.is_down() or not other.can_be_told():
+			continue
+		var d := other.global_position.distance_to(global_position)
+		if d < best_d and d <= tell_search_radius:
+			best_d = d
+			best = other
+	return best
+
+
+## a bird that could still be told something: not down, not already carrying or answering the alarm.
+func can_be_told() -> bool:
+	return _can_notice() or _state == State.SUSPECT
+
+
+## another bird told this one where the trouble is. it counts as being alerted and it answers the
+## same way it would have answered seeing you, so the alarm spreads from bird to bird on foot.
+func told(at: Vector3) -> void:
+	if _state == State.DOWN or not can_be_told():
+		return
+	if not _detected:
+		_detected = true
+		alerted.emit(self)
+	_on_alarmed(at)
+
+
+func _flee_target(from: Vector3) -> void:
+	var dir := global_position - from
 	dir.y = 0.0
 	if dir.length_squared() < 0.01:
 		dir = -global_transform.basis.z
 	_target = global_position + dir.normalized() * flee_distance
+
+
+func _begin_flee(away_from: Vector3) -> void:
+	_flee_target(away_from)
 	_timer = flee_time
 	_state = State.FLEE
 	_play(run_clip, 0.15)
-	speak(alert_pitch, alert_db)
 
 
 ## still alarmed, but back to watching, so walking into its face again sends it running again.
@@ -389,15 +708,31 @@ func witness(at: Vector3) -> void:
 	if not _detected:
 		_detected = true
 		alerted.emit(self)
-	_begin_flee(at)
+	_on_alarmed(at)
 
 
 func was_detected() -> bool:
 	return _detected
 
 
-## called by a BB that lands on us, an airsoft hit puts a target out rather than killing it.
-func take_bb_hit(damage := 1.0, _at := Vector3.INF) -> void:
+## the compound has calmed down and this bird forgets with it: eyes rearmed, the alarm it raised
+## forgotten, and a walk back to its post. Alarm calls this on every bird at once, which is what
+## makes being seen a setback the player can recover from rather than a mode the level is stuck in.
+func stand_down() -> void:
+	if _state == State.DOWN:
+		return
+	vision.rearm()
+	_detected = false
+	_home = _post
+	_target = _post
+	_state = State.WALK
+	_play(walk_clip)
+
+
+## called by a BB that lands on us, an airsoft hit puts a target out rather than killing it. the
+## energy is how hard it arrived; a plain kiwi does not care, one bb is one bb. -1 means nobody
+## measured, which is what a scripted hit says.
+func take_bb_hit(damage := 1.0, _at := Vector3.INF, _energy := -1.0) -> void:
 	if _state == State.DOWN:
 		return
 	health.take_damage(damage)
@@ -452,10 +787,26 @@ func _is_calm() -> bool:
 
 
 ## the states a bird can be pulled out of by its own eyes. it is already looking from SUSPECT, and
-## everything else has either raised the alarm or is out of the fight.
+## everything else has either raised the alarm or is out of the fight. a bird walking to a noise
+## is included on purpose: it can still catch you on the way, which is what makes the thrown
+## magazine a gamble rather than a way to make birds blind.
 func _can_notice() -> bool:
-	return _state == State.IDLE or _state == State.WALK or _state == State.LOOK
+	return _state == State.IDLE or _state == State.WALK or _state == State.LOOK or _state == State.INVESTIGATE
 
 
+## running, whether away from you or towards the horn. either way it is not standing there.
 func is_fleeing() -> bool:
-	return _state == State.FLEE
+	return _state == State.FLEE or _state == State.RUNNER
+
+
+func is_runner() -> bool:
+	return _state == State.RUNNER or _state == State.HORN
+
+
+## where a runner is headed, for the probes: the horn, the bird, or the point it is fleeing to.
+func runner_goal() -> Vector3:
+	if _goal_horn != null and is_instance_valid(_goal_horn):
+		return _goal_horn.global_position
+	if _goal_bird != null and is_instance_valid(_goal_bird):
+		return _goal_bird.global_position
+	return _target

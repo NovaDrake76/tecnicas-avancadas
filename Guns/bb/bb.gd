@@ -19,6 +19,10 @@ const BB_RADIUS := 0.003
 var _area: float = PI * BB_RADIUS * BB_RADIUS
 var _frame := 0
 var _impacted := false
+## the velocity going INTO the step that lands. by the time _integrate_forces reports the contact
+## the solver has already taken the impact out of the body, and the energy read there was a tenth
+## of what arrived: every shot bounced off the plate, seen in the probe before this existed.
+var _incoming := Vector3.ZERO
 var _crumb_mesh: SphereMesh
 var _crumb_mat: StandardMaterial3D
 
@@ -45,16 +49,21 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	## force the normal to oppose the incoming velocity, the engine's sign varies by body pair.
 	if normal.dot(state.linear_velocity) > 0.0:
 		normal = -normal
-	_on_impact.call_deferred(point, normal, hit_body)
+	## the energy the bb actually arrives with, after every metre of drag it flew through. this is
+	## the number that decides whether a shot beats armour, and it is the same number the bench
+	## draws as impact at range, so what the bench promises is what the plate feels.
+	var arriving := _incoming if _incoming.length_squared() > 0.0 else state.linear_velocity
+	var energy := 0.5 * bb_mass * arriving.length_squared()
+	_on_impact.call_deferred(point, normal, hit_body, energy)
 
 
-func _on_impact(point: Vector3, normal: Vector3, hit_body: Object) -> void:
+func _on_impact(point: Vector3, normal: Vector3, hit_body: Object, energy: float) -> void:
 	var world := get_tree().current_scene
 	ImpactFx.spawn(world, point, normal)
 
 	var target := hit_body != null and is_instance_valid(hit_body) and hit_body.has_method("take_bb_hit")
 	if target:
-		hit_body.take_bb_hit(1.0, point)
+		hit_body.take_bb_hit(1.0, point, energy)
 		## asked AFTER the hit, so a kiwi that this bb just put down answers yes and the marker
 		## comes up red. a range target has no such answer and gets the plain one.
 		Run.report_hit(hit_body.has_method("is_down") and hit_body.is_down())
@@ -67,6 +76,7 @@ func _on_impact(point: Vector3, normal: Vector3, hit_body: Object) -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	_incoming = linear_velocity
 	if draw_trail:
 		_frame += 1
 		if _frame % maxi(1, trail_every) == 0:

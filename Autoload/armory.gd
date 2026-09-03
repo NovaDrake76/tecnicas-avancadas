@@ -264,6 +264,10 @@ func apply_to_player(player: Node) -> void:
 				pouch.add(make_magazine(g.accepted_mag))
 	for g in rack.weapons():
 		g.emit_state()
+	## the noisemakers are kit too: topped up here and nowhere else, so they cannot be farmed mid-mission
+	var throw := _find(player, "distraction")
+	if throw != null and throw.has_method("refill"):
+		throw.refill()
 	changed.emit()
 
 

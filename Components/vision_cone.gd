@@ -77,6 +77,9 @@ func poll(delta: float) -> void:
 	if exposure > 0.0:
 		last_seen = _target.global_position
 		_seen_once = true
+		## eyes on the player keep the garrison from calming down. seeing is not the alarm, noticing
+		## is, so this only pins the quiet clock.
+		Alarm.report_contact(last_seen)
 		## standing in the open right in front of it is noticed in a moment, a far edge sighting takes a while.
 		awareness += (0.55 + exposure) * delta
 	else:

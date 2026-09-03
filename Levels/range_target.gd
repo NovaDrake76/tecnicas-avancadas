@@ -92,7 +92,7 @@ func aim_point(part: String) -> Vector3:
 	return _board.global_position
 
 
-func take_bb_hit(_damage := 1.0, _at := Vector3.INF) -> void:
+func take_bb_hit(_damage := 1.0, _at := Vector3.INF, _energy := -1.0) -> void:
 	hits += 1
 	hit.emit(hits)
 	_refresh_label()

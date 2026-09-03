@@ -107,9 +107,9 @@ func open() -> void:
 	## the cursor is this screen's until it closes; the player will not take it back on a focus-in
 	add_to_group("holds_mouse")
 	visible = true
-	## always the first mission. opening on the newest unlocked one made the board look like it had
-	## skipped past the others, which is the opposite of what a list of missions is for.
-	_selected = 0
+	## the mission after the furthest one cleared, if it is open: the one you are most likely here to
+	## play. a fresh run lands on the first.
+	_selected = Run.suggested_level()
 	_refresh()
 
 

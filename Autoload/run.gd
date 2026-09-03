@@ -28,18 +28,20 @@ signal detections_changed(count: int)
 ## nothing is counted here, the score already counts what went down and what was fired.
 signal shot_hit(lethal: bool)
 
-## a level is a scene path and the time you are expected to need. beating par is worth points.
 ## a mission is a scene, a name, the time you are expected to need (beating it is worth points), a
 ## brief for the board and a picture for it. the pictures are shots of the level itself.
+## "reinforcements" is whether a full alarm calls the gunship, and "reinforce_time" how long the horn
+## gives you before it arrives: off on the first mission on purpose, a mechanic that appears in mission
+## one has nowhere to go; slow on the second so it is a warning; the finale's own on the third.
 const LEVELS := [
-	{"path": "res://Levels/level_01.tscn", "name": "North Field", "par": 90.0,
-		"brief": "A supply camp on open ground: a container, barricades, three sentries who wander. Learn the cone, the crouch and the reload where the cover is generous.",
+	{"path": "res://Levels/level_01.tscn", "name": "North Field", "par": 90.0, "reinforcements": false,
+		"brief": "A supply camp on open ground: a container, barricades, three sentries who wander and an alarm horn by the container. A bird that sees you runs for the horn; drop it first, or cut the horn before you are seen.",
 		"image": "res://UI/missions/level_01.png"},
-	{"path": "res://Levels/level_02.tscn", "name": "The Woods", "par": 110.0,
-		"brief": "Five birds in the open with the trees for cover and nothing else. Longer shots, so the drop of your BB starts to matter. One of them has laser eyes and does not run: if it sees you, it comes for you.",
+	{"path": "res://Levels/level_02.tscn", "name": "The Woods", "par": 110.0, "reinforcements": true, "reinforce_time": 60.0,
+		"brief": "Six birds in the open with the trees for cover. One has laser eyes and armour and comes for you: aim for the eyes. A sniper at the far edge lines you up with a thin green line: move. A mortar drops shells on your last known spot: watch the ring. If the horn goes and you stay in sight for a minute, a gunship comes.",
 		"image": "res://UI/missions/level_02.png"},
-	{"path": "res://Levels/level_03.tscn", "name": "The Summit", "par": 130.0,
-		"brief": "A walled compound with a watchtower and a sentry on it who sees the whole approach. Seven kiwis, one of them a laser kiwi inside the walls. Take the tower or never be where it looks.",
+	{"path": "res://Levels/level_03.tscn", "name": "The Summit", "par": 130.0, "reinforcements": true, "reinforce_time": 45.0,
+		"brief": "A walled compound with a watchtower, a sniper on it who sees the whole approach, two armoured laser kiwis, a mortar and a horn in the yard. If the horn goes, a gunship follows in forty-five seconds: get under something or leave.",
 		"image": "res://UI/missions/level_03.png"},
 ]
 
@@ -49,8 +51,16 @@ const OPEN_AT_START := 2
 const POINTS_PER_TARGET := 100
 const ACCURACY_BONUS := 250
 const TIME_BONUS_PER_SECOND := 4
-## the stealth reward. a bb that misses is silent, so the only way to lose this is to be seen.
+## the stealth reward. a bb that misses is silent, so the only way to lose this is to be seen, and
+## it is paid on how long the compound stayed hot rather than on how many birds saw you.
 const STEALTH_BONUS := 400
+## the alarm never went up at all, not once, not briefly. a cliff and not a curve on purpose: "they
+## never knew you were there" is a different thing from "they nearly caught you", and the design
+## promise is that the first one is always possible.
+const GHOST_BONUS := 300
+## how long you may be hot before the stealth term is spent, as a fraction of par. a mission that
+## expects more time also allows more trouble, which is why it is per mission like par is.
+const ALARM_BUDGET_OF_PAR := 0.5
 
 ## the letter rates the run; the points are the wage, and they are different questions. a mission with
 ## seven kiwis pays more than one with three, so a grade built on the total would say the big mission
@@ -127,6 +137,11 @@ func begin_level(level: Node) -> void:
 	_level_score = 0
 	_awareness.clear()
 	_alert_level = 0.0
+	## the garrison forgets everything between missions, and only the finale calls the gunship.
+	Alarm.reset()
+	Alarm.reinforcements_enabled = bool(current().get("reinforcements", false))
+	Alarm.reinforce_time = float(current().get("reinforce_time", Alarm.REINFORCE_TIME))
+	Squad.reset()
 
 	var kiwis := _kiwis_in(level)
 	targets_total = kiwis.size()
@@ -190,6 +205,18 @@ func is_unlocked(index: int) -> bool:
 	return index >= 0 and index < LEVELS.size() and index < OPEN_AT_START + completed.size()
 
 
+## the mission the board should open on: the one after the furthest you have cleared, if it is
+## open, else the furthest open one. a fresh run opens on the first.
+func suggested_level() -> int:
+	var furthest := -1
+	for i in completed.keys():
+		furthest = maxi(furthest, int(i))
+	var next := clampi(furthest + 1, 0, LEVELS.size() - 1)
+	while next > 0 and not is_unlocked(next):
+		next -= 1
+	return next
+
+
 func unlock_needs(index: int) -> int:
 	return maxi(0, index + 1 - OPEN_AT_START - completed.size())
 
@@ -210,12 +237,20 @@ func accuracy_ratio() -> float:
 	return clampf(float(targets_down) / float(maxi(shots_fired, targets_down)), 0.0, 1.0)
 
 
-## the same squared curve the stealth bonus pays on, so the letter and the money agree about being seen.
+func alarm_budget() -> float:
+	return float(current()["par"]) * ALARM_BUDGET_OF_PAR
+
+
+## time spent hot against the budget. it used to be the square of the share of birds that never saw
+## you, and that stopped meaning anything the moment one bird could tell the rest: the count went
+## to everyone at once and forty percent of the letter became a coin flip. time is continuous, so
+## it already punishes in proportion and needs no curve on top; the same number pays the bonus, so
+## the letter and the money agree about being seen.
 func stealth_ratio() -> float:
-	if targets_total <= 0:
-		return 0.0
-	var unseen := float(maxi(targets_total - detections, 0)) / float(targets_total)
-	return unseen * unseen
+	var hot := Alarm.alarm_time()
+	if hot <= 0.0:
+		return 1.0
+	return clampf(1.0 - hot / maxf(alarm_budget(), 0.001), 0.0, 1.0)
 
 
 func time_ratio() -> float:
@@ -405,12 +440,17 @@ func _score_level() -> int:
 	return base + accuracy_points + time_points + stealth_points()
 
 
-## the whole bonus for a clean infiltration, and a slice of it back for every bird you did not spook.
+## the bonus shrinks with every second the compound was hot, and a run that never woke it at all is
+## paid the ghost bonus on top.
 func stealth_points() -> int:
 	if targets_total <= 0:
 		return 0
-	var unseen := float(maxi(targets_total - detections, 0)) / float(targets_total)
-	return int(round(STEALTH_BONUS * unseen * unseen))
+	var earned := int(round(STEALTH_BONUS * stealth_ratio()))
+	return earned + (GHOST_BONUS if not Alarm.was_ever_hot() else 0)
+
+
+func was_ghost() -> bool:
+	return not Alarm.was_ever_hot()
 
 
 func _summary() -> Dictionary:
@@ -426,6 +466,9 @@ func _summary() -> Dictionary:
 		"par": float(current()["par"]),
 		"detections": detections,
 		"stealth": stealth_points(),
+		"alarm_time": Alarm.alarm_time(),
+		"alarm_budget": alarm_budget(),
+		"ghost": was_ghost(),
 		"grade": grade_ratio(),
 		"letter": grade_letter(grade_ratio()),
 		"grade_stealth": stealth_ratio(),

@@ -11,11 +11,13 @@ const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 @onready var mode_icon: FireModeIcon = %ModeIcon
 @onready var mode_hint: Label = %ModeHint
 @onready var hopup_label: Label = %Hopup
+@onready var gear_label: Label = %Gear
 @onready var message_label: Label = %Message
 @onready var prompt_label: Label = %Prompt
 @onready var objective_label: Label = %Objective
 @onready var targets_label: Label = %Targets
 @onready var timer_label: Label = %Timer
+@onready var alarm_label: Label = %Alarm
 @onready var report_card: ReportCard = %ReportCard
 @onready var alert_ring: AlertRing = %AlertRing
 @onready var status_label: Label = %Status
@@ -59,6 +61,11 @@ func _ready() -> void:
 	Run.run_finished.connect(_on_run_finished)
 	Run.watcher_changed.connect(_on_watcher_changed)
 	Run.detections_changed.connect(_on_detections_changed)
+	## the ring says WHO is noticing you; this strip says HOW BAD it is for the whole compound, and
+	## how long until it gets worse. the two do not overlap.
+	Alarm.stage_changed.connect(_on_alarm_stage)
+	Alarm.reinforcements_changed.connect(_on_reinforcements)
+	_refresh_alarm()
 	## the bb that landed is the only thing that knows what it landed on, and it is gone a frame
 	## later. Run carries the word across because it is the one node both ends already know.
 	Run.shot_hit.connect(hit_marker.strike)
@@ -78,9 +85,11 @@ func _style() -> void:
 	## the brief wants these two permanently on screen. they stay, quietly, and speak up on change.
 	HudStyle.tune(mass_label, HudStyle.T_MICRO, HudStyle.FAINT)
 	HudStyle.tune(hopup_label, HudStyle.T_MICRO, HudStyle.FAINT)
+	HudStyle.tune(gear_label, HudStyle.T_MICRO, HudStyle.FAINT)
 	HudStyle.tune(objective_label, HudStyle.T_LABEL, HudStyle.DIM)
 	HudStyle.tune(targets_label, HudStyle.T_VALUE, HudStyle.BRIGHT)
 	HudStyle.tune(timer_label, HudStyle.T_UNIT, HudStyle.FAINT)
+	HudStyle.tune(alarm_label, HudStyle.T_LABEL, HudStyle.HOT)
 	HudStyle.tune(status_label, HudStyle.T_VALUE, HudStyle.ALERT)
 	HudStyle.tune(message_label, HudStyle.T_VALUE, HudStyle.HOT)
 	HudStyle.tune(prompt_label, HudStyle.T_UNIT, HudStyle.BRIGHT)
@@ -113,6 +122,17 @@ func _bind_weapon() -> void:
 		_pouch.refused.connect(_on_pouch_refused)
 		_pouch.added.connect(_on_spare_added)
 	_update_spare()
+
+	## the thrown magazines sit with the other quiet figures and speak up when one is thrown
+	var throw := get_tree().get_first_node_in_group("distraction")
+	if throw != null:
+		throw.changed.connect(_on_gear_changed)
+		_on_gear_changed(throw.count, throw.max_count)
+
+
+func _on_gear_changed(count: int, max_count: int) -> void:
+	gear_label.text = "[%s] MAG  x%d" % [_key_label(&"throw"), count] if max_count > 0 else ""
+	pulse(gear_label)
 
 
 ## the hud listens to exactly one weapon at a time. switching moves every connection over,
@@ -200,6 +220,33 @@ func _on_detections_changed(count: int) -> void:
 	_last_detections = count
 
 
+## hidden while the compound is calm. SEARCHING in the ring's amber, ALARM in its red, and the
+## seconds to the reinforcements next to the word once they are counting. signals only, no polling.
+func _on_alarm_stage(_stage: int) -> void:
+	_refresh_alarm()
+
+
+func _on_reinforcements(_seconds_left: float) -> void:
+	_refresh_alarm()
+
+
+func _refresh_alarm() -> void:
+	if Alarm.stage == Alarm.Stage.CALM or Run.state != Run.State.PLAYING:
+		alarm_label.text = ""
+		return
+	var text := Alarm.stage_name()
+	var left := Alarm.reinforcements_left()
+	if left >= 0.0:
+		text += "   REINFORCEMENTS %s" % _clock(left)
+	alarm_label.text = text
+	alarm_label.add_theme_color_override("font_color",
+		HudStyle.ALERT if Alarm.stage == Alarm.Stage.ALARM else HudStyle.HOT)
+
+
+func alarm_text() -> String:
+	return alarm_label.text
+
+
 func flash_status(text: String, colour: Color) -> void:
 	if _status_tween != null and _status_tween.is_valid():
 		_status_tween.kill()
@@ -236,6 +283,7 @@ func _clear_field_readout() -> void:
 	objective_label.text = ""
 	targets_label.text = ""
 	timer_label.text = ""
+	alarm_label.text = ""
 	status_label.text = ""
 	_last_detections = -1
 

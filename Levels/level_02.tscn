@@ -4,8 +4,11 @@
 [ext_resource type="PackedScene" path="res://Guns/magazine/magazine_pickup.tscn" id="2_1jt1u"]
 [ext_resource type="PackedScene" path="res://Characters/kiwi.tscn" id="3_er0or"]
 [ext_resource type="PackedScene" path="res://Characters/laser_kiwi.tscn" id="4_laser"]
+[ext_resource type="PackedScene" path="res://Characters/sniper_kiwi.tscn" id="5_sniper"]
+[ext_resource type="PackedScene" path="res://Characters/mortar_kiwi.tscn" id="6_mortar"]
 [ext_resource type="Script" path="res://Levels/hill_ring.gd" id="90_hills"]
 [ext_resource type="Script" path="res://Levels/foliage.gd" id="91_foliage"]
+[ext_resource type="Script" path="res://Props/alarm_horn.gd" id="101_horn"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bhunq"]
 size = Vector3(200, 1, 200)
@@ -55,8 +58,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38.659, 0.00090, 48.693)
 [node name="Kiwi4" parent="StaticBody3D" instance=ExtResource("3_er0or")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.273, 0.00090, 57.656)
 
-[node name="Kiwi5" parent="StaticBody3D" instance=ExtResource("3_er0or")]
+[node name="SniperKiwi" parent="StaticBody3D" instance=ExtResource("5_sniper")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.936, 0.00090, 69.477)
+wander_radius = 0.0
+walk_chance = 0.0
+
+[node name="MortarKiwi" parent="StaticBody3D" instance=ExtResource("6_mortar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.0, 0.00090, 38.0)
 
 [node name="PlayerSpawn" type="Marker3D" parent="." groups=["player_spawn"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.632, 2.33, 136.366)
@@ -68,3 +76,7 @@ noise_seed = 8801
 [node name="Foliage" type="Node3D" parent="."]
 script = ExtResource("91_foliage")
 scatter_seed = 5150
+
+[node name="AlarmHorn" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.0, 0.0, 40.0)
+script = ExtResource("101_horn")

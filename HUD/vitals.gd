@@ -14,6 +14,9 @@ const LOW := Color(1.0, 0.35, 0.3)
 
 var _health: Health
 var _ratio := 1.0
+## where regeneration stops, drawn as a tick so the player can see where it will stop rather than
+## wondering why it did. 1.0 means no cap.
+var _cap := 1.0
 var _show := 0.0
 var _flash := 0.0
 var _rim: TextureRect
@@ -54,6 +57,7 @@ func watch(player: Node) -> void:
 	_health.health_changed.connect(_on_health)
 	_health.damaged.connect(_on_damaged)
 	_ratio = _health.current / maxf(_health.max_health, 0.001)
+	_cap = clampf(float(player.get("regen_cap")), 0.0, 1.0) if "regen_cap" in player else 1.0
 	queue_redraw()
 
 
@@ -94,6 +98,9 @@ func _draw() -> void:
 		colour = colour.lerp(Color.WHITE, _flash * 0.6)
 	draw_rect(Rect2(BAR_POS, Vector2(BAR_SIZE.x * clampf(_ratio, 0.0, 1.0), BAR_SIZE.y)), Color(colour, a), true)
 	draw_rect(Rect2(BAR_POS, BAR_SIZE), Color(1.0, 1.0, 1.0, 0.25 * a), false, 1.0)
+	if _cap < 0.999:
+		var x := BAR_POS.x + BAR_SIZE.x * _cap
+		draw_line(Vector2(x, BAR_POS.y - 4.0), Vector2(x, BAR_POS.y + BAR_SIZE.y + 4.0), Color(1.0, 1.0, 1.0, 0.6 * a), 2.0)
 
 
 func showing() -> bool:
@@ -102,3 +109,7 @@ func showing() -> bool:
 
 func ratio() -> float:
 	return _ratio
+
+
+func cap() -> float:
+	return _cap
