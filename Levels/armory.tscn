@@ -1,17 +1,17 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene format=3 uid="uid://bat8pjypmauq1"]
 
-[ext_resource type="Script" path="res://Levels/armory_room.gd" id="1_room"]
-[ext_resource type="Shader" path="res://Shaders/grid_floor.gdshader" id="2_grid"]
-[ext_resource type="Script" path="res://Components/interactable.gd" id="3_inter"]
-[ext_resource type="Script" path="res://Levels/range_target.gd" id="4_target"]
-[ext_resource type="Script" path="res://Props/prop.gd" id="5_prop"]
-[ext_resource type="Script" path="res://Levels/mission_board_3d.gd" id="6_board"]
-[ext_resource type="PackedScene" path="res://Models/Props/wall_hr_1.glb" id="m_wall"]
-[ext_resource type="PackedScene" path="res://Models/Props/toolbox_mx_1.glb" id="m_toolbox"]
-[ext_resource type="PackedScene" path="res://Models/Props/supply_crate_1.glb" id="m_supply"]
-[ext_resource type="PackedScene" path="res://Models/Props/wooden_crate_1.glb" id="m_crate1"]
-[ext_resource type="PackedScene" path="res://Models/Props/barricade_b_4.glb" id="m_bar"]
-[ext_resource type="PackedScene" path="res://Models/Props/shipping_container_mx_1.glb" id="m_container"]
+[ext_resource type="Script" uid="uid://mqcvgugsyxwe" path="res://Levels/armory_room.gd" id="1_room"]
+[ext_resource type="Shader" uid="uid://cklqih7708id7" path="res://Shaders/grid_floor.gdshader" id="2_grid"]
+[ext_resource type="Script" uid="uid://bppo7heu40u4f" path="res://Components/interactable.gd" id="3_inter"]
+[ext_resource type="Script" uid="uid://d1d8ife10a532" path="res://Levels/range_target.gd" id="4_target"]
+[ext_resource type="Script" uid="uid://ce7thhydb1ntv" path="res://Props/prop.gd" id="5_prop"]
+[ext_resource type="Script" uid="uid://d0pcr78tjv351" path="res://Levels/mission_board_3d.gd" id="6_board"]
+[ext_resource type="PackedScene" uid="uid://c0cdoivyho4dv" path="res://Models/Props/barricade_b_4.glb" id="m_bar"]
+[ext_resource type="PackedScene" uid="uid://neeyatftobvw" path="res://Models/Props/shipping_container_mx_1.glb" id="m_container"]
+[ext_resource type="PackedScene" uid="uid://c1rvbshlk47qy" path="res://Models/Props/wooden_crate_1.glb" id="m_crate1"]
+[ext_resource type="PackedScene" uid="uid://dn3ueaxw2ww60" path="res://Models/Props/supply_crate_1.glb" id="m_supply"]
+[ext_resource type="PackedScene" uid="uid://cuodaad3728t1" path="res://Models/Props/toolbox_mx_1.glb" id="m_toolbox"]
+[ext_resource type="PackedScene" uid="uid://boxkc8nutfjc1" path="res://Models/Props/wall_hr_1.glb" id="m_wall"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
 size = Vector3(60, 1, 90)
@@ -20,6 +20,7 @@ size = Vector3(60, 1, 90)
 size = Vector3(60, 1, 90)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_floor"]
+render_priority = 0
 shader = ExtResource("2_grid")
 shader_parameter/base_color = Color(0.24, 0.25, 0.23, 1)
 shader_parameter/minor_color = Color(0.3, 0.32, 0.3, 1)
@@ -38,102 +39,109 @@ size = Vector3(1.6, 0.9, 0.7)
 albedo_color = Color(0.3, 0.22, 0.14, 1)
 roughness = 0.9
 
-[node name="Armory" type="Node3D"]
+[node name="Armory" type="Node3D" unique_id=1130350408]
 script = ExtResource("1_room")
 
-[node name="Floor" type="StaticBody3D" parent="."]
+[node name="Floor" type="StaticBody3D" parent="." unique_id=1499369779]
 
-[node name="Shape" type="CollisionShape3D" parent="Floor"]
+[node name="Shape" type="CollisionShape3D" parent="Floor" unique_id=143906102]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -15)
 shape = SubResource("BoxShape3D_floor")
 
-[node name="Mesh" type="MeshInstance3D" parent="Floor"]
+[node name="Mesh" type="MeshInstance3D" parent="Floor" unique_id=748824608]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -15)
 mesh = SubResource("BoxMesh_floor")
 surface_material_override/0 = SubResource("ShaderMaterial_floor")
 
-[node name="PlayerSpawn" type="Marker3D" parent="." groups=["player_spawn"]]
+[node name="PlayerSpawn" type="Marker3D" parent="." unique_id=1150287690 groups=["player_spawn"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 12)
 
-[node name="Bench" type="StaticBody3D" parent="."]
+[node name="Bench" type="StaticBody3D" parent="." unique_id=803071215]
 transform = Transform3D(0.94, 0, 0.342, 0, 1, 0, -0.342, 0, 0.94, 3.2, 0, 9.5)
 
-[node name="Shape" type="CollisionShape3D" parent="Bench"]
+[node name="Shape" type="CollisionShape3D" parent="Bench" unique_id=834711240]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
 shape = SubResource("BoxShape3D_bench")
 
-[node name="Mesh" type="MeshInstance3D" parent="Bench"]
+[node name="Mesh" type="MeshInstance3D" parent="Bench" unique_id=344343064]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
 mesh = SubResource("BoxMesh_bench")
 surface_material_override/0 = SubResource("Material_bench")
 
-[node name="Toolbox" type="StaticBody3D" parent="Bench"]
+[node name="Toolbox" type="StaticBody3D" parent="Bench" unique_id=814386828]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0.9, 0)
+collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_toolbox")
 
-[node name="Interactable" type="Node" parent="Bench"]
+[node name="Interactable" type="Node" parent="Bench" unique_id=2127236859]
 script = ExtResource("3_inter")
 prompt = "Open the bench"
 
-[node name="Targets" type="Node3D" parent="."]
+[node name="Targets" type="Node3D" parent="." unique_id=1917169528]
 
-[node name="Target10" type="StaticBody3D" parent="Targets"]
+[node name="Target10" type="StaticBody3D" parent="Targets" unique_id=1726549693]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 2)
 script = ExtResource("4_target")
 distance_label = "10 m"
 
-[node name="Target25" type="StaticBody3D" parent="Targets"]
+[node name="Target25" type="StaticBody3D" parent="Targets" unique_id=1234324592]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -13)
 script = ExtResource("4_target")
 distance_label = "25 m"
 
-[node name="Target40" type="StaticBody3D" parent="Targets"]
+[node name="Target40" type="StaticBody3D" parent="Targets" unique_id=201832117]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -28)
 script = ExtResource("4_target")
 distance_label = "40 m"
 
-[node name="Target60" type="StaticBody3D" parent="Targets"]
+[node name="Target60" type="StaticBody3D" parent="Targets" unique_id=1674011672]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -48)
 script = ExtResource("4_target")
 distance_label = "60 m"
 
-[node name="Props" type="Node3D" parent="."]
+[node name="Props" type="Node3D" parent="." unique_id=525910178]
 
-[node name="Backstop" type="StaticBody3D" parent="Props"]
+[node name="Backstop" type="StaticBody3D" parent="Props" unique_id=406125585]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, -56)
+collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_container")
 
-[node name="Divider1" type="StaticBody3D" parent="Props"]
+[node name="Divider1" type="StaticBody3D" parent="Props" unique_id=748834246]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -7, 0, 6)
+collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_bar")
 
-[node name="Divider2" type="StaticBody3D" parent="Props"]
+[node name="Divider2" type="StaticBody3D" parent="Props" unique_id=1495207473]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 7, 0, 6)
+collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_bar")
 
-[node name="Crate1" type="StaticBody3D" parent="Props"]
+[node name="Crate1" type="StaticBody3D" parent="Props" unique_id=466680461]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 11)
+collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_supply")
 
-[node name="Crate2" type="StaticBody3D" parent="Props"]
+[node name="Crate2" type="StaticBody3D" parent="Props" unique_id=968169069]
 transform = Transform3D(0.866, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866, -5.5, 0, 12.2)
+collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_crate1")
 
-[node name="BoardWall" type="StaticBody3D" parent="Props"]
+[node name="BoardWall" type="StaticBody3D" parent="Props" unique_id=1413976730]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -6.5, 0, 9)
+collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="Board" type="StaticBody3D" parent="."]
+[node name="Board" type="StaticBody3D" parent="." unique_id=1637102833]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -6.2, 1.55, 9)
 script = ExtResource("6_board")
 
-[node name="Interactable" type="Node" parent="Board"]
+[node name="Interactable" type="Node" parent="Board" unique_id=967561857]
 script = ExtResource("3_inter")
 prompt = "Open the mission board"
