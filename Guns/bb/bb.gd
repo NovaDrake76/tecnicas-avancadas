@@ -55,6 +55,9 @@ func _on_impact(point: Vector3, normal: Vector3, hit_body: Object) -> void:
 	var target := hit_body != null and is_instance_valid(hit_body) and hit_body.has_method("take_bb_hit")
 	if target:
 		hit_body.take_bb_hit(1.0, point)
+		## asked AFTER the hit, so a kiwi that this bb just put down answers yes and the marker
+		## comes up red. a range target has no such answer and gets the plain one.
+		Run.report_hit(hit_body.has_method("is_down") and hit_body.is_down())
 
 	## decals belong on static world surfaces only, a hole stamped on a kiwi hangs in the air once it moves.
 	if mark_surface and not target:

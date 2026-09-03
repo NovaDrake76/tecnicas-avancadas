@@ -5,6 +5,7 @@ const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 
 @onready var type_label: Label = %Type
 @onready var ammo_label: Label = %Ammo
+@onready var capacity_label: Label = %Capacity
 @onready var mass_label: Label = %Mass
 @onready var mode_label: Label = %Mode
 @onready var mode_icon: FireModeIcon = %ModeIcon
@@ -13,11 +14,13 @@ const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 @onready var message_label: Label = %Message
 @onready var prompt_label: Label = %Prompt
 @onready var objective_label: Label = %Objective
+@onready var targets_label: Label = %Targets
 @onready var timer_label: Label = %Timer
 @onready var report_card: ReportCard = %ReportCard
 @onready var alert_ring: AlertRing = %AlertRing
-@onready var stealth_label: Label = %Stealth
-@onready var crosshair: Label = %Crosshair
+@onready var status_label: Label = %Status
+@onready var crosshair: Crosshair = %Crosshair
+@onready var hit_marker: HitMarker = %HitMarker
 @onready var spare_label: Label = %Spare
 @onready var reload_ring: ReloadRing = %ReloadRing
 @onready var vitals: Vitals = %Vitals
@@ -29,6 +32,9 @@ var _flash_tween: Tween
 var _aim_tween: Tween
 var _spare_tween: Tween
 var _aiming := false
+## -1 until a level has said what the count is, so the first value is not a change.
+var _last_detections := -1
+var _status_tween: Tween
 var _pouch: MagazinePouch
 
 
@@ -36,9 +42,8 @@ func _ready() -> void:
 	add_to_group("hud")
 	message_label.text = ""
 	prompt_label.text = ""
-	objective_label.text = ""
-	timer_label.text = ""
-	stealth_label.text = ""
+	_style()
+	_clear_field_readout()
 	alert_ring.clear()
 	## the key is read off the input map instead of typed into the scene, so a rebind can
 	## never leave the hud telling the player to press a key that does nothing.
@@ -54,8 +59,31 @@ func _ready() -> void:
 	Run.run_finished.connect(_on_run_finished)
 	Run.watcher_changed.connect(_on_watcher_changed)
 	Run.detections_changed.connect(_on_detections_changed)
+	## the bb that landed is the only thing that knows what it landed on, and it is gone a frame
+	## later. Run carries the word across because it is the one node both ends already know.
+	Run.shot_hit.connect(hit_marker.strike)
 
 	_bind_weapon.call_deferred()
+
+
+## every size and colour comes from HudStyle rather than from a theme override typed into the
+## scene, so the scale stays in one file and a new label cannot invent a fourteenth size.
+func _style() -> void:
+	HudStyle.tune(type_label, HudStyle.T_LABEL, HudStyle.DIM)
+	HudStyle.tune(ammo_label, HudStyle.T_HERO, HudStyle.BRIGHT)
+	HudStyle.tune(capacity_label, HudStyle.T_UNIT, HudStyle.DIM)
+	HudStyle.tune(spare_label, HudStyle.T_UNIT, HudStyle.DIM)
+	HudStyle.tune(mode_hint, HudStyle.T_LABEL, HudStyle.FAINT)
+	HudStyle.tune(mode_label, HudStyle.T_VALUE, HudStyle.HOT)
+	## the brief wants these two permanently on screen. they stay, quietly, and speak up on change.
+	HudStyle.tune(mass_label, HudStyle.T_MICRO, HudStyle.FAINT)
+	HudStyle.tune(hopup_label, HudStyle.T_MICRO, HudStyle.FAINT)
+	HudStyle.tune(objective_label, HudStyle.T_LABEL, HudStyle.DIM)
+	HudStyle.tune(targets_label, HudStyle.T_VALUE, HudStyle.BRIGHT)
+	HudStyle.tune(timer_label, HudStyle.T_UNIT, HudStyle.FAINT)
+	HudStyle.tune(status_label, HudStyle.T_VALUE, HudStyle.ALERT)
+	HudStyle.tune(message_label, HudStyle.T_VALUE, HudStyle.HOT)
+	HudStyle.tune(prompt_label, HudStyle.T_UNIT, HudStyle.BRIGHT)
 
 
 func _bind_weapon() -> void:
@@ -103,6 +131,7 @@ func _follow_weapon(gun: Gun) -> void:
 		sig.connect(pair[1])
 	_weapon.emit_state()
 	reload_ring.watch(_weapon)
+	crosshair.watch(_weapon)
 	_update_spare()
 	show_message(_weapon.weapon_model)
 
@@ -112,6 +141,7 @@ func _weapon_signals() -> Array:
 		["ammo_changed", _on_ammo_changed],
 		["magazine_changed", _on_magazine_changed],
 		["fire_mode_changed", _on_fire_mode_changed],
+		["fired", _on_weapon_fired],
 		["hopup_changed", _on_hopup_changed],
 		["fire_failed", _on_fire_failed],
 		["magazine_rejected", _on_magazine_rejected],
@@ -137,15 +167,18 @@ func _on_level_started(_index: int, _name: String) -> void:
 ## and a range, each with its own prompt when you look at it.
 func _on_armory_entered(_next_index: int, _name: String) -> void:
 	report_card.hide_card()
-	timer_label.text = ""
-	stealth_label.text = ""
+	_clear_field_readout()
 	alert_ring.clear()
 	objective_label.text = "ARMORY"
 	_clear_message()
 
 
+## the caption names the job and the count is the thing you glance at, so they are two labels at
+## two sizes rather than one sentence with numbers buried in it.
 func _on_targets_changed(_down: int, _total: int) -> void:
-	objective_label.text = Run.objective_text()
+	## upper case because it is a caption naming the job, not a sentence being said to the player.
+	objective_label.text = Run.objective_caption().to_upper()
+	targets_label.text = Run.objective_count()
 
 
 func _on_time_changed(seconds: float) -> void:
@@ -158,9 +191,24 @@ func _on_watcher_changed(kiwi: Node3D, value: float) -> void:
 	alert_ring.set_watcher(kiwi, value)
 
 
+## being spotted is an EVENT, so it is announced and then it goes. a line that sits there saying
+## UNDETECTED for a whole mission is telling the player something they already know; the ring of
+## arcs is what carries the live state, one arc per bird, at its bearing.
 func _on_detections_changed(count: int) -> void:
-	stealth_label.text = Run.stealth_text()
-	stealth_label.modulate = ALERT_COLOR if count > 0 else CLEAR_COLOR
+	if _last_detections >= 0 and count > _last_detections:
+		flash_status(Run.stealth_text(), HudStyle.ALERT)
+	_last_detections = count
+
+
+func flash_status(text: String, colour: Color) -> void:
+	if _status_tween != null and _status_tween.is_valid():
+		_status_tween.kill()
+	status_label.text = text
+	status_label.add_theme_color_override("font_color", colour)
+	status_label.modulate.a = 1.0
+	_status_tween = create_tween()
+	_status_tween.tween_interval(1.8)
+	_status_tween.tween_property(status_label, "modulate:a", 0.0, 0.5)
 
 
 func _on_level_cleared(_index: int, summary: Dictionary) -> void:
@@ -186,8 +234,10 @@ func _on_run_finished(summary: Dictionary) -> void:
 ## was showing them stands down rather than competing with it.
 func _clear_field_readout() -> void:
 	objective_label.text = ""
+	targets_label.text = ""
 	timer_label.text = ""
-	stealth_label.text = ""
+	status_label.text = ""
+	_last_detections = -1
 
 
 func _clock(seconds: float) -> String:
@@ -210,8 +260,11 @@ func _key_label(action: StringName) -> String:
 	return String(action).to_upper()
 
 
+## the count is the hero and the capacity hangs off it at a third of the size, which is the whole
+## of the trick in the reference sheet: one number to read, one to check.
 func _on_ammo_changed(count: int, capacity: int) -> void:
-	ammo_label.text = "%d / %d" % [count, capacity]
+	ammo_label.text = "%d" % count
+	capacity_label.text = "/ %d" % capacity
 
 
 func _on_magazine_changed(mag: Magazine) -> void:
@@ -221,6 +274,7 @@ func _on_magazine_changed(mag: Magazine) -> void:
 		return
 	type_label.text = "%s   %s" % [_weapon.weapon_model if _weapon != null else "", mag.type_label().to_upper()]
 	mass_label.text = "%.2f g" % mag.mass_grams()
+	pulse(mass_label)
 
 
 func _on_fire_mode_changed(mode: Gun.FireMode) -> void:
@@ -231,10 +285,17 @@ func _on_fire_mode_changed(mode: Gun.FireMode) -> void:
 	mode_hint.modulate.a = 1.0 if can_auto else 0.35
 
 
+## every shot throws the aim about a little, and the reticle opens by exactly one shot's worth.
+## taken off the weapon's own signal, so it can never disagree with how many bbs left the barrel.
+func _on_weapon_fired(_speed: float, _mass_kg: float) -> void:
+	crosshair.bloom()
+
+
 func _on_hopup_changed(value: float, min_value: float, max_value: float) -> void:
 	var span := max_value - min_value
 	var pct := 0.0 if span <= 0.0 else (value - min_value) / span * 100.0
-	hopup_label.text = "HOP-UP  %.0f%%  (%.5f)" % [pct, value]
+	hopup_label.text = "HOP-UP  %.0f%%" % pct
+	pulse(hopup_label)
 
 
 func _on_fire_failed(reason: Gun.FireBlock, message: String) -> void:
@@ -290,6 +351,14 @@ func _on_pouch_refused(message: String) -> void:
 	show_message(message)
 	blink_spare()
 	buzz()
+
+
+## a figure that lives at the bottom of the block in half tone, brightened for a moment when it
+## changes. that is how the hop-up can answer the wheel without shouting for the rest of the run,
+## and it stays on screen the whole time, which the brief requires and a fade out would break.
+func pulse(label: Label) -> void:
+	label.modulate = Color(1.7, 1.5, 0.95, 2.0)
+	create_tween().tween_property(label, "modulate", Color.WHITE, 0.8)
 
 
 func blink_spare() -> void:

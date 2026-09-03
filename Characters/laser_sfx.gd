@@ -24,7 +24,7 @@ static func zap() -> AudioStreamWAV:
 			phase += TAU * f / RATE
 			var env := exp(-u * 5.0) * (1.0 - u)
 			out[i] = tanh((sin(phase) * 0.9 + (randf() * 2.0 - 1.0) * 0.25) * env * 1.6)
-		_cache["zap"] = _make(out, false)
+		_cache["zap"] = Tone.wav(out)
 	return _cache["zap"]
 
 
@@ -45,7 +45,7 @@ static func charge(duration: float) -> AudioStreamWAV:
 			var trem := 1.0 - 0.45 * (0.5 + 0.5 * sin(trem_phase))
 			var env := (0.18 + 0.82 * u * u) * trem
 			out[i] = tanh((sin(phase) + 0.4 * sin(2.0 * phase)) * env * 1.1)
-		_cache[key] = _make(out, false)
+		_cache[key] = Tone.wav(out)
 	return _cache[key]
 
 
@@ -63,7 +63,7 @@ static func beam() -> AudioStreamWAV:
 			v += 0.5 * sin(TAU * 192.0 * t)
 			var wobble := 0.7 + 0.3 * sin(TAU * 26.0 * t)
 			out[i] = tanh((v * 0.45 + (randf() * 2.0 - 1.0) * 0.08) * wobble * 1.3)
-		_cache["beam"] = _make(out, true)
+		_cache["beam"] = Tone.wav(out, true)
 	return _cache["beam"]
 
 
@@ -78,23 +78,5 @@ static func hit() -> AudioStreamWAV:
 			var u := float(i) / float(n)
 			var env := exp(-u * 7.0)
 			out[i] = tanh(((randf() * 2.0 - 1.0) * 0.7 + sin(TAU * 70.0 * t) * 0.9) * env * 1.4)
-		_cache["hit"] = _make(out, false)
+		_cache["hit"] = Tone.wav(out)
 	return _cache["hit"]
-
-
-static func _make(samples: PackedFloat32Array, loop: bool) -> AudioStreamWAV:
-	var n := samples.size()
-	var bytes := PackedByteArray()
-	bytes.resize(n * 2)
-	for i in n:
-		bytes.encode_s16(i * 2, int(clampf(samples[i], -1.0, 1.0) * 32767.0))
-	var wav := AudioStreamWAV.new()
-	wav.format = AudioStreamWAV.FORMAT_16_BITS
-	wav.mix_rate = RATE
-	wav.stereo = false
-	wav.data = bytes
-	if loop:
-		wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
-		wav.loop_begin = 0
-		wav.loop_end = n
-	return wav

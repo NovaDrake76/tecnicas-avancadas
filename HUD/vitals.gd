@@ -69,6 +69,10 @@ func _on_damaged(amount: float, _current: float) -> void:
 
 
 func _process(delta: float) -> void:
+	## the same trap the reticle had: a player that was freed leaves this watching a dead Health.
+	if _health != null and not is_instance_valid(_health):
+		_health = null
+		watch(get_tree().get_first_node_in_group("player"))
 	_flash = maxf(0.0, _flash - delta * 3.2)
 	var missing := 1.0 - _ratio
 	_rim.modulate.a = clampf(_flash * 0.85 + missing * missing * 0.7, 0.0, 1.0)

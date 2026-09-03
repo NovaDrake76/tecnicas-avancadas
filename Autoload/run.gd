@@ -24,6 +24,9 @@ signal state_changed(state: int)
 signal alert_changed(value: float)
 signal watcher_changed(kiwi: Node3D, value: float)
 signal detections_changed(count: int)
+## a bb landed on something that could be hit, and whether that put it down. only the hud listens:
+## nothing is counted here, the score already counts what went down and what was fired.
+signal shot_hit(lethal: bool)
 
 ## a level is a scene path and the time you are expected to need. beating par is worth points.
 ## a mission is a scene, a name, the time you are expected to need (beating it is worth points), a
@@ -149,6 +152,12 @@ func begin_level(level: Node) -> void:
 		_clear_level()
 
 
+## called by the bb itself. it is the only thing that knows what it hit, and it is freed a frame
+## later, so it hands the fact over rather than expecting anyone to have watched it fly.
+func report_hit(lethal: bool) -> void:
+	shot_hit.emit(lethal)
+
+
 func alert_level() -> float:
 	return _alert_level
 
@@ -163,6 +172,16 @@ func objective_text() -> String:
 	if targets_total == 0:
 		return "No targets"
 	return "Take out the kiwis  %d / %d" % [targets_down, targets_total]
+
+
+## the same objective in two pieces, for a hud that draws the name and the count at two sizes.
+## the wording stays here: what the mission asks for is the run's business, not the overlay's.
+func objective_caption() -> String:
+	return "No targets" if targets_total == 0 else "Take out the kiwis"
+
+
+func objective_count() -> String:
+	return "" if targets_total == 0 else "%d / %d" % [targets_down, targets_total]
 
 
 ## the unlock rule: the first OPEN_AT_START missions are open; each clear opens the next one. mission
