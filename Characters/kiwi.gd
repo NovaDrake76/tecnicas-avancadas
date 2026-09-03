@@ -8,7 +8,9 @@ signal downed(kiwi: Kiwi)
 signal alerted(kiwi: Kiwi)
 signal awareness_changed(kiwi: Kiwi, value: float)
 
-enum State { IDLE, WALK, DOWN, FLEE, LOOK }
+## HUNT and ATTACK belong to the laser kiwi; a plain kiwi never enters them, but the states live in
+## one enum so every guard in here can name them.
+enum State { IDLE, WALK, DOWN, FLEE, LOOK, HUNT, ATTACK, SUSPECT }
 
 @export_group("Wander")
 ## radius of the patch it stays inside, measured from wherever it was placed.
@@ -28,6 +30,15 @@ enum State { IDLE, WALK, DOWN, FLEE, LOOK }
 @export var look_time := 3.0
 ## how far off a noise it will settle for. it turns, it does not walk over to investigate.
 @export var look_turn_speed := 2.6
+
+@export_group("Suspicion")
+## clips that hold the head perfectly still. measured with probe_headsweep: IdleA and IdleC sweep
+## the cone 0.0 degrees, IdleB 55.7 and IdleD 167.8.
+@export var still_clips: Array[String] = ["IdleA", "IdleC"]
+## the body has to come round at least as fast as the head goes back to centre, or the cone would
+## swing off the target while the body was still catching up. the head returns over the clip blend,
+## about 320 deg/s; 6 rad/s is 344.
+@export var suspect_turn_speed := 6.0
 
 @export_group("Stealth")
 ## how far a burst carries. a kiwi with a clear line to one going down inside this raises the alarm.
@@ -92,6 +103,7 @@ var _home := Vector3.ZERO
 var _target := Vector3.ZERO
 var _detected := false
 var _call_timer := 0.0
+var _suspect_at := Vector3.ZERO
 
 
 func _ready() -> void:
@@ -173,8 +185,9 @@ func _physics_process(delta: float) -> void:
 
 	if _state != State.DOWN:
 		vision.poll(delta)
-	## a bird already shouting the alarm does not stop to chit chat.
-	if _state != State.DOWN and _state != State.FLEE:
+		_update_suspicion()
+	## a bird already shouting the alarm, or hunting, does not stop to chit chat.
+	if _is_calm():
 		## clamped rather than only counted down, so shortening the interval in the inspector
 		## takes effect on the wait already running instead of on the one after it.
 		_call_timer = minf(_call_timer, call_interval.y) - delta
@@ -188,6 +201,13 @@ func _physics_process(delta: float) -> void:
 			velocity.z = 0.0
 		State.FLEE:
 			_step_flee(delta)
+		State.SUSPECT:
+			velocity.x = move_toward(velocity.x, 0.0, walk_speed * 8.0 * delta)
+			velocity.z = move_toward(velocity.z, 0.0, walk_speed * 8.0 * delta)
+			## while it can still see, this follows; once it cannot, it holds the last place it did.
+			if vision.has_last_seen():
+				_suspect_at = vision.last_seen
+			_turn_to(_suspect_at, suspect_turn_speed, delta)
 		State.LOOK:
 			velocity.x = move_toward(velocity.x, 0.0, walk_speed * 4.0 * delta)
 			velocity.z = move_toward(velocity.z, 0.0, walk_speed * 4.0 * delta)
@@ -245,9 +265,38 @@ func _turn_to(point: Vector3, speed: float, delta: float) -> void:
 	rotation.y = rotate_toward(rotation.y, atan2(-dir.x, -dir.z), speed * delta)
 
 
+## the cone rides the HEAD, so a bird that has half noticed something must stop swinging it. this is
+## the 'what is that?' state: it stops where it is, holds its head still and squares its body up to
+## the spot. without it a bird could notice you and then have its own idle clip turn its head away
+## and cancel the detection, which reads as the bird being broken rather than as the player being
+## lucky. it costs the player the accident that used to save them: cover, crouch and distance are
+## the ways out now, which are the three the design already promised.
+func _update_suspicion() -> void:
+	if _state == State.SUSPECT:
+		if not vision.is_noticing():
+			_begin_idle()
+		return
+	if not _can_notice() or not vision.is_noticing():
+		return
+	_begin_suspect()
+
+
+## the still clip stops the head, and turning the BODY to where the eyes last had it is what keeps
+## the cone there while the head blends back to centre. it is also the tell the player can read: a
+## bird that has stopped and squared up to you has noticed something.
+func _begin_suspect() -> void:
+	_state = State.SUSPECT
+	_suspect_at = vision.last_seen if vision.has_last_seen() \
+		else global_position - global_transform.basis.z * 2.0
+	if not still_clips.is_empty():
+		_play(still_clips[randi() % still_clips.size()])
+
+
 ## something made a noise nearby. loud things carry further, which is the whole of the mechanic.
+## a bird that is already peering at something is not turned by a footstep: the eyes are the sense
+## that raises the alarm, so nothing may pull them off a target they have already half caught.
 func hear(at: Vector3, radius: float) -> void:
-	if not hearing or _state == State.DOWN or _state == State.FLEE:
+	if not hearing or _state == State.DOWN or _state == State.FLEE or _state == State.SUSPECT:
 		return
 	if global_position.distance_to(at) > radius:
 		return
@@ -261,6 +310,10 @@ func hear(at: Vector3, radius: float) -> void:
 
 func is_listening() -> bool:
 	return _state == State.LOOK
+
+
+func is_suspicious() -> bool:
+	return _state == State.SUSPECT
 
 
 func _decide() -> void:
@@ -390,6 +443,18 @@ func speak(band: Vector2, db: float) -> void:
 
 func is_down() -> bool:
 	return _state == State.DOWN
+
+
+## not alarmed and not down. a bird peering at something is still one of these: it keeps its calm
+## call, because the three voice bands are calm, alarm and going down, and suspicion is none of them.
+func _is_calm() -> bool:
+	return _can_notice() or _state == State.SUSPECT
+
+
+## the states a bird can be pulled out of by its own eyes. it is already looking from SUSPECT, and
+## everything else has either raised the alarm or is out of the fight.
+func _can_notice() -> bool:
+	return _state == State.IDLE or _state == State.WALK or _state == State.LOOK
 
 
 func is_fleeing() -> bool:

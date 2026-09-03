@@ -24,7 +24,9 @@ func _ready() -> void:
 func set_watcher(who: Node3D, value: float) -> void:
 	if who == null:
 		return
-	if value <= 0.02:
+	## the same threshold the bird itself acts on, so an arc on the ring means a bird that has
+	## stopped and squared up to you, never a bird still wandering about.
+	if value <= VisionCone.NOTICING:
 		_watchers.erase(who)
 	else:
 		_watchers[who] = value

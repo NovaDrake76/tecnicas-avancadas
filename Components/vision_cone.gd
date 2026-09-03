@@ -7,6 +7,11 @@ extends Node
 signal awareness_changed(value: float)
 signal spotted(target: Node3D)
 
+## the level at which a bird counts as NOTICING you: the hud puts an arc on the ring at its
+## bearing, and the bird itself stops and squares up to you. one number, so what you can see on
+## screen and what the bird is doing about it can never disagree.
+const NOTICING := 0.02
+
 @export_group("Head")
 ## the cone rides this bone, so the idle clips that turn the bird's head turn its cone with it.
 ## anything without a matching bone falls back to the way its body is facing.
@@ -34,6 +39,10 @@ signal spotted(target: Node3D)
 
 var awareness := 0.0
 var alerted := false
+## where the target was the last time these eyes actually had it. the owner turns to this when
+## the head goes back to centre, which is what stops the bird's own idle clip from swinging the
+## cone off something it has already half noticed.
+var last_seen := Vector3.ZERO
 
 var _body: Node3D
 var _target: Node3D
@@ -41,6 +50,7 @@ var _sent := 0.0
 var _skeleton: Skeleton3D
 var _bone := -1
 var _bone_forward := Vector3.FORWARD
+var _seen_once := false
 
 
 func _ready() -> void:
@@ -65,6 +75,8 @@ func poll(delta: float) -> void:
 
 	var exposure := exposure_to(_target)
 	if exposure > 0.0:
+		last_seen = _target.global_position
+		_seen_once = true
 		## standing in the open right in front of it is noticed in a moment, a far edge sighting takes a while.
 		awareness += (0.55 + exposure) * delta
 	else:
@@ -142,6 +154,19 @@ func rearm() -> void:
 
 func level() -> float:
 	return awareness / maxf(notice_time, 0.001)
+
+
+## more than a flicker of awareness: the bird has half caught something and is acting on it.
+func is_noticing() -> bool:
+	return level() > NOTICING
+
+
+func has_last_seen() -> bool:
+	return _seen_once
+
+
+func target() -> Node3D:
+	return _target
 
 
 ## the rig's bone axes are the rigger's business, so nothing here assumes one. at rest the bird
