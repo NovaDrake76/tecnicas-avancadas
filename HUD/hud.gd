@@ -39,6 +39,9 @@ func _ready() -> void:
 	timer_label.text = ""
 	stealth_label.text = ""
 	alert_ring.clear()
+	## the key is read off the input map instead of typed into the scene, so a rebind can
+	## never leave the hud telling the player to press a key that does nothing.
+	mode_hint.text = "[%s]" % _key_label(&"toggle_fire_mode")
 
 	Run.level_started.connect(_on_level_started)
 	report_card.dismissed.connect(func() -> void: Run.dismiss_results())

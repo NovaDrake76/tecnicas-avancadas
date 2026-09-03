@@ -8,6 +8,23 @@ signal back_pressed
 
 const TABS := ["VIDEO", "AUDIO", "CONTROLS"]
 
+## caption, then the actions whose keys it prints. one row can carry several, which is how the
+## four movement keys and the two lean keys read as one line each.
+const KEYS := [
+	["MOVE", ["move_forward", "move_left", "move_back", "move_right"]],
+	["SPRINT", ["sprint"]],
+	["CROUCH", ["crouch"]],
+	["JUMP", ["jump"]],
+	["LEAN (HOLD, THEN A / D)", ["lean_mode"]],
+	["FIRE", ["fire"]],
+	["AIM", ["aim"]],
+	["RELOAD", ["reload"]],
+	["FIRE MODE", ["toggle_fire_mode"]],
+	["INTERACT", ["interact"]],
+	["CYCLE WEAPON", ["weapon_next", "weapon_prev"]],
+	["WEAPON SLOTS", ["weapon_1", "weapon_2", "weapon_3", "weapon_4"]],
+]
+
 var _tab_buttons: Array[Button] = []
 var _pages: Array[Control] = []
 
@@ -88,7 +105,38 @@ func _controls() -> Control:
 		Settings.invert_look = on
 		Settings.commit())
 	page.add_child(invert)
+
+	MenuStyle.sheet_section(page, "KEYS")
+	for row in KEYS:
+		MenuStyle.sheet_kv(page, String(row[0]), _binding(row[1] as Array))
+	MenuStyle.sheet_kv(page, "HOP-UP", "MOUSE WHEEL")
 	return page
+
+
+## every key here is resolved from the input map, so the sheet says what the game actually
+## listens for rather than what someone typed the day it was written.
+func _binding(actions: Array) -> String:
+	var keys: Array[String] = []
+	for action in actions:
+		for event in InputMap.action_get_events(StringName(action)):
+			if event is InputEventKey:
+				keys.append(OS.get_keycode_string((event as InputEventKey).physical_keycode).to_upper())
+				break
+			if event is InputEventMouseButton:
+				keys.append(_mouse_name((event as InputEventMouseButton).button_index))
+				break
+	return "  ".join(keys)
+
+
+func _mouse_name(button: int) -> String:
+	match button:
+		MOUSE_BUTTON_LEFT:
+			return "LEFT MOUSE"
+		MOUSE_BUTTON_RIGHT:
+			return "RIGHT MOUSE"
+		MOUSE_BUTTON_MIDDLE:
+			return "MIDDLE MOUSE"
+	return "MOUSE %d" % button
 
 
 func _page() -> VBoxContainer:
