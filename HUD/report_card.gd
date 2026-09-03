@@ -21,6 +21,10 @@ const BAR_DELAY := 0.55
 const BAR_STEP := 0.16
 const BAR_TIME := 0.55
 const FOOTER_DELAY := 1.5
+## the card takes input only once it has finished playing, so the last shot's click cannot skip it
+const ARM_AFTER := 2.1
+
+signal dismissed
 
 var ring_ratio := 0.0:
 	set(value):
@@ -44,6 +48,8 @@ var _stats: Array[Label] = []
 var _footer: Control
 var _earned: Label
 var _best: Label
+var _hint: Label
+var _armed := false
 var _tweens: Array[Tween] = []
 
 
@@ -175,6 +181,10 @@ func _ready() -> void:
 	spread.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	money.add_child(spread)
 	_best = _text(money, "", 30, MenuStyle.DIM)
+	_gap(_footer, 18)
+	_hint = _text(_footer, "PRESS ENTER TO RETURN TO THE ARMORY", 15, MenuStyle.DIM)
+	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 
 func _build_ring() -> Control:
@@ -233,7 +243,29 @@ func is_showing() -> bool:
 
 func hide_card() -> void:
 	_kill()
+	_armed = false
 	visible = false
+
+
+func is_armed() -> bool:
+	return _armed
+
+
+## enter, space or the interact key once the card has played. the same path the probe takes.
+func try_dismiss() -> bool:
+	if not visible or not _armed:
+		return false
+	_armed = false
+	dismissed.emit()
+	return true
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible or not _armed:
+		return
+	if event.is_action_pressed("ui_accept") or event.is_action_pressed("interact"):
+		if try_dismiss():
+			get_viewport().set_input_as_handled()
 
 
 ## fills the card in from the summary, then plays it.
@@ -253,11 +285,13 @@ func play(s: Dictionary, title: String) -> void:
 	_best.text = "BEST  $%s" % MenuStyle.thousands(int(s.get("best", 0)))
 
 	visible = true
+	_armed = false
 	modulate.a = 0.0
 	ring_ratio = 0.0
 	for row in _rows:
 		row.fill = 0.0
 	_footer.modulate.a = 0.0
+	_hint.modulate.a = 0.0
 
 	var fade := create_tween()
 	fade.tween_property(self, "modulate:a", 1.0, FADE_IN)
@@ -282,6 +316,16 @@ func play(s: Dictionary, title: String) -> void:
 	tail.tween_property(_footer, "modulate:a", 1.0, 0.4)
 	_tweens.append(tail)
 
+	## the hint arrives last and breathes, so the eye lands on it after the numbers
+	var arm := create_tween()
+	arm.tween_interval(ARM_AFTER)
+	arm.tween_callback(func() -> void: _armed = true)
+	arm.tween_property(_hint, "modulate:a", 1.0, 0.4)
+	arm.set_loops()
+	arm.tween_property(_hint, "modulate:a", 0.45, 0.9).set_trans(Tween.TRANS_SINE)
+	arm.tween_property(_hint, "modulate:a", 1.0, 0.9).set_trans(Tween.TRANS_SINE)
+	_tweens.append(arm)
+
 
 ## the same card without the animation, for a probe that cannot wait two seconds of tweens.
 func show_now(s: Dictionary, title: String) -> void:
@@ -292,6 +336,8 @@ func show_now(s: Dictionary, title: String) -> void:
 	ring_ratio = clampf(float(s.get("grade", 0.0)), 0.0, 1.0)
 	for i in _rows.size():
 		_rows[i].fill = clampf(float(s.get(String(TERMS[i][1]), 0.0)), 0.0, 1.0)
+	_hint.modulate.a = 1.0
+	_armed = true
 
 
 func _kill() -> void:

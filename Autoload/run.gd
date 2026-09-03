@@ -15,6 +15,8 @@ signal armory_entered(next_index: int, name: String)
 signal targets_changed(down: int, total: int)
 signal time_changed(seconds: float)
 signal level_cleared(index: int, summary: Dictionary)
+## the player has read the report card and pressed the key. main takes the run home on this.
+signal results_dismissed
 signal run_finished(summary: Dictionary)
 signal state_changed(state: int)
 signal alert_changed(value: float)
@@ -59,8 +61,8 @@ const GRADE_TIME_ZERO := 2.0
 ## highest first. a clean, one-shot-each, unhurried run is a B; speed is what takes it to an A.
 const GRADES := [["A+", 0.95], ["A", 0.85], ["B", 0.70], ["C", 0.55], ["D", 0.35], ["F", 0.0]]
 
-## seconds the report card stays up before the safe house loads. the card plays for about two of
-## them, so this is the reading time plus the animation.
+## the report card waits for the player's key. this is only the fallback where there is no player to
+## press one, headless, so tours and probes still come home.
 const CLEAR_PAUSE := 5.5
 
 var state := State.IDLE
@@ -245,6 +247,13 @@ func enter_armory() -> void:
 
 func in_armory() -> bool:
 	return state == State.ARMORY
+
+
+## the report card is done with. only a cleared run can be dismissed, so a stray key in a level does
+## nothing.
+func dismiss_results() -> void:
+	if state == State.CLEARED:
+		results_dismissed.emit()
 
 
 func advance() -> bool:

@@ -41,6 +41,7 @@ func _ready() -> void:
 	alert_ring.clear()
 
 	Run.level_started.connect(_on_level_started)
+	report_card.dismissed.connect(func() -> void: Run.dismiss_results())
 	Run.armory_entered.connect(_on_armory_entered)
 	Run.targets_changed.connect(_on_targets_changed)
 	Run.time_changed.connect(_on_time_changed)

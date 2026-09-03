@@ -38,6 +38,7 @@ func _settle_armory() -> void:
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	move_player_to_spawn()
+	player.process_mode = Node.PROCESS_MODE_INHERIT
 	Armory.apply_to_player(player)
 	Run.enter_armory()
 	Fade.uncover()
@@ -85,9 +86,14 @@ func move_player_to_spawn() -> void:
 		player.respawn_from_void()
 
 
-## every clear goes back to the safe house; the board says what opened. the banner is on screen while
-## this waits, then the curtain falls and the armory swaps in underneath it.
+## every clear goes back to the safe house; the board says what opened. the player is frozen under the
+## report card and the run waits for them to press the key; headless, where nobody can, it waits the
+## old fixed pause instead. then the curtain falls and the armory swaps in underneath it.
 func _on_level_cleared(_index: int, _summary: Dictionary) -> void:
-	await get_tree().create_timer(Run.CLEAR_PAUSE).timeout
+	player.process_mode = Node.PROCESS_MODE_DISABLED
+	if DisplayServer.get_name() == "headless":
+		await get_tree().create_timer(Run.CLEAR_PAUSE).timeout
+	else:
+		await Run.results_dismissed
 	await Fade.cover()
 	_enter_armory()
