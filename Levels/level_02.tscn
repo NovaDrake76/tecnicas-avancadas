@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://Levels/hill_ring.gd" id="90_hills"]
 [ext_resource type="Script" path="res://Levels/foliage.gd" id="91_foliage"]
 [ext_resource type="Script" path="res://Props/alarm_horn.gd" id="101_horn"]
+[ext_resource type="Script" path="res://Components/objective.gd" id="obj_script"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bhunq"]
 size = Vector3(200, 1, 200)
@@ -80,3 +81,20 @@ scatter_seed = 5150
 [node name="AlarmHorn" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.0, 0.0, 40.0)
 script = ExtResource("101_horn")
+
+[node name="ObjectiveManifests" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.0, -14.0)
+script = ExtResource("obj_script")
+id = &"manifests"
+kind = 1
+label = "Take the supply manifests"
+prompt = "Take the manifests"
+work_time = 4.0
+
+[node name="ObjectiveExfil" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.0, 44.0)
+script = ExtResource("obj_script")
+id = &"exfil"
+kind = 3
+label = "Get out"
+reach = 3.5

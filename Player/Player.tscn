@@ -19,6 +19,7 @@
 [ext_resource type="Script" path="res://Components/health.gd" id="17_health"]
 [ext_resource type="Script" path="res://Player/distraction.gd" id="18_throw"]
 [ext_resource type="Script" path="res://Player/body_drag.gd" id="19_drag"]
+[ext_resource type="Script" path="res://Components/viewmodel_pass.gd" id="20_vmpass"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_bhunq"]
 radius = 0.4
@@ -101,6 +102,9 @@ script = ExtResource("18_throw")
 
 [node name="BodyDrag" type="Node" parent="."]
 script = ExtResource("19_drag")
+
+[node name="ViewmodelPass" type="Node" parent="."]
+script = ExtResource("20_vmpass")
 
 [node name="Footsteps" type="AudioStreamPlayer3D" parent="." unique_id=771204553]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)

@@ -65,7 +65,10 @@ const EVENTS := {
 	&"player_hurt": {"2d": true, "bus": &"Player", "db": -6.0, "voices": 2, "cooldown": 0.12, "clips": "player/hurt", "n": 4, "pitch": [0.94, 1.06]},
 	&"player_down": {"2d": true, "bus": &"Player", "db": -2.0, "clips": "player/down", "n": 1},
 	&"jump": {"2d": true, "bus": &"Player", "db": -14.0, "clips": "player/jump", "n": 2},
-	&"crouch": {"2d": true, "bus": &"Player", "db": -18.0, "cooldown": 0.3, "clips": "player/crouch", "n": 3},
+	## cut: going up and down was a rustle on every crouch, which is most of what the player does
+	## in a stealth game. the clips stay on disk and the call site stays in Player; it is one word
+	## to put back.
+	&"crouch": {"2d": true, "bus": &"Player", "silent": true},
 	&"land_hard": {"2d": true, "bus": &"Player", "db": -6.0, "clips": "player/land_hard", "n": 1},
 	&"throw": {"2d": true, "bus": &"Player", "db": -10.0, "clips": "player/throw", "n": 1},
 	## hauling a body. the grab is the player's own hands, so it is in the head; the drop is out in
@@ -95,6 +98,12 @@ const EVENTS := {
 	&"target_rise": {"bus": &"World", "db": -10.0, "unit": 8.0, "max": 90.0, "voices": 2, "clips": "impacts/target_rise", "n": 1},
 	&"clank": {"bus": &"World", "db": -4.0, "unit": 10.0, "max": 60.0, "voices": 2, "clips": "impacts/clank", "n": 3, "pitch": [0.94, 1.08]},
 	&"pickup": {"bus": &"World", "db": -8.0, "unit": 3.0, "max": 20.0, "clips": "ui/pickup", "n": 1},
+	## the mission itself: starting a job, finishing one, and a charge going onto something. the
+	## first two are in the head because they are the player's own hands; the charge is out in the
+	## world because a bird standing next to it should be able to hear it go on.
+	&"objective_start": {"2d": true, "bus": &"Player", "db": -14.0, "clips": "ui/tick", "n": 1},
+	&"objective_done": {"2d": true, "bus": &"UI", "db": -8.0, "clips": "ui/objective", "n": 1},
+	&"charge_set": {"bus": &"World", "db": -8.0, "unit": 6.0, "max": 40.0, "clips": "ui/install", "n": 1},
 
 	# ---- the kiwis: the information bus, never ducked by the hdr moment
 	&"kiwi_step": {"bus": &"Kiwis", "db": -18.0, "unit": 3.0, "max": 24.0, "voices": 6, "cooldown": 0.03, "clips": "kiwi/step", "n": 8, "pitch": [0.95, 1.1]},

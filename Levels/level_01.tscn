@@ -24,6 +24,7 @@
 [ext_resource type="Resource" path="res://Guns/resources/mag_shotgun.tres" id="mg_shot"]
 [ext_resource type="Resource" path="res://Guns/resources/mag_pistol_1911.tres" id="mg_1911"]
 [ext_resource type="Resource" path="res://Guns/resources/mag_glock.tres" id="mg_glock"]
+[ext_resource type="Script" path="res://Components/objective.gd" id="obj_script"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bhunq"]
 size = Vector3(200, 1, 200)
@@ -65,10 +66,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.841454, 1.9073486e-06, 20
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.895088, 1.9073486e-06, 20.827642)
 quantity = 3
 
-[node name="Kiwi" parent="StaticBody3D" unique_id=756847431 instance=ExtResource("3_er0or")]
+[node name="Kiwi" parent="StaticBody3D" unique_id=756847431 groups=["hvt"] instance=ExtResource("3_er0or")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.586499, 0.00090217753, 55.495514)
 
-[node name="Kiwi2" parent="StaticBody3D" unique_id=1386454169 instance=ExtResource("3_er0or")]
+[node name="Kiwi2" parent="StaticBody3D" unique_id=1386454169 groups=["hvt"] instance=ExtResource("3_er0or")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.586499, 0.00090217753, 26.581268)
 
 [node name="Kiwi3" parent="StaticBody3D" unique_id=1019559954 instance=ExtResource("3_er0or")]
@@ -192,3 +193,28 @@ magazine = ExtResource("mg_1911")
 [node name="PickupGlock" parent="StaticBody3D" instance=ExtResource("2_1jt1u")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.0, 0, 58.5)
 magazine = ExtResource("mg_glock")
+
+[node name="ObjectiveHvt" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.6, 0.0, 41.0)
+script = ExtResource("obj_script")
+id = &"hvt"
+kind = 0
+label = "Take out the two sentries"
+target_group = &"hvt"
+
+[node name="ObjectiveCase" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.0, 0.0, 39.0)
+script = ExtResource("obj_script")
+id = &"case"
+kind = 1
+label = "Take the range-finder case"
+prompt = "Take the case"
+work_time = 3.0
+
+[node name="ObjectiveExfil" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 0.0, 88.0)
+script = ExtResource("obj_script")
+id = &"exfil"
+kind = 3
+label = "Get out"
+reach = 3.5

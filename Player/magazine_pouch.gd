@@ -30,6 +30,17 @@ func total() -> int:
 	return _mags.size()
 
 
+## rounds, not magazines: what every shooter puts after the slash. the pouch owns the number because
+## the pouch owns the magazines, and a hud that added it up itself would be a second place to get it
+## wrong when a half empty spare goes in.
+func rounds(mag_type: Ordnance.MagType) -> int:
+	var n := 0
+	for m in _mags:
+		if m.mag_type == mag_type:
+			n += m.count
+	return n
+
+
 ## a copy goes in, never the pickup's own resource, or two pickups sharing a .tres share a count.
 func add(mag: Magazine) -> bool:
 	if mag == null:

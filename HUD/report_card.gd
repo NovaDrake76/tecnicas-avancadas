@@ -45,6 +45,7 @@ var _letter: Label
 var _percent: Label
 var _rows: Array = []
 var _stats: Array[Label] = []
+var _jobs: VBoxContainer
 var _footer: Control
 var _earned: Label
 var _best: Label
@@ -173,6 +174,13 @@ func _ready() -> void:
 	_footer.add_child(stats)
 	for caption in ["TARGETS", "SHOTS", "ACCURACY", "TIME", "STEALTH"]:
 		_stats.append(_stat(stats, caption))
+	_gap(_footer, 14)
+	## what the mission asked for and what the player did about it, under the numbers. objectives
+	## are ticked or crossed rather than scored: the letter already says how the run went, and
+	## this says what it was FOR, which no number on the row above answers.
+	_jobs = VBoxContainer.new()
+	_jobs.add_theme_constant_override("separation", 2)
+	_footer.add_child(_jobs)
 	_gap(_footer, 22)
 	var money := HBoxContainer.new()
 	_footer.add_child(money)
@@ -230,6 +238,31 @@ func letter() -> String:
 	return _letter.text if _letter != null else ""
 
 
+## the required objectives first, then the optional ones, each with a tick or a cross. an optional
+## one that was NOT done is still listed: half the value of an optional objective is finding out
+## it existed, which is how a second run becomes a different run.
+func _fill_jobs(s: Dictionary) -> void:
+	if _jobs == null:
+		return
+	for child in _jobs.get_children():
+		child.queue_free()
+	var rows: Array = []
+	for line in s.get("objectives", []):
+		rows.append([line, false])
+	for line in s.get("optional", []):
+		rows.append([line, true])
+	for row in rows:
+		var line: Dictionary = row[0]
+		var done := bool(line.get("done", false))
+		var mark := "+" if done else "-"
+		var text := "%s  %s" % [mark, String(line.get("name", ""))]
+		if bool(row[1]):
+			text += "   (optional)"
+		var label := _text(_jobs, text, 20,
+			MenuStyle.HOT if done else MenuStyle.DIM)
+		label.visible = true
+
+
 func term_letters() -> Array:
 	var out := []
 	for row in _rows:
@@ -281,6 +314,7 @@ func play(s: Dictionary, title: String) -> void:
 	var seen := int(s.get("detections", 0))
 	_stats[0].text = "%d / %d" % [int(s.get("targets", 0)), int(s.get("total", 0))]
 	_stats[1].text = "%d" % int(s.get("shots", 0))
+	_fill_jobs(s)
 	_stats[2].text = "%d%%" % int(round(float(s.get("accuracy", 0.0)) * 100.0))
 	_stats[3].text = "%s  (par %s)" % [_clock(float(s.get("time", 0.0))), _clock(float(s.get("par", 0.0)))]
 	## what the stealth term measures is time hot, so that is the number shown. a run that never woke

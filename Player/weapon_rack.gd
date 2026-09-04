@@ -137,6 +137,16 @@ func _apply() -> void:
 		g.visible = on
 		if editor:
 			continue
+		## everything the player HOLDS is drawn by the viewmodel pass, so the weapon stops sinking
+		## into a wall the player stands against. a holstered weapon comes straight back off the
+		## layer: it is invisible either way, but leaving it there would keep the second render
+		## running for something nobody can see.
+		var pass_node := get_tree().get_first_node_in_group("viewmodel_pass") as ViewmodelPass
+		if pass_node != null:
+			if on:
+				pass_node.take_over(g)
+			else:
+				pass_node.hand_back(g)
 		## a holstered weapon neither fires nor listens. process_mode off covers input, physics and
 		## the auto fire loop in one switch.
 		g.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED

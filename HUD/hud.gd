@@ -61,6 +61,9 @@ func _ready() -> void:
 	Run.run_finished.connect(_on_run_finished)
 	Run.watcher_changed.connect(_on_watcher_changed)
 	Run.watcher_tier.connect(_on_watcher_tier)
+	Run.objectives_changed.connect(_on_objectives_changed)
+	Run.objective_working.connect(_on_objective_working)
+	Run.objective_abandoned.connect(_on_objective_abandoned)
 	Run.detections_changed.connect(_on_detections_changed)
 	## the ring says WHO is noticing you; this strip says HOW BAD it is for the whole compound, and
 	## how long until it gets worse. the two do not overlap.
@@ -208,17 +211,41 @@ func _on_time_changed(seconds: float) -> void:
 
 ## one arc per bird that is noticing you, drawn at its bearing, so you can tell WHICH one and
 ## turn the right way. a bar in the middle of the screen could never say that.
+## the mission moved on. the caption and the count are Run's own two pieces, the same way the
+## kiwi count always was; only the SIZES are the hud's business.
+func _on_objectives_changed() -> void:
+	if Run.state != Run.State.PLAYING:
+		return
+	objective_label.text = Run.objective_caption().to_upper()
+	targets_label.text = Run.objective_count()
+
+
+## a job on an objective is the same sentence as a reload -- something is running, wait for it -- so
+## it gets the same ring round the same crosshair. it says it with the RING and with nothing else:
+## words flashed in the middle of the screen were doing the ring's job twice, and the second time in
+## a place the player is trying to see the compound through.
+func _on_objective_working(which, active: bool) -> void:
+	reload_ring.watch_job(which if active else null)
+	_show_crosshair(not active and not _aiming)
+
+
+## the ring going out IS the message. it appeared when the job started and it leaves when the job
+## stops, which is the same fact either way round and needs no word for it.
+func _on_objective_abandoned(_which) -> void:
+	reload_ring.watch_job(null)
+	_show_crosshair(not _aiming)
+
+
 func _on_watcher_changed(kiwi: Node3D, value: float) -> void:
 	alert_ring.set_watcher(kiwi, value)
 
 
-## the ring carries the tier, and the one tier worth interrupting the player for gets the line
-## as well: a bird on the radio is a two second window and there is nothing else on screen that
-## says so in words.
+## the ring carries the tier and nothing is written on the screen about it. a bird on the radio is a
+## two second window and it still has to be READABLE, but the fast blinking arc says it better than
+## words did: it says the same thing AND says which direction to shoot in, which a line in the middle
+## of the screen never could.
 func _on_watcher_tier(kiwi: Node3D, tier: int) -> void:
 	alert_ring.set_tier(kiwi, tier)
-	if tier == Kiwi.Alert.CALLING:
-		flash_status("CALLING IT IN", HudStyle.ALERT)
 
 
 ## being spotted is an EVENT, so it is announced and then it goes. a line that sits there saying
@@ -318,11 +345,24 @@ func _key_label(action: StringName) -> String:
 	return String(action).to_upper()
 
 
-## the count is the hero and the capacity hangs off it at a third of the size, which is the whole
-## of the trick in the reference sheet: one number to read, one to check.
-func _on_ammo_changed(count: int, capacity: int) -> void:
+## the count is the hero and the figure after the slash hangs off it at a third of the size, which is
+## the whole of the trick in the reference sheet: one number to read, one to check.
+##
+## that second figure is the RESERVE, not the magazine's capacity. it used to be the capacity, so a
+## weapon with nothing in it and nothing to reload from read "0 / 30" -- and every shooter the player
+## has ever touched uses that slot for rounds in the bag, so "0 / 30" says "thirty left". it said the
+## exact opposite of the truth at the one moment the player most needs to know it.
+func _on_ammo_changed(count: int, _capacity: int) -> void:
 	ammo_label.text = "%d" % count
-	capacity_label.text = "/ %d" % capacity
+	capacity_label.text = "/ %d" % _reserve()
+	_update_spare()
+
+
+## rounds in the pouch that this weapon could reload from. the pouch owns the number.
+func _reserve() -> int:
+	if _weapon == null or _pouch == null:
+		return 0
+	return _pouch.rounds(_weapon.accepted_mag)
 
 
 func _on_magazine_changed(mag: Magazine) -> void:
@@ -439,7 +479,10 @@ func _update_spare() -> void:
 	if _weapon == null or _pouch == null:
 		spare_label.text = ""
 		return
+	## the reserve says how many ROUNDS are left; this says how many magazines they are spread over,
+	## which is a different fact and the one that decides whether a reload is worth taking now.
 	spare_label.text = _pouch.describe(_weapon.accepted_mag)
+	capacity_label.text = "/ %d" % _reserve()
 
 
 func flash_ammo() -> void:

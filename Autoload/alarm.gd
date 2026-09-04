@@ -57,6 +57,9 @@ var _mark_quiet := 0.0
 var _ever_hot := false
 ## seconds since anybody last had eyes on the player. the belief below is only as good as this.
 var _age := 999.0
+## how many bodies the garrison walked into this level. an optional objective is paid on it, and
+## it is a fact the player can act on: it is the difference between a tidy run and a lucky one.
+var _bodies_found := 0
 
 
 func _process(delta: float) -> void:
@@ -97,6 +100,7 @@ func reset() -> void:
 	_alarm_time = 0.0
 	_ever_hot = false
 	_age = 999.0
+	_bodies_found = 0
 	has_last_known = false
 	last_known = Vector3.ZERO
 	_cancel_reinforcements()
@@ -160,6 +164,16 @@ func is_marked() -> bool:
 ## how old the compound's belief is. zero while a bird can see you.
 func knowledge_age() -> float:
 	return _age
+
+
+## a bird found a body. counted here rather than on the bird, because the question is about the
+## whole garrison and no single bird can answer it.
+func note_body_found() -> void:
+	_bodies_found += 1
+
+
+func bodies_found() -> int:
+	return _bodies_found
 
 
 ## where a bird should go and LOOK, as against where the player provably is. the two are the same

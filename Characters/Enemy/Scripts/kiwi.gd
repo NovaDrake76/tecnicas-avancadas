@@ -136,6 +136,21 @@ enum Alert { UNAWARE, CURIOUS, SUSPICIOUS, HUNTING, CALLING, ENGAGED }
 @export var vertex_colors_are_srgb := true
 
 @export_group("Down")
+## a downed bird TIPS OVER. the Sleep clip is a bird settling on its feet, not a bird going down, so
+## on its own it left a corpse standing upright with its eyes shut: the pose has to be driven here.
+## there is no ragdoll because the rig has no physical bones and building one for a body that only
+## ever lies still would be a skeleton's worth of work for one frame of motion; a fall over onto its
+## side reads as dead at every distance the player will ever see it from.
+@export var lie_down := true
+@export var lie_roll_deg := 84.0
+@export var lie_time := 0.35
+## the two crosses over the eyes. it is a cartoon shorthand and it is the clearest possible way to
+## say at a glance which birds are done, which matters now that they stay on the ground.
+## how hard the ground slows a thrown body. it is friction, not a timer: a bird thrown hard travels
+## further than one dropped, which is the only reason the throw is worth aiming.
+@export var throw_friction := 14.0
+@export var mark_eyes := true
+@export var eye_mark_size := 0.075
 ## OFF by default: a downed kiwi stays lying where it fell, and that is what makes where you drop
 ## one a decision. a body another bird walks past is found, and a body dragged behind a crate is
 ## not. turn this on to go back to the bird popping and leaving nothing to find.
@@ -187,7 +202,10 @@ var _body_scan := 0.0
 ## compound a second time however many birds walk past it afterwards.
 var _found := false
 var _dragged := false
+var _thrown := false
+var _tumble := 0.0
 var _handle: Area3D
+var _grab: Interactable
 
 
 func _ready() -> void:
@@ -266,6 +284,12 @@ func _physics_process(delta: float) -> void:
 	## while the player is hauling it, the drag owns where it is: gravity and move_and_slide would
 	## both fight the pull and the body would judder along the ground behind them.
 	if _dragged:
+		return
+	## thrown: it flies on the body's own gravity until it hits something, tumbling as it goes. the
+	## DOWN branch below would zero the horizontal velocity every tick, so a throw has to run before
+	## it and land itself.
+	if _thrown:
+		_step_thrown(delta)
 		return
 	if not is_on_floor():
 		velocity.y -= gravity * delta
@@ -854,6 +878,7 @@ func _scan_for_bodies(delta: float) -> void:
 		return
 	_body_seen = 0.0
 	found.mark_found()
+	Alarm.note_body_found()
 	_learn(found.global_position, true)
 
 
@@ -866,9 +891,58 @@ func is_found() -> bool:
 	return _found
 
 
+## out of the hands and away. it keeps the velocity it was given until the ground stops it, and the
+## model spins about its own long axis on the way so it reads as thrown rather than as slid.
+func toss(launch: Vector3, spin: float) -> void:
+	if _state != State.DOWN:
+		return
+	_thrown = true
+	_tumble = spin
+	velocity = launch
+	set_physics_process(true)
+
+
+func _step_thrown(delta: float) -> void:
+	velocity.y -= gravity * delta
+	if model != null:
+		model.rotation.x += _tumble * delta
+	## the ground DRAGS. without this the bird keeps every bit of the speed it was thrown with and
+	## skates across the level forever, which is how the first version of this went: it never landed
+	## because it never slowed down.
+	if is_on_floor():
+		velocity.x = move_toward(velocity.x, 0.0, throw_friction * delta)
+		velocity.z = move_toward(velocity.z, 0.0, throw_friction * delta)
+		_tumble = move_toward(_tumble, 0.0, throw_friction * delta)
+	move_and_slide()
+	## landed: on the floor and no longer going anywhere much. the pose is put back so it comes to
+	## rest lying down like every other body rather than frozen at whatever angle it stopped at.
+	if not is_on_floor() or Vector2(velocity.x, velocity.z).length() > 0.4:
+		return
+	_thrown = false
+	velocity = Vector3.ZERO
+	if model != null:
+		model.rotation.x = 0.0
+		model.rotation.z = deg_to_rad(lie_roll_deg)
+		model.position.y = _lie_lift(deg_to_rad(lie_roll_deg))
+	Sfx.play(&"body_drop", global_position)
+
+
+func is_thrown() -> bool:
+	return _thrown
+
+
 ## the player has it by the feet. the drag owns the position while this is true.
 func set_dragged(value: bool) -> void:
 	_dragged = value
+	## a carried body sits right in front of the camera, well inside the interactor's reach, so its
+	## own handle would sit under the crosshair offering to pick up the thing already in your hands.
+	if _grab != null:
+		_grab.set_enabled(not value)
+	## the fall-over roll is undone while it is held, so the carry pose is the ONLY thing turning it
+	## and the two do not compound into whatever angle happens to come out.
+	if model != null:
+		model.rotation.z = 0.0 if value else deg_to_rad(lie_roll_deg)
+		model.position.y = 0.0 if value else _lie_lift(deg_to_rad(lie_roll_deg))
 
 
 func is_dragged() -> bool:
@@ -960,6 +1034,8 @@ func _go_down() -> void:
 
 	if not vanish_on_down:
 		_play(down_clip, 0.15)
+		_lie_down()
+		_mark_eyes()
 		_become_body()
 		_publish_tier()
 		return
@@ -986,10 +1062,10 @@ func _become_body() -> void:
 	shape.position = Vector3(0.0, 0.25, 0.0)
 	_handle.add_child(shape)
 	add_child(_handle)
-	var grab := Interactable.new()
-	grab.prompt = "Drag the body"
-	add_child(grab)
-	grab.interacted.connect(_on_grab_pressed)
+	_grab = Interactable.new()
+	_grab.prompt = "Pick the body up"
+	add_child(_grab)
+	_grab.interacted.connect(_on_grab_pressed)
 
 
 func _on_grab_pressed(_by: Node) -> void:
@@ -1050,3 +1126,82 @@ func runner_goal() -> Vector3:
 	if _goal_bird != null and is_instance_valid(_goal_bird):
 		return _goal_bird.global_position
 	return _target
+
+
+## over it goes. a tween rather than a snap, because a bird that vanishes from standing to lying in
+## one frame reads as a glitch and half a second of falling reads as a hit landing.
+func _lie_down() -> void:
+	if not lie_down or model == null:
+		return
+	## the model's origin is between its FEET, so rolling it about that point swings the whole body
+	## sideways and half of it ends up under the floor. the lift is measured rather than guessed: the
+	## mesh bounds are rotated by the same angle the tween applies and the model is raised by however
+	## far the lowest corner went below zero.
+	var roll := deg_to_rad(lie_roll_deg)
+	var lift := _lie_lift(roll)
+	var over := create_tween()
+	over.set_trans(Tween.TRANS_CUBIC)
+	over.set_ease(Tween.EASE_OUT)
+	over.tween_property(model, "rotation:z", roll, lie_time)
+	over.parallel().tween_property(model, "position:y", lift, lie_time)
+
+
+## how high the model has to sit so that, once rolled, nothing pokes through the ground.
+func _lie_lift(roll: float) -> float:
+	var bounds := AABB()
+	var first := true
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		var mesh := node as MeshInstance3D
+		if mesh.mesh == null:
+			continue
+		var box := (model.global_transform.affine_inverse() * mesh.global_transform) * mesh.mesh.get_aabb()
+		bounds = box if first else bounds.merge(box)
+		first = false
+	if first:
+		return model.position.y
+	var turn := Basis(Vector3.BACK, roll)
+	var lowest := INF
+	for i in 8:
+		lowest = minf(lowest, (turn * bounds.get_endpoint(i)).y)
+	return maxf(-lowest, 0.0)
+
+
+## two crosses where the eyes are, riding the eye bones so they stay put whatever the body does and
+## wherever it is carried. the bones are the same ones the laser kiwi fires out of, found by prefix
+## because the rig names them eye.l_010 and eye.r_011 and nothing should depend on the digits.
+func _mark_eyes() -> void:
+	if not mark_eyes:
+		return
+	var skeleton: Skeleton3D = null
+	for node in find_children("*", "Skeleton3D", true, false):
+		skeleton = node as Skeleton3D
+		break
+	if skeleton == null:
+		return
+	for i in skeleton.get_bone_count():
+		var bone := skeleton.get_bone_name(i).to_lower()
+		if not (bone.begins_with("eye.l") or bone.begins_with("eye.r")):
+			continue
+		var mount := BoneAttachment3D.new()
+		mount.bone_idx = i
+		skeleton.add_child(mount)
+		mount.add_child(_cross())
+
+
+## two thin bars crossed, unshaded so they read as a mark drawn ON the bird rather than as a prop
+## sitting near its face, and doubled slightly apart so the cross is visible from either side.
+func _cross() -> Node3D:
+	var root := Node3D.new()
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.05, 0.04, 0.04)
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	for angle in [45.0, -45.0]:
+		var bar := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = Vector3(eye_mark_size, eye_mark_size * 0.22, eye_mark_size * 0.22)
+		bar.mesh = box
+		bar.material_override = mat
+		bar.rotation.z = deg_to_rad(angle)
+		root.add_child(bar)
+	return root

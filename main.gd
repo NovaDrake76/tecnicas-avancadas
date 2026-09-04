@@ -6,6 +6,17 @@ extends Node3D
 const ARMORY_SCENE := "res://Levels/armory.tscn"
 
 @onready var player: CharacterBody3D = $Player
+
+
+## the same trap the reticle, the health bar and Run._gun_bound each paid for: a reference to the
+## player taken once and kept forever. quitting to the menu frees that player and spawns another, and
+## a freed node compares equal to null, so every use below reads through here and re-finds it by group
+## rather than going on writing to a corpse. it surfaced when a mission first ENDED in the smoke probe:
+## the probe frees the player mid-run on purpose, and _on_level_over then wrote process_mode to it.
+func _player() -> CharacterBody3D:
+	if player == null or not is_instance_valid(player):
+		player = get_tree().get_first_node_in_group("player") as CharacterBody3D
+	return player
 @onready var level_holder: Node3D = $LevelHolder
 
 var _level: Node
@@ -41,16 +52,21 @@ func _settle_armory() -> void:
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	move_player_to_spawn()
-	player.process_mode = Node.PROCESS_MODE_INHERIT
-	player.restore()
-	Armory.apply_to_player(player)
+	var who := _player()
+	if who == null:
+		return
+	who.process_mode = Node.PROCESS_MODE_INHERIT
+	who.restore()
+	Armory.apply_to_player(who)
 	Run.enter_armory()
 	Fade.uncover()
 
 
 ## the curtain comes down, the level swaps underneath, and _begin lifts it once the run is counting.
 func _on_deploy() -> void:
-	Armory.apply_to_player(player)
+	var who := _player()
+	if who != null:
+		Armory.apply_to_player(who)
 	await Fade.cover()
 	_load_level()
 
@@ -83,7 +99,9 @@ func _begin() -> void:
 	## behind the curtain, before the run counts, before any kiwi has somewhere to go.
 	NavBake.bake(_level, _level)
 	move_player_to_spawn()
-	player.restore()
+	var here := _player()
+	if here != null:
+		here.restore()
 	Run.begin_level(_level)
 	Fade.uncover()
 
@@ -114,15 +132,18 @@ func _on_reinforcements_due(at: Vector3) -> void:
 
 ## the lookup lives on the player so KillPlane and this share one implementation.
 func move_player_to_spawn() -> void:
-	if player != null and player.has_method("respawn_from_void"):
-		player.respawn_from_void()
+	var who := _player()
+	if who != null and who.has_method("respawn_from_void"):
+		who.respawn_from_void()
 
 
 ## every clear, and every failure, goes back to the safe house; the board says what opened. the player is
 ## frozen under the report card and the run waits for them to press the key; headless, where nobody
 ## can, it waits the old fixed pause instead. then the curtain falls and the armory swaps in underneath.
 func _on_level_over(_index: int, _summary: Dictionary) -> void:
-	player.process_mode = Node.PROCESS_MODE_DISABLED
+	var who := _player()
+	if who != null:
+		who.process_mode = Node.PROCESS_MODE_DISABLED
 	if DisplayServer.get_name() == "headless":
 		await get_tree().create_timer(Run.CLEAR_PAUSE).timeout
 	else:
