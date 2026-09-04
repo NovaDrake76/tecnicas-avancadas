@@ -48,6 +48,7 @@ const SPAWN_CLEARANCE := 0.15
 @onready var _sm: StateMachine = $StateMachine
 @onready var _ceiling_check: ShapeCast3D = get_node_or_null("HeadClearance")
 @onready var _aim: AimScope = get_node_or_null("AimScope")
+@onready var _drag: BodyDrag = get_node_or_null("BodyDrag")
 @onready var health: Health = $Health
 
 var _jump_buffer := 0.0
@@ -151,7 +152,10 @@ func current_max_speed() -> float:
 		base = movement.crouch_max_speed
 	elif Input.is_action_pressed("sprint"):
 		base = movement.run_max_speed
-	return base * (_aim.speed_mult() if _aim != null else 1.0)
+	## the aim scope and the body drag are both TERMS in one speed rather than two opinions about
+	## it, so hauling a body while aiming is slow once and not slow twice by accident.
+	return base * (_aim.speed_mult() if _aim != null else 1.0) \
+		* (_drag.speed_mult() if _drag != null else 1.0)
 
 
 func wants_jump() -> bool:

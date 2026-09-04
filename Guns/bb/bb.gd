@@ -9,6 +9,12 @@ const BB_RADIUS := 0.003
 @export_range(0.0, 0.01, 0.00001, "or_greater") var BackspinDrag: float = 0.0002
 @export var lifetime: float = 5.0
 @export var despawn_on_impact := true
+## how far a bb landing on the world is heard. a bb makes no noise where it was FIRED, only where
+## it lands, so a miss betrays what you were shooting at and never where you were shooting from:
+## Wildlands' explosive rule, and the one that makes missing at range survivable. it is shorter
+## than a walking footstep (14 m) on purpose, and like every other noise in this game it turns
+## birds and raises nothing. the alarm still has exactly two sources.
+@export var impact_hearing := 8.0
 @export var mark_surface := true
 
 @export var draw_trail: bool = true
@@ -71,12 +77,26 @@ func _on_impact(point: Vector3, normal: Vector3, hit_body: Object, energy: float
 	## what it landed on says what it sounds like; the birds and the targets answer for themselves
 	if not target:
 		Sfx.play("bb_" + String(Sfx.surface_of(hit_body)), point)
+		_heard_at(point)
 
 	## decals belong on static world surfaces only, a hole stamped on a kiwi hangs in the air once it moves.
 	if mark_surface and not target:
 		BulletHoles.mark(point, normal)
 	if despawn_on_impact:
 		queue_free()
+
+
+## the birds walk over to the hole, the way they do for a thrown magazine. they are told about the
+## IMPACT and nothing else: no bird learns anything about the shooter from a shot going past it.
+func _heard_at(point: Vector3) -> void:
+	if impact_hearing <= 0.0:
+		return
+	for node in get_tree().get_nodes_in_group("kiwi"):
+		var bird := node as Node3D
+		if bird == null or not bird.has_method("investigate"):
+			continue
+		if bird.global_position.distance_to(point) <= impact_hearing:
+			bird.investigate(point)
 
 
 func _physics_process(_delta: float) -> void:

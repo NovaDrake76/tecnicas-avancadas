@@ -29,6 +29,12 @@ const REINFORCE_TIME := 45.0
 const SEARCH_WEIGHT := 0.35
 ## how long after the last paint the mark is dropped.
 const MARK_HOLD := 0.5
+## how fast the compound's belief SPREADS once nobody can see the player any more, and how far
+## it is allowed to spread. a search that stays a single exact point is a crowd standing on a
+## spot; one that widens with age is a net closing, and it is what makes moving after being seen
+## worth anything at all.
+const SEARCH_SPREAD := 1.4
+const SEARCH_SPREAD_MAX := 20.0
 
 var stage := Stage.CALM
 var last_known := Vector3.ZERO
@@ -49,6 +55,8 @@ var _reinforce_shown := -1
 var _marked := false
 var _mark_quiet := 0.0
 var _ever_hot := false
+## seconds since anybody last had eyes on the player. the belief below is only as good as this.
+var _age := 999.0
 
 
 func _process(delta: float) -> void:
@@ -56,6 +64,7 @@ func _process(delta: float) -> void:
 		return
 	_quiet += delta
 	_mark_quiet += delta
+	_age += delta
 	if _marked and _mark_quiet > MARK_HOLD:
 		_marked = false
 		marked_changed.emit(false)
@@ -87,6 +96,7 @@ func reset() -> void:
 	_quiet = 0.0
 	_alarm_time = 0.0
 	_ever_hot = false
+	_age = 999.0
 	has_last_known = false
 	last_known = Vector3.ZERO
 	_cancel_reinforcements()
@@ -100,6 +110,7 @@ func reset() -> void:
 ## alarm, noticing is, and that is the cone's business.
 func report_contact(at: Vector3) -> void:
 	_quiet = 0.0
+	_age = 0.0
 	last_known = at
 	has_last_known = true
 
@@ -146,12 +157,37 @@ func is_marked() -> bool:
 	return _marked
 
 
+## how old the compound's belief is. zero while a bird can see you.
+func knowledge_age() -> float:
+	return _age
+
+
+## where a bird should go and LOOK, as against where the player provably is. the two are the same
+## thing at the moment of a sighting and drift apart from there. the offset is deterministic per
+## bird, so a squad fans out into a ring instead of every one of them picking the same random
+## spot, and it never moves under a bird already walking to it.
+func search_point(seed_id: int) -> Vector3:
+	if not has_last_known:
+		return last_known
+	var spread := minf(_age * SEARCH_SPREAD, SEARCH_SPREAD_MAX)
+	if spread <= 0.5:
+		return last_known
+	var angle := float(absi(seed_id) % 360) * (PI / 180.0)
+	return last_known + Vector3(cos(angle), 0.0, sin(angle)) * spread
+
+
 ## weighted seconds spent hot. what Run grades the stealth term on.
 func alarm_time() -> float:
 	return _alarm_time
 
 
 ## for probes and tools that need a run graded at a chosen point on the curve.
+## the belief aged on purpose, so a probe can ask what a cold search looks like without sitting
+## through twelve seconds of one.
+func force_age(seconds: float) -> void:
+	_age = maxf(seconds, 0.0)
+
+
 func force_alarm_time(seconds: float) -> void:
 	_alarm_time = maxf(seconds, 0.0)
 	if _alarm_time > 0.0:

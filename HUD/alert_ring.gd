@@ -13,6 +13,8 @@ extends Control
 @export var backing := Color(0.0, 0.0, 0.0, 0.45)
 
 var _watchers := {}
+var _tiers := {}
+var _blink := 0.0
 
 
 func _ready() -> void:
@@ -33,8 +35,25 @@ func set_watcher(who: Node3D, value: float) -> void:
 	queue_redraw()
 
 
+## how much that bird KNOWS, which the awareness bar stops answering the moment it is full: a bird
+## that has already seen you has no bar left to fill, and a bird that was merely shouted at never
+## had one. from HUNTING up the arc is pinned on whatever the bar says, so an arc on the ring means
+## the same thing at every tier: that bird is a problem, and it is in that direction.
+func set_tier(who: Node3D, tier: int) -> void:
+	if who == null:
+		return
+	if tier <= Kiwi.Alert.CURIOUS:
+		_tiers.erase(who)
+	else:
+		_tiers[who] = tier
+		if tier >= Kiwi.Alert.HUNTING:
+			_watchers[who] = 1.0
+	queue_redraw()
+
+
 func clear() -> void:
 	_watchers.clear()
+	_tiers.clear()
 	queue_redraw()
 
 
@@ -48,7 +67,8 @@ static func bearing_to(cam: Camera3D, point: Vector3) -> float:
 	return atan2(local.x, -local.z)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_blink += delta
 	if not _watchers.is_empty():
 		queue_redraw()
 
@@ -65,11 +85,22 @@ func _draw() -> void:
 	for who in _watchers.keys():
 		if not is_instance_valid(who):
 			_watchers.erase(who)
+			_tiers.erase(who)
 			continue
+		var tier: int = int(_tiers.get(who, Kiwi.Alert.SUSPICIOUS))
 		var value: float = clampf(float(_watchers[who]), 0.0, 1.0)
+		var shade := calm.lerp(alarmed, value)
+		if tier == Kiwi.Alert.CALLING:
+			## the two seconds the player has to stop the word getting out, and the only thing on the
+			## screen that blinks. a window nobody can see is not a window.
+			shade = alarmed if fmod(_blink, 0.24) < 0.12 else backing.lerp(alarmed, 0.35)
+		elif tier == Kiwi.Alert.ENGAGED:
+			shade = alarmed
+		elif tier == Kiwi.Alert.HUNTING:
+			shade = calm
 		## screen angles run from +X and clockwise, so straight ahead is a quarter turn up.
 		var mid := bearing_to(cam, (who as Node3D).global_position) - PI * 0.5
 		draw_arc(centre, radius, mid - span * 0.5, mid + span * 0.5, 20,
 			backing, thickness + 5.0, true)
 		draw_arc(centre, radius, mid - span * 0.5 * value, mid + span * 0.5 * value, 20,
-			calm.lerp(alarmed, value), thickness, true)
+			shade, thickness, true)

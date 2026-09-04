@@ -54,6 +54,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 
+## what is under the crosshair right now, in words. the hud is driven by the signal; this is for
+## a probe that wants to ask rather than wait.
+func focus_text() -> String:
+	return _last_sig
+
+
 func _emit_focus() -> void:
 	focus_changed.emit(_current.prompt_text(), _current.prompt_action(), _current.get_parent())
 

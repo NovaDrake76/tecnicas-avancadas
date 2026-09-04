@@ -87,8 +87,11 @@ func _step_bombard(delta: float) -> void:
 	## you, a runner's shout, the gunship's mark. it is only worth aiming at because VisionCone keeps
 	## it fresh while ANY bird can see you, alerted or not; before that it froze at the spot where
 	## the mortar first caught you and every shell after that landed there.
+	## the fire plan is the compound's belief INCLUDING how old it is. a fresh contact is shelled
+	## accurately and a cold one is area fire you can walk out of, which is what stops a mortar
+	## from being a turret that always knows the answer.
 	if Alarm.has_last_known:
-		_aim_at = Alarm.last_known
+		_aim_at = Alarm.search_point(get_instance_id())
 		_has_aim = true
 	if not _has_aim:
 		return

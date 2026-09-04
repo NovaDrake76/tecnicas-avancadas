@@ -23,6 +23,8 @@ signal run_finished(summary: Dictionary)
 signal state_changed(state: int)
 signal alert_changed(value: float)
 signal watcher_changed(kiwi: Node3D, value: float)
+## the same birds, but what each of them KNOWS rather than how close it is to seeing you.
+signal watcher_tier(kiwi: Node3D, tier: int)
 signal detections_changed(count: int)
 ## a bb landed on something that could be hit, and whether that put it down. only the hud listens:
 ## nothing is counted here, the score already counts what went down and what was fired.
@@ -152,6 +154,8 @@ func begin_level(level: Node) -> void:
 			kiwi.alerted.connect(_on_kiwi_alerted)
 		if not kiwi.awareness_changed.is_connected(_on_kiwi_awareness):
 			kiwi.awareness_changed.connect(_on_kiwi_awareness)
+		if not kiwi.tier_changed.is_connected(_on_kiwi_tier):
+			kiwi.tier_changed.connect(_on_kiwi_tier)
 
 	_bind_gun()
 	_set_state(State.PLAYING)
@@ -370,6 +374,13 @@ func _on_kiwi_awareness(kiwi, value: float) -> void:
 	_awareness[kiwi.get_instance_id()] = value
 	watcher_changed.emit(kiwi, value)
 	_push_alert()
+
+
+## a courier, like watcher_changed: nothing here decides anything about the tier, the bird does.
+func _on_kiwi_tier(kiwi, tier: int) -> void:
+	if state != State.PLAYING:
+		return
+	watcher_tier.emit(kiwi, tier)
 
 
 func _push_alert() -> void:

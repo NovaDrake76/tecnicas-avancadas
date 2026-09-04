@@ -68,6 +68,11 @@ const EVENTS := {
 	&"crouch": {"2d": true, "bus": &"Player", "db": -18.0, "cooldown": 0.3, "clips": "player/crouch", "n": 3},
 	&"land_hard": {"2d": true, "bus": &"Player", "db": -6.0, "clips": "player/land_hard", "n": 1},
 	&"throw": {"2d": true, "bus": &"Player", "db": -10.0, "clips": "player/throw", "n": 1},
+	## hauling a body. the grab is the player's own hands, so it is in the head; the drop is out in
+	## the world where the body lands, and it is the cloth thump of the bb impact taken well down in
+	## pitch, which is a body settling rather than a pellet landing.
+	&"body_grab": {"2d": true, "bus": &"Player", "db": -16.0, "clips": "player/crouch", "n": 3, "pitch": [0.82, 0.9]},
+	&"body_drop": {"bus": &"World", "db": -10.0, "unit": 6.0, "max": 40.0, "voices": 2, "clips": "impacts/bb_body", "n": 3, "pitch": [0.62, 0.7]},
 	&"step_grass": {"2d": true, "bus": &"Player", "db": -25.0, "voices": 2, "clips": "player/step_grass", "n": 5, "pitch": [0.92, 1.1]},
 	&"step_dirt": {"2d": true, "bus": &"Player", "db": -25.0, "voices": 2, "clips": "player/step_dirt", "n": 8, "pitch": [0.92, 1.1]},
 	&"step_concrete": {"2d": true, "bus": &"Player", "db": -25.0, "voices": 2, "clips": "player/step_concrete", "n": 6, "pitch": [0.94, 1.08]},

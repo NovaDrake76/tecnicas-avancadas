@@ -60,6 +60,7 @@ func _ready() -> void:
 	Run.level_failed.connect(_on_level_failed)
 	Run.run_finished.connect(_on_run_finished)
 	Run.watcher_changed.connect(_on_watcher_changed)
+	Run.watcher_tier.connect(_on_watcher_tier)
 	Run.detections_changed.connect(_on_detections_changed)
 	## the ring says WHO is noticing you; this strip says HOW BAD it is for the whole compound, and
 	## how long until it gets worse. the two do not overlap.
@@ -209,6 +210,15 @@ func _on_time_changed(seconds: float) -> void:
 ## turn the right way. a bar in the middle of the screen could never say that.
 func _on_watcher_changed(kiwi: Node3D, value: float) -> void:
 	alert_ring.set_watcher(kiwi, value)
+
+
+## the ring carries the tier, and the one tier worth interrupting the player for gets the line
+## as well: a bird on the radio is a two second window and there is nothing else on screen that
+## says so in words.
+func _on_watcher_tier(kiwi: Node3D, tier: int) -> void:
+	alert_ring.set_tier(kiwi, tier)
+	if tier == Kiwi.Alert.CALLING:
+		flash_status("CALLING IT IN", HudStyle.ALERT)
 
 
 ## being spotted is an EVENT, so it is announced and then it goes. a line that sits there saying

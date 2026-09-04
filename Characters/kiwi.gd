@@ -7,12 +7,20 @@ extends CharacterBody3D
 signal downed(kiwi: Kiwi)
 signal alerted(kiwi: Kiwi)
 signal awareness_changed(kiwi: Kiwi, value: float)
+## what this ONE bird knows, for the hud's ring. the compound's own stage is Alarm's business.
+signal tier_changed(kiwi: Kiwi, tier: int)
 
 ## HUNT and ATTACK belong to the laser kiwi; a plain kiwi never enters them, but the states live in
 ## one enum so every guard in here can name them. RUNNER is a bird carrying the alarm to the horn or
 ## to a friend, HORN is the moment it spends pulling the lever, FLEE is what is left once the whole
 ## compound already knows.
-enum State { IDLE, WALK, DOWN, FLEE, LOOK, HUNT, ATTACK, SUSPECT, RUNNER, HORN, INVESTIGATE }
+enum State { IDLE, WALK, DOWN, FLEE, LOOK, HUNT, ATTACK, SUSPECT, RUNNER, HORN, INVESTIGATE, CALL }
+
+## how much this bird knows, which is a different question from what it is doing. it is READ OFF
+## the state rather than kept beside it, so the two can never drift apart. the hud draws it, and
+## the ladder is Wildlands': nothing, heard something, half saw you, knows there is an intruder
+## but not where, is telling everyone, has you.
+enum Alert { UNAWARE, CURIOUS, SUSPICIOUS, HUNTING, CALLING, ENGAGED }
 
 @export_group("Wander")
 ## radius of the patch it stays inside, measured from wherever it was placed.
@@ -77,6 +85,22 @@ enum State { IDLE, WALK, DOWN, FLEE, LOOK, HUNT, ATTACK, SUSPECT, RUNNER, HORN, 
 @export var horn_search_radius := 70.0
 @export var tell_search_radius := 40.0
 
+@export_group("Report")
+## a bird that learns something the COMPOUND does not know has to report it, and the report takes
+## time. put it down inside this window and the garrison never hears: that is the answer to a
+## compound that knew where you were the instant one bird's bar filled, even if you dropped that
+## bird a fifth of a second later. it is MGSV's reflex window paid for with a real shot.
+@export var call_time := 2.0
+## from a garrison that is ALREADY searching the word gets out quicker, which is Wildlands' own
+## rule; under a full alarm there is nothing left to report and the call is skipped outright.
+@export var call_time_hot := 0.8
+
+@export_group("Bodies")
+## how long a body has to sit in this bird's cone before it counts as FOUND. a glance while
+## turning is not a discovery, and without this a body anywhere in the open is found instantly.
+@export var body_notice := 0.6
+@export var body_scan_interval := 0.3
+
 @export_group("Voice")
 ## one recording, resampled. pitch_scale moves speed and pitch together, which is what turns a
 ## single clip into a flock instead of a row of clones.
@@ -112,8 +136,10 @@ enum State { IDLE, WALK, DOWN, FLEE, LOOK, HUNT, ATTACK, SUSPECT, RUNNER, HORN, 
 @export var vertex_colors_are_srgb := true
 
 @export_group("Down")
-## a hit kiwi pops and is gone. turn this off to leave it lying in the sleep pose instead.
-@export var vanish_on_down := true
+## OFF by default: a downed kiwi stays lying where it fell, and that is what makes where you drop
+## one a decision. a body another bird walks past is found, and a body dragged behind a crate is
+## not. turn this on to go back to the bird popping and leaving nothing to find.
+@export var vanish_on_down := false
 ## long enough for the slowest, lowest call to finish before the node carrying it is freed.
 @export var despawn_delay := 1.6
 
@@ -154,6 +180,14 @@ var _runner_stuck := 0.0
 var _look_at := Vector3.ZERO
 var _investigating_walk := false
 var _returning := false
+var _tier_sent := -1
+var _body_seen := 0.0
+var _body_scan := 0.0
+## this body has already been discovered by somebody, so it is spent: it cannot raise the
+## compound a second time however many birds walk past it afterwards.
+var _found := false
+var _dragged := false
+var _handle: Area3D
 
 
 func _ready() -> void:
@@ -229,6 +263,10 @@ func _play(clip: String, blend := 0.3) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	## while the player is hauling it, the drag owns where it is: gravity and move_and_slide would
+	## both fight the pull and the body would judder along the ground behind them.
+	if _dragged:
+		return
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 	else:
@@ -237,6 +275,7 @@ func _physics_process(delta: float) -> void:
 	if _state != State.DOWN:
 		vision.poll(delta)
 		_update_suspicion()
+		_scan_for_bodies(delta)
 	## a bird already shouting the alarm, or hunting, does not stop to chit chat.
 	if _is_calm():
 		## clamped rather than only counted down, so shortening the interval in the inspector
@@ -260,6 +299,13 @@ func _physics_process(delta: float) -> void:
 			_timer -= delta
 			if _timer <= 0.0:
 				_pull_horn()
+		State.CALL:
+			velocity.x = move_toward(velocity.x, 0.0, walk_speed * 8.0 * delta)
+			velocity.z = move_toward(velocity.z, 0.0, walk_speed * 8.0 * delta)
+			_turn_to(_alarm_from, suspect_turn_speed, delta)
+			_timer -= delta
+			if _timer <= 0.0:
+				_finish_call()
 		State.SUSPECT:
 			velocity.x = move_toward(velocity.x, 0.0, walk_speed * 8.0 * delta)
 			velocity.z = move_toward(velocity.z, 0.0, walk_speed * 8.0 * delta)
@@ -285,6 +331,7 @@ func _physics_process(delta: float) -> void:
 		State.WALK:
 			_step_walk(delta)
 
+	_publish_tier()
 	move_and_slide()
 
 
@@ -497,12 +544,7 @@ func _begin_walk() -> void:
 
 ## the alarm goes up once per bird. after that it is already blown, so fleeing again costs nothing.
 func _on_spotted(target: Node3D) -> void:
-	if _state == State.DOWN:
-		return
-	if not _detected:
-		_detected = true
-		alerted.emit(self)
-	_on_alarmed(target.global_position if target != null else global_position)
+	_learn(target.global_position if target != null else global_position, true)
 
 
 func _on_awareness_changed(value: float) -> void:
@@ -522,7 +564,8 @@ func _on_alarmed(from: Vector3) -> void:
 ## already under full alarm there is nothing left to raise, so it simply runs for it.
 func _begin_alarm_run(from: Vector3) -> void:
 	_alarm_from = from
-	Alarm.raise_search(from)
+	## the compound was told by the CALL that got us here, or by whoever shouted at us. nothing is
+	## raised on this line: a bird that starts running is not a bird that has reported.
 	speak(alert_pitch, alert_db)
 	_play(run_clip, 0.15)
 	if Alarm.stage == Alarm.Stage.ALARM:
@@ -677,12 +720,18 @@ func can_be_told() -> bool:
 ## another bird told this one where the trouble is. it counts as being alerted and it answers the
 ## same way it would have answered seeing you, so the alarm spreads from bird to bird on foot.
 func told(at: Vector3) -> void:
-	if _state == State.DOWN or not can_be_told():
+	if not can_be_told():
 		return
-	if not _detected:
-		_detected = true
-		alerted.emit(self)
-	_on_alarmed(at)
+	## no call: the bird that shouted is the one already reporting, and two birds reporting the
+	## same sighting would make killing the messenger pointless the moment there were two of them.
+	_learn(at, false)
+
+
+## this bird found out FIRST HAND: it saw the player, a bb bounced off its own plate, it walked
+## into a body. first hand means it is the one who has to get on the radio, and it can be put
+## down before it finishes. told() is the second-hand half of the same pair.
+func saw(at: Vector3) -> void:
+	_learn(at, true)
 
 
 func _flee_target(from: Vector3) -> void:
@@ -721,10 +770,141 @@ func _alert_witnesses() -> void:
 func witness(at: Vector3) -> void:
 	if _state == State.DOWN or not vision.sees_point(at, witness_radius):
 		return
+	_learn(at, true)
+
+
+## something this bird now knows. needs_report says whether the COMPOUND knows it too: seeing the
+## player, watching a neighbour drop and finding a body all have to go over the radio first, and
+## the bird can be put down before it finishes. being shouted at does not, because the bird that
+## shouted is the one on the radio. this is the whole of the two-layer design: what one bird knows
+## and what the garrison knows are different facts, and the second one has to travel.
+func _learn(from: Vector3, needs_report: bool) -> void:
+	if _state == State.DOWN:
+		return
 	if not _detected:
 		_detected = true
 		alerted.emit(self)
-	_on_alarmed(at)
+	if needs_report and call_seconds() > 0.0:
+		_begin_call(from)
+		return
+	_on_alarmed(from)
+
+
+## it stops, squares up to the trouble and gets on the radio. it is standing still and calling,
+## which is the loudest and most obvious thing a bird ever does, because the player has to be able
+## to see the window in order to use it.
+func _begin_call(from: Vector3) -> void:
+	_alarm_from = from
+	_timer = call_seconds()
+	_state = State.CALL
+	speak(alert_pitch, alert_db)
+	Sfx.play(&"kiwi_radio", global_position + Vector3.UP * 0.3)
+	if not still_clips.is_empty():
+		_play(still_clips[randi() % still_clips.size()])
+
+
+## the escalation clock shortens with the stage the garrison is already in.
+func call_seconds() -> float:
+	match Alarm.stage:
+		Alarm.Stage.ALARM:
+			return 0.0
+		Alarm.Stage.SEARCHING:
+			return call_time_hot
+	return call_time
+
+
+func is_calling() -> bool:
+	return _state == State.CALL
+
+
+## the word is out. only here does the compound learn anything, and only from a bird that lived
+## long enough to finish saying it.
+func _finish_call() -> void:
+	Alarm.raise_search(_alarm_from)
+	_on_alarmed(_alarm_from)
+
+
+## a body lying in the open is a fact, not a glimpse, so it skips the awareness bar entirely. the
+## compound is then told about the BODY and not about the player: the garrison converges on where
+## the shooting was, which is where the player no longer is, and that gap is the reward for having
+## moved. the sight test is the same ray as everything else, so a crate hides a body for free and
+## the level's own cover is the whole vocabulary.
+func _scan_for_bodies(delta: float) -> void:
+	if not _can_notice():
+		_body_seen = 0.0
+		return
+	_body_scan -= delta
+	if _body_scan > 0.0:
+		return
+	_body_scan = body_scan_interval
+	var found: Kiwi = null
+	for node in get_tree().get_nodes_in_group("body"):
+		var other := node as Kiwi
+		if other == null or other == self or other.is_found():
+			continue
+		var at := other.global_position + Vector3.UP * 0.25
+		if vision.sees_point(at, witness_radius):
+			found = other
+			break
+	if found == null:
+		_body_seen = 0.0
+		return
+	_body_seen += body_scan_interval
+	if _body_seen < body_notice:
+		return
+	_body_seen = 0.0
+	found.mark_found()
+	_learn(found.global_position, true)
+
+
+## spent: no number of birds walking past can raise the compound on the same body twice.
+func mark_found() -> void:
+	_found = true
+
+
+func is_found() -> bool:
+	return _found
+
+
+## the player has it by the feet. the drag owns the position while this is true.
+func set_dragged(value: bool) -> void:
+	_dragged = value
+
+
+func is_dragged() -> bool:
+	return _dragged
+
+
+## a plain bird never hunts, so it never has the player in front of it in the sense the tier
+## means. the laser kiwi answers for itself.
+func has_contact() -> bool:
+	return false
+
+
+func alert_tier() -> int:
+	match _state:
+		State.LOOK, State.INVESTIGATE:
+			return Alert.CURIOUS
+		State.SUSPECT:
+			return Alert.SUSPICIOUS
+		State.CALL:
+			return Alert.CALLING
+		State.ATTACK:
+			return Alert.ENGAGED
+		State.HUNT:
+			return Alert.ENGAGED if has_contact() else Alert.HUNTING
+		State.RUNNER, State.HORN, State.FLEE:
+			return Alert.HUNTING
+	return Alert.UNAWARE
+
+
+## an int compared once a tick, so the signal cannot get out of step with the state it reads.
+func _publish_tier() -> void:
+	var tier := alert_tier()
+	if tier == _tier_sent:
+		return
+	_tier_sent = tier
+	tier_changed.emit(self, tier)
 
 
 func was_detected() -> bool:
@@ -739,6 +919,7 @@ func stand_down() -> void:
 		return
 	vision.rearm()
 	_detected = false
+	_body_seen = 0.0
 	_home = _post
 	_target = _post
 	_state = State.WALK
@@ -779,6 +960,8 @@ func _go_down() -> void:
 
 	if not vanish_on_down:
 		_play(down_clip, 0.15)
+		_become_body()
+		_publish_tier()
 		return
 
 	model.visible = false
@@ -786,6 +969,35 @@ func _go_down() -> void:
 	set_physics_process(false)
 	## the node outlives the burst by a moment, the particles are parented to the world not to us.
 	get_tree().create_timer(despawn_delay).timeout.connect(queue_free)
+
+
+## what is left on the ground: something a patrol can find, and something the player can haul out
+## of a patrol's way. the handle is an AREA on the interactable layer, not a body, so a bb passes
+## straight through it and a corpse can never come back as a second hit marker.
+func _become_body() -> void:
+	add_to_group("body")
+	_handle = Area3D.new()
+	_handle.collision_layer = 128
+	_handle.collision_mask = 0
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(0.75, 0.5, 0.75)
+	shape.shape = box
+	shape.position = Vector3(0.0, 0.25, 0.0)
+	_handle.add_child(shape)
+	add_child(_handle)
+	var grab := Interactable.new()
+	grab.prompt = "Drag the body"
+	add_child(grab)
+	grab.interacted.connect(_on_grab_pressed)
+
+
+func _on_grab_pressed(_by: Node) -> void:
+	for node in get_tree().get_nodes_in_group("body_drag"):
+		var drag := node as BodyDrag
+		if drag != null:
+			drag.grab(self)
+			return
 
 
 ## the same clip every time, pulled to a different pitch so thirty birds are not one bird.

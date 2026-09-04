@@ -123,6 +123,12 @@ func told(at: Vector3) -> void:
 	super(at)
 
 
+## a hunter that can see the player right now is ENGAGED rather than merely hunting, and the ring
+## says which.
+func has_contact() -> bool:
+	return _seen
+
+
 func _begin_hunt(toward: Vector3) -> void:
 	if _player == null or not is_instance_valid(_player):
 		_player = get_tree().get_first_node_in_group("player") as Node3D
@@ -139,9 +145,10 @@ func _begin_hunt(toward: Vector3) -> void:
 	_hunt_call = randf_range(hunt_call_interval.x, hunt_call_interval.y)
 	_play(run_clip, 0.15)
 	speak(alert_pitch, alert_db)
-	## a hunter is a bird that has noticed: the compound starts searching. it does not raise the
-	## full alarm on its own, that takes a runner reaching the horn.
-	Alarm.raise_search(toward)
+	## nothing is raised here. a hunter reaches this line either because its own radio call went
+	## through, or because it was shouted at by a bird whose call went through; raising it again
+	## on the way into the hunt would put the compound's knowledge back on the same tick as the
+	## sighting, which is the whole thing being fixed.
 	## the squad is who decides whether this bird gets to shoot or has to move.
 	Squad.join(self)
 	## the hud's ring keeps an arc on a bird that is hunting you, at its bearing, for as long as it is.
@@ -170,8 +177,11 @@ func _step_hunt(delta: float) -> void:
 		## under a full alarm it never gives up: it works the last place anyone saw you, and when the
 		## compound learns something new it goes there.
 		_search = search_time
-		if Alarm.has_last_known and Alarm.last_known.distance_to(_last_seen) > 1.5:
-			_last_seen = Alarm.last_known
+		## the compound's belief, WIDENED by how old it is: every hunter picks its own spot on the
+		## ring, so a stale search fans out instead of three birds standing on one patch of grass.
+		var believed := Alarm.search_point(get_instance_id())
+		if Alarm.has_last_known and believed.distance_to(_last_seen) > 1.5:
+			_last_seen = believed
 			_stuck = 0.0
 
 	## the search clock is the whole hunt while the compound is only searching. it runs through a
@@ -536,7 +546,7 @@ func take_bb_hit(damage := 1.0, at := Vector3.INF, energy := -1.0) -> void:
 			armour.bounce(at)
 		if plate_alerts:
 			var shooter := get_tree().get_first_node_in_group("player") as Node3D
-			told(shooter.global_position if shooter != null else at)
+			saw(shooter.global_position if shooter != null else at)
 		return
 	_plate -= 1
 	if _plate > 0:
@@ -544,7 +554,7 @@ func take_bb_hit(damage := 1.0, at := Vector3.INF, energy := -1.0) -> void:
 			armour.dent(at)
 		if plate_alerts:
 			var shooter := get_tree().get_first_node_in_group("player") as Node3D
-			told(shooter.global_position if shooter != null else at)
+			saw(shooter.global_position if shooter != null else at)
 		return
 	if armour != null:
 		armour.shed()
