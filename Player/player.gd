@@ -59,7 +59,6 @@ var _peak_fall_vy := 0.0
 var _pitch := 0.0
 var _lean := 0.0
 var _since_hurt := 999.0
-var _hit_sound: AudioStreamPlayer
 
 
 func _ready() -> void:
@@ -84,11 +83,8 @@ func _ready() -> void:
 
 	_sm.setup(self)
 
-	## the hit is heard in the head, not in the world, so it is a plain player and not a 3d one.
-	_hit_sound = AudioStreamPlayer.new()
-	_hit_sound.stream = LaserSfx.hit()
-	_hit_sound.volume_db = -4.0
-	add_child(_hit_sound)
+	if health != null:
+		health.died.connect(func() -> void: Sfx.play_2d(&"player_down"))
 
 
 ## the mouse is the player's only while nothing on screen owns it: not the pause menu (the tree is
@@ -182,9 +178,8 @@ func take_laser_hit(amount: float, from: Vector3) -> void:
 	if camera != null:
 		camera.add_damage_kick(2.2 * k, 1.6 * k, from)
 		camera.add_screen_shake(0.35 * k, 0.22)
-	if _hit_sound != null and not _hit_sound.playing:
-		_hit_sound.pitch_scale = randf_range(0.9, 1.1)
-		_hit_sound.play()
+	## heard in the head, not in the world: the table caps it so a beam is not a drum roll
+	Sfx.play_2d(&"player_hurt")
 	hurt.emit(amount, from)
 
 
@@ -255,6 +250,7 @@ func solve_and_move(delta: float, wish: Vector3, cur_max: float, want_jump: bool
 		vert -= movement.gravity * delta
 	if jumping:
 		vert = movement.jump_impulse
+		Sfx.play_2d(&"jump")
 		_jump_buffer = 0.0
 
 	## lift onto kerbs and stairs before the move, never after.
@@ -296,6 +292,8 @@ func _update_crouch(delta: float) -> void:
 	## refuse to stand up while something is directly overhead.
 	if not want and _crouching and _ceiling_check != null and _ceiling_check.is_colliding():
 		want = true
+	if want != _crouching:
+		Sfx.play_2d(&"crouch")
 	_crouching = want
 
 	var target := 1.0 if _crouching else 0.0
@@ -357,6 +355,7 @@ func _update_jump_buffer(delta: float) -> void:
 func _on_landed(impact_vy: float) -> void:
 	if impact_vy >= fall_velocity_threshold:
 		return
+	Sfx.play_2d(&"land_hard")
 	if camera != null:
 		camera.add_fall_kick(clampf(absf(impact_vy) * 0.5, 1.0, 6.0))
 

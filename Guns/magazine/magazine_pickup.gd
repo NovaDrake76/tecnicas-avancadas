@@ -78,6 +78,7 @@ func take(gun: Gun) -> bool:
 			return false
 
 	quantity -= 1
+	Sfx.play(&"pickup", global_position)
 	contents_changed.emit(magazine)
 	_refresh()
 	if quantity <= 0:

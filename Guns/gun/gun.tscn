@@ -1,11 +1,10 @@
-[gd_scene load_steps=7 format=3 uid="uid://ble4klsjtx5q2"]
+[gd_scene load_steps=6 format=3 uid="uid://ble4klsjtx5q2"]
 
 [ext_resource type="Script" uid="uid://bvspvig8o52i4" path="res://Guns/gun/gun.gd" id="1_a202f"]
 [ext_resource type="Mesh" uid="uid://cgky0oklhe07b" path="res://Models/Weapons/m4a1.obj" id="2_mesh"]
 [ext_resource type="Texture2D" path="res://Models/Weapons/m4a1_body.png" id="3_body"]
 [ext_resource type="Texture2D" path="res://Models/Weapons/m4a1_mag.png" id="4_mag"]
 [ext_resource type="Resource" path="res://Guns/resources/mag_rifle.tres" id="5_rifle"]
-[ext_resource type="Script" path="res://Components/sfx_bank.gd" id="6_sfx"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
 albedo_texture = ExtResource("3_body")
@@ -19,6 +18,7 @@ roughness = 0.65
 
 [node name="Gun" type="Node3D" unique_id=989647515]
 script = ExtResource("1_a202f")
+sfx_prefix = &"m4a1"
 slow_motion = 1.0
 motor_rpm = 9000.0
 magazine = ExtResource("5_rifle")
@@ -37,24 +37,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, -0.19, -0.5)
 
 [node name="AimPose" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.9999556, 0.009424636, 0, -0.009424636, 0.9999556, 0, -0.090957426, -0.1461691)
-
-[node name="FireSfx" type="AudioStreamPlayer3D" parent="."]
-unit_size = 3.0
-max_distance = 40.0
-panning_strength = 0.0
-script = ExtResource("6_sfx")
-clip_paths = PackedStringArray("res://Sounds/rifle_fire_1.ogg")
-pitch_range = Vector2(0.92, 1.09)
-base_db = -13.0
-
-[node name="MagSfx" type="AudioStreamPlayer3D" parent="."]
-unit_size = 3.0
-max_distance = 30.0
-panning_strength = 0.0
-script = ExtResource("6_sfx")
-clip_paths = PackedStringArray("res://Sounds/mag_in_1.ogg", "res://Sounds/mag_in_2.ogg", "res://Sounds/mag_in_3.ogg", "res://Sounds/mag_in_4.ogg")
-pitch_range = Vector2(0.95, 1.05)
-base_db = -6.0
 
 [node name="Anchors" type="Node3D" parent="."]
 

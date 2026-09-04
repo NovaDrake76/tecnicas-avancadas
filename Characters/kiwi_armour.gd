@@ -181,6 +181,7 @@ func dent(at: Vector3) -> void:
 	var where := at if at.is_finite() else global_position + Vector3.UP * 0.3
 	BurstFx.spawn(world, where, Color(0.8, 0.8, 0.82), 12, 2.6, 0.35)
 	BurstFx.spawn(world, where, Color(0.4, 0.4, 0.42), 8, 1.8, 0.4)
+	Sfx.play(&"bb_dent", where)
 
 
 ## a bb that arrived too slow to matter: a white spark and a ping, nothing else.
@@ -190,15 +191,7 @@ func bounce(at: Vector3) -> void:
 	var where := at if at.is_finite() else global_position + Vector3.UP * 0.3
 	BurstFx.spawn(world, where, Color(1.0, 1.0, 1.0), 8, 2.2, 0.25)
 	ImpactFx.flash(world, where, Color(1.0, 1.0, 0.95), 0.8, 0.08)
-	var ping := AudioStreamPlayer3D.new()
-	ping.stream = ping_sound()
-	ping.unit_size = 8.0
-	ping.max_distance = 60.0
-	ping.pitch_scale = randf_range(0.94, 1.08)
-	world.add_child(ping)
-	ping.global_position = where
-	ping.finished.connect(ping.queue_free)
-	ping.play()
+	Sfx.play(&"bb_plate", where)
 
 
 ## the plates come off before the bird does, which is the clearest possible "that one worked".
@@ -206,6 +199,8 @@ func shed() -> void:
 	if _shed:
 		return
 	_shed = true
+	if _kiwi != null and is_instance_valid(_kiwi):
+		Sfx.play(&"plates_shed", _kiwi.global_position + Vector3.UP * 0.3)
 	var world := get_tree().current_scene
 	for p in _plates:
 		if p.visible:
@@ -250,24 +245,3 @@ func hide_all() -> void:
 	if _weak != null:
 		_weak.collision_layer = 0
 	set_process(false)
-
-
-static var _ping: AudioStreamWAV
-
-
-## a short metallic ping: two close partials that beat against each other, decaying fast.
-static func ping_sound() -> AudioStreamWAV:
-	if _ping != null:
-		return _ping
-	var rate := Tone.RATE
-	var n := int(rate * 0.22)
-	var out := PackedFloat32Array()
-	out.resize(n)
-	for i in n:
-		var t := float(i) / float(rate)
-		var u := float(i) / float(n)
-		var env := exp(-u * 9.0)
-		var v := sin(TAU * 3100.0 * t) * 0.6 + sin(TAU * 3380.0 * t) * 0.45 + sin(TAU * 5200.0 * t) * 0.2
-		out[i] = tanh(v * env * 1.3)
-	_ping = Tone.wav(out)
-	return _ping

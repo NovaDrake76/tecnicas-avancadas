@@ -31,6 +31,24 @@ func _ready() -> void:
 	_body = get_parent() as CharacterBody3D
 
 
+## the sound goes through the table, by the surface underfoot: grass, dirt, concrete, metal, wood or
+## gravel, read off whatever the ray under the boots lands on. the noise the birds hear is unchanged.
+func play_one(extra_db := 0.0) -> void:
+	Sfx.play_2d("step_" + String(surface()), extra_db)
+
+
+func surface() -> StringName:
+	if _body == null or not is_inside_tree():
+		return &"grass"
+	var from := _body.global_position + Vector3.UP * 0.3
+	var query := PhysicsRayQueryParameters3D.create(from, from + Vector3.DOWN * 1.4, 1)
+	query.exclude = [_body.get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return &"grass"
+	return Sfx.surface_of(hit["collider"])
+
+
 ## the whole rule, kept out of _physics_process so it can be driven and measured directly.
 func advance(distance: float, crouched: bool) -> bool:
 	_travelled += distance

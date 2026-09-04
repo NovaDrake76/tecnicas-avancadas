@@ -151,5 +151,7 @@ func _apply() -> void:
 	if was != null and was != _gun and is_instance_valid(was):
 		was.cancel_reload()
 	if was != _gun:
+		if was != null:
+			Sfx.play_2d(&"weapon_draw")
 		weapon_changed.emit(_gun)
 		_gun.emit_state()

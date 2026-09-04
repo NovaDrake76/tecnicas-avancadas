@@ -112,7 +112,7 @@ func hunter_count() -> int:
 ## how many may shoot at once. one for a small group, one more for every three birds, never more
 ## than three however big the fight gets.
 func max_firing() -> int:
-	return clampi(1 + _members.size() / 3, 1, 3)
+	return clampi(1 + floori(_members.size() / 3.0), 1, 3)
 
 
 func token_count() -> int:
@@ -183,6 +183,7 @@ func sync_hold(kiwi: Node3D) -> bool:
 	if _sync_waiting.size() < 2:
 		return true
 	_sync_armed = false
+	force_sync = false
 	_sync_cooldown = SYNC_COOLDOWN
 	for id in _sync_waiting.keys():
 		var k := instance_from_id(id)
@@ -312,8 +313,8 @@ func tangent_point(kiwi: Node3D, toward: Vector3, side := 0) -> Vector3:
 	if to.length_squared() < 0.01:
 		to = Vector3.FORWARD
 	var right := to.normalized().cross(Vector3.UP)
-	var sign := float(side) if side != 0 else (1.0 if (kiwi.get_instance_id() % 2) == 0 else -1.0)
-	var goal := here + right * sign * FLANK_STEP + to.normalized() * FLANK_STEP * 0.35
+	var hand := float(side) if side != 0 else (1.0 if (kiwi.get_instance_id() % 2) == 0 else -1.0)
+	var goal := here + right * hand * FLANK_STEP + to.normalized() * FLANK_STEP * 0.35
 	var grounded := _ground(kiwi, goal)
 	return goal if grounded == Vector3.INF else grounded
 
@@ -361,7 +362,6 @@ func _assign_roles() -> void:
 	## the other is ready too, so the two charges start on the same tick however their bursts were
 	## staggered. a window nobody fills in SYNC_WAIT closes on its own.
 	if seeing.size() >= 2 and not _sync_armed and (force_sync or (_sync_cooldown <= 0.0 and randf() < SYNC_CHANCE)):
-		force_sync = false
 		_sync_armed = true
 		_sync_wait = 0.0
 		_sync_waiting.clear()

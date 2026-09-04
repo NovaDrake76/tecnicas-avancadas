@@ -70,10 +70,10 @@ class TermRow extends HBoxContainer:
 				_tag.text = text
 				_tag.add_theme_color_override("font_color", colour)
 
-	func setup(name: String) -> void:
+	func setup(caption: String) -> void:
 		add_theme_constant_override("separation", 18)
 		var label := Label.new()
-		label.text = name
+		label.text = caption
 		label.custom_minimum_size = Vector2(160, 0)
 		label.add_theme_font_size_override("font_size", 22)
 		label.add_theme_color_override("font_color", MenuStyle.DIM)
@@ -256,6 +256,7 @@ func try_dismiss() -> bool:
 	if not visible or not _armed:
 		return false
 	_armed = false
+	UiSfx.play("confirm")
 	dismissed.emit()
 	return true
 
@@ -313,12 +314,14 @@ func play(s: Dictionary, title: String) -> void:
 	ring.tween_interval(RING_DELAY)
 	ring.tween_property(self, "ring_ratio", clampf(float(s.get("grade", 0.0)), 0.0, 1.0), RING_TIME) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	ring.tween_callback(func() -> void: UiSfx.play("stamp"))
 	_tweens.append(ring)
 
 	for i in _rows.size():
 		var target := clampf(float(s.get(String(TERMS[i][1]), 0.0)), 0.0, 1.0)
 		var bar := create_tween()
 		bar.tween_interval(BAR_DELAY + BAR_STEP * float(i))
+		bar.tween_callback(func() -> void: UiSfx.play("tick"))
 		bar.tween_property(_rows[i], "fill", target, BAR_TIME) \
 			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		_tweens.append(bar)
@@ -359,10 +362,10 @@ func _kill() -> void:
 	_tweens.clear()
 
 
-func _text(parent: Control, text: String, size: int, colour: Color) -> Label:
+func _text(parent: Control, text: String, points: int, colour: Color) -> Label:
 	var l := Label.new()
 	l.text = text
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", points)
 	l.add_theme_color_override("font_color", colour)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(l)
@@ -396,4 +399,4 @@ func _gap(parent: Control, h: float) -> void:
 
 func _clock(seconds: float) -> String:
 	var whole := int(round(seconds))
-	return "%d:%02d" % [whole / 60, whole % 60]
+	return "%d:%02d" % [floori(whole / 60.0), whole % 60]

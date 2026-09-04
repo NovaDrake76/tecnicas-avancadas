@@ -185,6 +185,9 @@ func _set_stage(value: int) -> void:
 		_ever_hot = true
 	if stage == value:
 		return
+	## the same as Run._set_state: an autoload's enum has two identities to the analyser, so the
+	## warning is answered outright. the value is only ever one of Stage's own members.
+	@warning_ignore("int_as_enum_without_cast")
 	stage = value
 	if stage != Stage.ALARM:
 		_cancel_reinforcements()

@@ -489,5 +489,10 @@ func _summary() -> Dictionary:
 func _set_state(value: int) -> void:
 	if state == value:
 		return
+	## the analyser gives an AUTOLOAD's enum two identities, the local `State` and the global
+	## `run.gd.State`, and refuses to convert between them: typing the parameter breaks every
+	## caller and `as State` is rejected as an invalid cast. both were tried. the value is only
+	## ever one of the enum's own members, so the warning is answered rather than worked around.
+	@warning_ignore("int_as_enum_without_cast")
 	state = value
 	state_changed.emit(state)

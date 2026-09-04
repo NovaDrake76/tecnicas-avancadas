@@ -7,3 +7,6 @@
 script = ExtResource("2_mortar")
 wander_radius = 0.0
 walk_chance = 0.0
+
+[node name="Vision" parent="."]
+sight_range = 20.0

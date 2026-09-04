@@ -202,7 +202,7 @@ func _on_targets_changed(_down: int, _total: int) -> void:
 
 
 func _on_time_changed(seconds: float) -> void:
-	timer_label.text = "%d:%02d" % [int(seconds) / 60, int(seconds) % 60]
+	timer_label.text = "%d:%02d" % [floori(seconds / 60.0), int(seconds) % 60]
 
 
 ## one arc per bird that is noticing you, drawn at its bearing, so you can tell WHICH one and
@@ -289,7 +289,7 @@ func _clear_field_readout() -> void:
 
 
 func _clock(seconds: float) -> String:
-	return "%d:%02d" % [int(seconds) / 60, int(seconds) % 60]
+	return "%d:%02d" % [floori(seconds / 60.0), int(seconds) % 60]
 
 
 func _on_focus_changed(text: String, action: StringName, _target: Node) -> void:

@@ -14,16 +14,12 @@ signal cut
 const METAL := Color(0.16, 0.17, 0.18)
 const BAND := Color(0.72, 0.12, 0.1)
 const LIT := Color(1.0, 0.28, 0.16)
-const RATE := 22050
 
 @export var post_height := 2.3
 @export var prompt := "Cut the horn"
 @export var can_be_cut := true
-## quieter than it was: the first cut was loud enough to be heard over the whole level at full
-## volume, and a siren that is everywhere tells you nothing about where.
-@export var siren_db := -7.0
-
-static var _siren_stream: AudioStreamWAV
+## on top of the table's level for the siren, for a horn that should carry more or less than the others.
+@export var siren_db := 0.0
 
 var _raised := false
 var _disabled := false
@@ -56,12 +52,10 @@ func _ready() -> void:
 	add_child(_interact)
 	_interact.interacted.connect(func(_by: Node) -> void: cut_horn())
 
-	_siren = AudioStreamPlayer3D.new()
-	_siren.unit_size = 14.0
-	_siren.max_distance = 140.0
-	_siren.volume_db = siren_db
-	_siren.position = Vector3(0.0, post_height, 0.0)
-	add_child(_siren)
+	## a real siren recording, looped on its own wail; tracked so a horn behind the container is muffled
+	_siren = Sfx.attach(&"siren", self, Vector3(0.0, post_height, 0.0))
+	_siren.volume_db += siren_db
+	Sfx.track(_siren)
 
 	Alarm.stage_changed.connect(_on_stage)
 
@@ -178,7 +172,7 @@ func raise(by: Node) -> void:
 	_raised = true
 	_time = 0.0
 	_light.visible = true
-	_siren.stream = siren()
+	Sfx.play(&"horn_lever", global_position + Vector3.UP * post_height)
 	_siren.play()
 	raised.emit(by)
 
@@ -190,6 +184,7 @@ func cut_horn() -> void:
 		return
 	_disabled = true
 	_quiet()
+	Sfx.play(&"horn_cut", global_position + Vector3.UP * post_height)
 	_interact.set_enabled(false)
 	_head.rotation_degrees = Vector3(-120.0, 0.0, 0.0)
 	_band_mat.albedo_color = BAND.darkened(0.5)
@@ -227,22 +222,3 @@ func _quiet() -> void:
 	_light.visible = false
 	_light.light_energy = 0.0
 	_beacon_mat.emission_energy_multiplier = 0.0
-
-
-## a two tone siren that loops without a seam: the sweep is symmetric over the loop and its mean
-## frequency fits a whole number of cycles in it, so the phase lands back where it started.
-static func siren() -> AudioStreamWAV:
-	if _siren_stream != null:
-		return _siren_stream
-	var n := RATE
-	var out := PackedFloat32Array()
-	out.resize(n)
-	var phase := 0.0
-	for i in n:
-		var t := float(i) / float(n)
-		var f := 620.0 + 140.0 * sin(TAU * t)
-		phase += TAU * f / float(RATE)
-		var v := sin(phase) + 0.5 * sin(2.0 * phase) + 0.25 * sin(3.0 * phase)
-		out[i] = tanh(v * 0.7)
-	_siren_stream = Tone.wav(out, true, RATE)
-	return _siren_stream

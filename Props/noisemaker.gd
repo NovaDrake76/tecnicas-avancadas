@@ -17,7 +17,6 @@ const MODEL := "res://Models/Ammo/m4a1_mag.obj"
 @export var lifetime := 12.0
 
 var _landed := false
-var _sfx: AudioStreamPlayer3D
 
 
 func _ready() -> void:
@@ -41,11 +40,6 @@ func _ready() -> void:
 			var bounds := mesh.get_aabb()
 			mi.position = -bounds.get_center()
 			add_child(mi)
-	_sfx = AudioStreamPlayer3D.new()
-	_sfx.unit_size = 10.0
-	_sfx.max_distance = 60.0
-	_sfx.stream = clank_sound()
-	add_child(_sfx)
 	get_tree().create_timer(lifetime).timeout.connect(queue_free)
 
 
@@ -61,8 +55,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 ## the clatter: a sound for the player, and a walk-over for every calm bird in earshot. it raises
 ## nothing and touches no alarm stage, ever.
 func _on_landed(at: Vector3) -> void:
-	_sfx.pitch_scale = randf_range(0.92, 1.1)
-	_sfx.play()
+	Sfx.play(&"clank", at)
 	for node in get_tree().get_nodes_in_group("kiwi"):
 		if node.has_method("investigate") and node.global_position.distance_to(at) <= noise_radius:
 			node.investigate(at)
@@ -71,28 +64,3 @@ func _on_landed(at: Vector3) -> void:
 
 func has_landed() -> bool:
 	return _landed
-
-
-static var _clank: AudioStreamWAV
-
-
-## a short metallic clatter: three hits close together, each a ring of two partials, dying fast.
-static func clank_sound() -> AudioStreamWAV:
-	if _clank != null:
-		return _clank
-	var rate := Tone.RATE
-	var n := int(rate * 0.32)
-	var out := PackedFloat32Array()
-	out.resize(n)
-	for hit: float in [0.0, 0.07, 0.16]:
-		var f := randf_range(1900.0, 2600.0)
-		for i in n:
-			var t: float = float(i) / float(rate) - hit
-			if t < 0.0:
-				continue
-			var env := exp(-t * 28.0)
-			out[i] += (sin(TAU * f * t) * 0.5 + sin(TAU * f * 1.41 * t) * 0.3 + (randf() * 2.0 - 1.0) * 0.15) * env
-	for i in n:
-		out[i] = tanh(out[i] * 1.2)
-	_clank = Tone.wav(out)
-	return _clank

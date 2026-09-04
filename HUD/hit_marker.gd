@@ -34,9 +34,9 @@ func _ready() -> void:
 	set_process(false)
 
 
-func strike(lethal := false) -> void:
-	_lethal = lethal
-	_span = kill_life if lethal else life
+func strike(killed := false) -> void:
+	_lethal = killed
+	_span = kill_life if killed else life
 	_left = _span
 	set_process(true)
 	queue_redraw()

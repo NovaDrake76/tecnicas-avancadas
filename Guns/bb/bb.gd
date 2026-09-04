@@ -68,6 +68,10 @@ func _on_impact(point: Vector3, normal: Vector3, hit_body: Object, energy: float
 		## comes up red. a range target has no such answer and gets the plain one.
 		Run.report_hit(hit_body.has_method("is_down") and hit_body.is_down())
 
+	## what it landed on says what it sounds like; the birds and the targets answer for themselves
+	if not target:
+		Sfx.play("bb_" + String(Sfx.surface_of(hit_body)), point)
+
 	## decals belong on static world surfaces only, a hole stamped on a kiwi hangs in the air once it moves.
 	if mark_surface and not target:
 		BulletHoles.mark(point, normal)

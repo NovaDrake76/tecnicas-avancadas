@@ -15,6 +15,10 @@ run/main_scene="res://UI/main_menu.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
 
+[audio]
+
+buses/default_bus_layout="res://default_bus_layout.tres"
+
 [autoload]
 
 BulletHoles="*res://VFX/bullet_holes.gd"
@@ -22,6 +26,8 @@ DamageNumbers="*res://VFX/damage_numbers.gd"
 Run="*res://Autoload/run.gd"
 Alarm="*res://Autoload/alarm.gd"
 Squad="*res://Autoload/squad.gd"
+Sfx="*res://Autoload/sfx.gd"
+Score="*res://Autoload/score.gd"
 Armory="*res://Autoload/armory.gd"
 Settings="*res://Autoload/settings.gd"
 UiSfx="*res://Autoload/ui_sfx.gd"

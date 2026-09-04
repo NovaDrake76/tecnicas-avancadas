@@ -9,6 +9,10 @@ extends StaticBody3D
 const VIEW := "__view"
 const SHAPE := "__shape"
 
+## what a bb sounds like landing on it: metal, wood, concrete, dirt, gravel or grass. left empty it is
+## read off the model's file name, which is right for every prop in the pack so far.
+@export var material_tag := &""
+
 @export var model: PackedScene:
 	set(value):
 		model = value
@@ -23,8 +27,8 @@ func _ready() -> void:
 
 
 func _rebuild() -> void:
-	for name in [VIEW, SHAPE]:
-		var old := get_node_or_null(NodePath(name))
+	for built in [VIEW, SHAPE]:
+		var old := get_node_or_null(NodePath(built))
 		if old != null:
 			remove_child(old)
 			old.queue_free()
@@ -65,6 +69,13 @@ func bounds(root: Node3D) -> AABB:
 		box = part if first else box.merge(part)
 		first = false
 	return box
+
+
+func surface() -> StringName:
+	if material_tag != &"":
+		return material_tag
+	var hint := model.resource_path.get_file().to_lower() if model != null else ""
+	return Sfx.surface_from_name(hint + " " + name.to_lower())
 
 
 func has_collision() -> bool:

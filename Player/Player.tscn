@@ -104,9 +104,6 @@ unit_size = 3.0
 max_distance = 30.0
 panning_strength = 0.0
 script = ExtResource("11_steps")
-clip_paths = PackedStringArray("res://Sounds/footstep_grass_1.ogg", "res://Sounds/footstep_grass_2.ogg", "res://Sounds/footstep_grass_3.ogg", "res://Sounds/footstep_grass_4.ogg", "res://Sounds/footstep_grass_5.ogg")
-pitch_range = Vector2(0.9, 1.12)
-base_db = -14.0
 
 [editable path="Head/Camera3D/Viewmodel/Weapons/M4A1"]
 [editable path="Head/Camera3D/Viewmodel/Weapons/M870"]

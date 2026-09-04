@@ -70,7 +70,7 @@ func _video() -> Control:
 	var page := _page()
 	_dropdown(page, "WINDOW MODE", ["Windowed", "Fullscreen", "Borderless"], Settings.window_mode,
 		func(i: int) -> void:
-			Settings.window_mode = i
+			Settings.window_mode = i as Settings.WindowMode
 			Settings.commit())
 	_dropdown(page, "V-SYNC", ["Off", "On", "Adaptive"], Settings.vsync,
 		func(i: int) -> void:
@@ -88,6 +88,12 @@ func _audio() -> Control:
 	var page := _page()
 	_slider(page, "MASTER VOLUME", Settings.master_volume, 0.0, 1.0, func(x: float) -> void:
 		Settings.master_volume = x
+		Settings.commit())
+	_slider(page, "MUSIC VOLUME", Settings.music_volume, 0.0, 1.0, func(x: float) -> void:
+		Settings.music_volume = x
+		Settings.commit())
+	_slider(page, "EFFECTS VOLUME", Settings.sfx_volume, 0.0, 1.0, func(x: float) -> void:
+		Settings.sfx_volume = x
 		Settings.commit())
 	return page
 

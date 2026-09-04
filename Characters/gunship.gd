@@ -71,6 +71,7 @@ var _beacon_mat: StandardMaterial3D
 var _tracer: MeshInstance3D
 var _gun_muzzle: Node3D
 var _rotor_sfx: AudioStreamPlayer3D
+var _rotor_far: AudioStreamPlayer3D
 var _gun_sfx: AudioStreamPlayer3D
 var _leave_dir := Vector3.FORWARD
 
@@ -84,18 +85,14 @@ func _ready() -> void:
 	light = Searchlight.new()
 	light.position = Vector3(0.0, -0.6, -1.4)
 	add_child(light)
-	_rotor_sfx = AudioStreamPlayer3D.new()
-	_rotor_sfx.stream = rotor_sound()
-	_rotor_sfx.unit_size = 45.0
-	_rotor_sfx.max_distance = 320.0
-	_rotor_sfx.volume_db = 2.0
-	add_child(_rotor_sfx)
+	## two rotor loops crossfaded by distance: far off it is a dull thud with no whine, and the crack
+	## and the turbine arrive as it closes. a plain fade reads as someone turning a knob.
+	_rotor_sfx = Sfx.attach(&"heli_rotor_near", self)
 	_rotor_sfx.play()
-	_gun_sfx = AudioStreamPlayer3D.new()
-	_gun_sfx.stream = gun_sound()
-	_gun_sfx.unit_size = 30.0
-	_gun_sfx.max_distance = 260.0
-	add_child(_gun_sfx)
+	_rotor_far = Sfx.attach(&"heli_rotor_far", self)
+	_rotor_far.play()
+	_rotor_mix()
+	_gun_sfx = Sfx.attach(&"heli_gun", self)
 	Alarm.stage_changed.connect(_on_stage)
 
 
@@ -112,6 +109,7 @@ func dispatch(from: Vector3, toward: Vector3) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_rotor_mix()
 	_time += delta
 	if _rotor != null:
 		_rotor.rotation.y += delta * 25.0
@@ -301,15 +299,7 @@ func take_bb_hit(_damage := 1.0, at := Vector3.INF, _energy := -1.0) -> void:
 	var world := get_tree().current_scene
 	var where := at if at.is_finite() else global_position
 	BurstFx.spawn(world, where, Color.WHITE, 8, 2.0, 0.25)
-	var ping := AudioStreamPlayer3D.new()
-	ping.stream = KiwiArmour.ping_sound()
-	ping.unit_size = 14.0
-	ping.max_distance = 120.0
-	ping.pitch_scale = 0.8
-	world.add_child(ping)
-	ping.global_position = where
-	ping.finished.connect(ping.queue_free)
-	ping.play()
+	Sfx.play(&"heli_ping", where)
 	if _player != null and is_instance_valid(_player):
 		_mark = mark_time
 		_marked = true
@@ -502,42 +492,12 @@ func _cyl(top: float, bottom: float, h: float, at: Vector3, mat: Material) -> Me
 	return mi
 
 
-## ------------------------------------------------------------------------------- the sounds
-static var _rotor_stream: AudioStreamWAV
-static var _gun_stream: AudioStreamWAV
-
-
-## a rotor: a pulse train at blade pass frequency with a low thud under it and a hiss over it. the
-## loop is one second and every partial fits whole cycles in it, so it never clicks.
-static func rotor_sound() -> AudioStreamWAV:
-	if _rotor_stream != null:
-		return _rotor_stream
-	var rate := Tone.RATE
-	var n := rate
-	var out := PackedFloat32Array()
-	out.resize(n)
-	for i in n:
-		var t := float(i) / float(rate)
-		var blade := pow(0.5 + 0.5 * sin(TAU * 13.0 * t), 6.0)
-		var thud := sin(TAU * 26.0 * t) * 0.5 + sin(TAU * 52.0 * t) * 0.25
-		var hiss := (randf() * 2.0 - 1.0) * (0.35 + 0.65 * blade)
-		out[i] = tanh((blade * 1.4 + thud * 0.6 + hiss * 0.5) * 0.7)
-	_rotor_stream = Tone.wav(out, true)
-	return _rotor_stream
-
-
-## the door gun: a rattle of short bangs at 14 a second for as long as a burst lasts.
-static func gun_sound() -> AudioStreamWAV:
-	if _gun_stream != null:
-		return _gun_stream
-	var rate := Tone.RATE
-	var n := int(rate * 2.2)
-	var out := PackedFloat32Array()
-	out.resize(n)
-	for i in n:
-		var t := float(i) / float(rate)
-		var u := fmod(t * 14.0, 1.0) / 14.0
-		var env := exp(-u * 60.0)
-		out[i] = tanh(((randf() * 2.0 - 1.0) * 0.9 + sin(TAU * 140.0 * t) * 0.4) * env * 1.6)
-	_gun_stream = Tone.wav(out)
-	return _gun_stream
+## the near loop fades out past 50 m and the far one is full from 130 m, so what changes with
+## distance is the SOUND of the thing and not only its level.
+func _rotor_mix() -> void:
+	if _rotor_sfx == null or _rotor_far == null:
+		return
+	var d := global_position.distance_to(Sfx.listener())
+	var far_t := clampf((d - 50.0) / 80.0, 0.0, 1.0)
+	_rotor_sfx.volume_db = Sfx.level_of(&"heli_rotor_near") - 30.0 * far_t
+	_rotor_far.volume_db = Sfx.level_of(&"heli_rotor_far") - 14.0 * (1.0 - far_t)

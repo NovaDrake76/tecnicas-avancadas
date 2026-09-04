@@ -18,6 +18,8 @@ enum Attack { NONE, BURST, CHARGE, BEAM, RECOVER }
 @export var hunt_sight := 32.0
 ## how long it searches where it last saw you before it gives up and goes back to loafing.
 @export var search_time := 3.5
+## a hunter keeps calling while it hunts, so a squad closing in can be counted by ear.
+@export var hunt_call_interval := Vector2(3.5, 6.5)
 @export var stuck_time := 1.0
 
 @export_group("Armour")
@@ -96,6 +98,10 @@ func _physics_process(delta: float) -> void:
 	_beam_ready = maxf(0.0, _beam_ready - delta)
 	_since_burst += delta
 	if _state == State.HUNT or _state == State.ATTACK:
+		_hunt_call -= delta
+		if _hunt_call <= 0.0:
+			_hunt_call = randf_range(hunt_call_interval.x, hunt_call_interval.y)
+			speak(alert_pitch, alert_db)
 		_step_hunt(delta)
 	super(delta)
 
@@ -130,6 +136,7 @@ func _begin_hunt(toward: Vector3) -> void:
 	_suppressing = false
 	_role_goal = Vector3.INF
 	_state = State.HUNT
+	_hunt_call = randf_range(hunt_call_interval.x, hunt_call_interval.y)
 	_play(run_clip, 0.15)
 	speak(alert_pitch, alert_db)
 	## a hunter is a bird that has noticed: the compound starts searching. it does not raise the
@@ -220,14 +227,14 @@ func _step_hunt(delta: float) -> void:
 ## squad scatters the same way. arriving does not earn a turn; it puts the bird somewhere new, and
 ## movement is the point.
 func _step_role(delta: float) -> void:
-	var role := Squad.role_for(self)
+	var duty := Squad.role_for(self)
 	_role_timer -= delta
-	if _role_goal == Vector3.INF or _role_timer <= 0.0 or _role_role != role:
-		_role_role = role
+	if _role_goal == Vector3.INF or _role_timer <= 0.0 or _role_role != duty:
+		_role_role = duty
 		_role_timer = Squad.ROLE_INTERVAL
 		_role_arrived = false
-		_role_goal = Squad.claim_cover(self, _player.global_position, role == Squad.Role.FLANK)
-		if _role_goal == Vector3.INF and (role != Squad.Role.HOLD or Squad.is_rattled()):
+		_role_goal = Squad.claim_cover(self, _player.global_position, duty == Squad.Role.FLANK)
+		if _role_goal == Vector3.INF and (duty != Squad.Role.HOLD or Squad.is_rattled()):
 			_role_goal = Squad.tangent_point(self, _player.global_position)
 	if _role_goal == Vector3.INF or _role_arrived:
 		velocity.x = move_toward(velocity.x, 0.0, hunt_speed * 6.0 * delta)
@@ -363,6 +370,7 @@ func _choose_attack() -> void:
 
 
 var _since_burst := 99.0
+var _hunt_call := 0.0
 
 
 ## where the aim sits while the charge runs. the laser kiwi leaves it where it was when the charge
@@ -545,9 +553,10 @@ func take_bb_hit(damage := 1.0, at := Vector3.INF, energy := -1.0) -> void:
 
 ## a bb on the eyes. one precise shot, at any range, with any kit: the skill line, and the reason the
 ## armour is not simply a wall.
-func take_weak_hit(_at: Vector3) -> void:
+func take_weak_hit(at: Vector3) -> void:
 	if _state == State.DOWN:
 		return
+	Sfx.play(&"bb_glass", at if at.is_finite() else global_position + Vector3.UP * 0.4)
 	if armour != null:
 		armour.shed()
 	_plate = 0

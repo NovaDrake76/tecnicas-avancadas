@@ -116,13 +116,13 @@ static func grade_color(letter: String) -> Color:
 	return GRADE_COLORS.get(letter, BRIGHT)
 
 
-static func sheet_text(parent: Control, text: String, size: int, colour: Color, wrap := false) -> Label:
+static func sheet_text(parent: Control, text: String, size: int, colour: Color, wrapped := false) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", colour)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if wrap:
+	if wrapped:
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(l)

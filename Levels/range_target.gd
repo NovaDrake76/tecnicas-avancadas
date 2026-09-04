@@ -92,18 +92,21 @@ func aim_point(part: String) -> Vector3:
 	return _board.global_position
 
 
-func take_bb_hit(_damage := 1.0, _at := Vector3.INF, _energy := -1.0) -> void:
+func take_bb_hit(_damage := 1.0, at := Vector3.INF, _energy := -1.0) -> void:
 	hits += 1
 	hit.emit(hits)
+	Sfx.play(&"target_hit", at if at.is_finite() else global_position)
 	_refresh_label()
 	if _down:
 		return
 	_down = true
+	Sfx.play(&"target_fall", global_position)
 	if _tween != null and _tween.is_valid():
 		_tween.kill()
 	_tween = create_tween()
 	_tween.tween_property(_board, "rotation_degrees:x", -85.0, 0.12).set_ease(Tween.EASE_OUT)
 	_tween.tween_interval(down_time)
+	_tween.tween_callback(func() -> void: Sfx.play(&"target_rise", global_position))
 	_tween.tween_property(_board, "rotation_degrees:x", 0.0, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_tween.finished.connect(func() -> void: _down = false)
 

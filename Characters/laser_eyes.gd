@@ -38,7 +38,6 @@ var _beam_to := Vector3.ZERO
 var _beam_light: OmniLight3D
 var _sparks: GPUParticles3D
 var _charge_parts: GPUParticles3D
-var _voice: AudioStreamPlayer3D
 var _hum: AudioStreamPlayer3D
 var _time := 0.0
 
@@ -72,10 +71,10 @@ func _ready() -> void:
 	_charge_parts = _make_charge()
 	add_child(_charge_parts)
 
-	_voice = _speaker(10.0)
-	add_child(_voice)
-	_hum = _speaker(12.0)
-	add_child(_hum)
+	## one player for the sounds that have to be stopped, the charge and the beam; the one-shots go
+	## through the table. it is tracked so a beam from behind a wall sounds like it is behind a wall.
+	_hum = Sfx.attach(&"laser_beam", self)
+	Sfx.track(_hum)
 	set_glow(0.0)
 
 
@@ -119,15 +118,15 @@ func set_glow(level: float) -> void:
 
 ## the crack of one bolt leaving. the bolt itself is a LaserBolt, the kiwi launches it.
 func zap() -> void:
-	_voice.stream = LaserSfx.zap()
-	_voice.pitch_scale = randf_range(0.92, 1.1)
-	_voice.play()
+	Sfx.play(&"laser_bolt", between_eyes())
 
 
 ## where a bolt or the beam lands: sparks off the world, and a flash of the same green on whatever it
 ## hit. a hit on the player throws no sparks: they would burst in the camera as pale squares, and
 ## the player already has the rim, the kick and the sound to say they were hit.
 func impact(at: Vector3, on_player: bool) -> void:
+	if not on_player:
+		Sfx.play(&"laser_hit", at)
 	var world := get_tree().current_scene
 	if not on_player:
 		BurstFx.spawn(world, at, GLOW, 14, 2.4, 0.4)
@@ -142,8 +141,15 @@ func impact(at: Vector3, on_player: bool) -> void:
 
 func charge_start(duration: float) -> void:
 	_charge_parts.emitting = true
-	_hum.stream = LaserSfx.charge(duration)
+	## the clip is built for the stock charge and pitched to fit any other, so it still ends exactly
+	## as the beam comes whatever the charge time is tuned to
+	var event := &"laser_charge_110" if duration <= 1.5 else &"laser_charge_200"
+	_hum.stream = Sfx.stream(event)
+	_hum.volume_db = Sfx.level_of(event)
+	_hum.set_meta(&"sfx_base_db", _hum.volume_db)
 	_hum.pitch_scale = 1.0
+	if _hum.stream != null and duration > 0.05:
+		_hum.pitch_scale = _hum.stream.get_length() / duration
 	_hum.play()
 
 
@@ -152,16 +158,16 @@ func charge_stop(fizzle: bool) -> void:
 	_charge_parts.emitting = false
 	_hum.stop()
 	if fizzle:
-		_voice.stream = LaserSfx.zap()
-		_voice.pitch_scale = 0.5
-		_voice.play()
+		Sfx.play(&"laser_fizzle", between_eyes())
 
 
 func beam_start() -> void:
 	_beam_on = true
 	_beam_light.visible = true
 	_sparks.emitting = true
-	_hum.stream = LaserSfx.beam()
+	_hum.stream = Sfx.stream(&"laser_beam")
+	_hum.volume_db = Sfx.level_of(&"laser_beam")
+	_hum.set_meta(&"sfx_base_db", _hum.volume_db)
 	_hum.pitch_scale = 1.0
 	_hum.play()
 
@@ -302,14 +308,6 @@ static func make_light(colour: Color, range_m: float) -> OmniLight3D:
 	l.shadow_enabled = false
 	l.light_specular = 0.2
 	return l
-
-
-func _speaker(unit: float) -> AudioStreamPlayer3D:
-	var p := AudioStreamPlayer3D.new()
-	p.unit_size = unit
-	p.max_distance = 70.0
-	p.volume_db = 0.0
-	return p
 
 
 ## sparks thrown off the point where the beam lands, for as long as it lands.

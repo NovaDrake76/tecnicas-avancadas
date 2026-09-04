@@ -17,3 +17,6 @@ beam_track = 0.0
 beam_chance = 1.0
 beam_cooldown = 3.5
 laser_range = 80.0
+
+[node name="Vision" parent="."]
+sight_range = 70.0

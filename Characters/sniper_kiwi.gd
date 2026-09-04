@@ -27,6 +27,7 @@ extends LaserKiwi
 ## your chest says "it is on me" and the last moment is the one that decides it. locking at the START
 ## of the charge instead made the whole two seconds free, which is a warning you can ignore.
 @export var aim_lock_before := 0.3
+var _lock_told := false
 
 var _sight: MeshInstance3D
 
@@ -54,10 +55,14 @@ func _physics_process(delta: float) -> void:
 ## tracking until the lock: while it can see you, the aim is where you are. a suppressing charge is
 ## aimed at a spot and never tracks.
 func _aim_during_charge(at: Vector3) -> void:
-	if _suppressing or not _seen:
-		return
 	if _attack_timer > aim_lock_before:
-		_aim = at
+		_lock_told = false
+		if not _suppressing and _seen:
+			_aim = at
+	elif not _lock_told and not _suppressing:
+		## the lock is audible: from here the shot is coming to THIS spot, and the sound is the cue to leave it
+		_lock_told = true
+		Sfx.play(&"sniper_lock", eyes.between_eyes())
 
 
 func aim_locked() -> bool:
@@ -67,7 +72,7 @@ func aim_locked() -> bool:
 ## the charge is done: one slug at the locked aim, then the recovery. a suppressing charge fires the
 ## same slug at the spot it was lighting up.
 func _fire_charged() -> void:
-	eyes.zap()
+	Sfx.play(&"laser_slug", eyes.between_eyes())
 	eyes.set_glow(0.0)
 	var bolt := LaserBolt.launch(get_parent(), eyes.between_eyes(), _aim, slug_speed, laser_range,
 		slug_damage, self, eyes)

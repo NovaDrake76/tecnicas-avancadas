@@ -18,9 +18,9 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(round_size.x * 3.0 + gap * 2.0, round_size.y)
 
 
-func set_state(mode: Gun.FireMode, can_auto: bool) -> void:
+func set_state(mode: Gun.FireMode, auto_allowed: bool) -> void:
 	_mode = mode
-	_can_auto = can_auto
+	_can_auto = auto_allowed
 	queue_redraw()
 
 

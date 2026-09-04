@@ -92,9 +92,10 @@ const TRAIL_COLORS := [
 @export var log_shots: bool = true
 
 @onready var muzzle: Marker3D = $Muzzle
-@onready var fire_sfx: SfxBank = $FireSfx
-@onready var mag_sfx: SfxBank = $MagSfx
-@onready var cycle_sfx: SfxBank = get_node_or_null("CycleSfx") as SfxBank
+## the weapon's sounds are events in the Sfx table, named by this prefix: <prefix>_fire, _dry,
+## _cycle, _mag_out, _mag_in. the scene says which kit it is; the table says what it sounds like.
+@export var sfx_prefix := &"m4a1"
+var _dry_at := 0.0
 
 var _shot := 0
 var _clock := 0.0
@@ -190,7 +191,7 @@ func equip_magazine(mag: Magazine) -> bool:
 		return false
 
 	magazine = mag.duplicate()
-	mag_sfx.play_one()
+	Sfx.play_2d(sfx_prefix + "_mag_in")
 	magazine_changed.emit(magazine)
 	ammo_changed.emit(magazine.count, magazine.capacity)
 	if log_shots:
@@ -275,11 +276,13 @@ func toggle_fire_mode() -> void:
 	if not allow_auto:
 		var message := "%s is %s: semi only" % [weapon_model, action_label()]
 		mode_refused.emit(message)
+		Sfx.play_2d(&"fire_refused")
 		if log_shots:
 			print("Refused: %s" % message)
 		return
 	fire_mode = FireMode.SEMI if fire_mode == FireMode.AUTO else FireMode.AUTO
 	fire_mode_changed.emit(fire_mode)
+	Sfx.play_2d(&"fire_select")
 	if log_shots:
 		print("Fire mode: %s | %.2f BB/s | interval %.4f s"
 			% [fire_mode_label(), shots_per_second(), shot_interval()])
@@ -306,9 +309,9 @@ func try_fire() -> bool:
 
 	_next_shot_at = maxf(_clock, _next_shot_at) + shot_interval()
 	_spawn_shot(magazine.bb_mass_kg)
-	fire_sfx.play_one()
-	if cycle_sfx != null and cycle_sfx.clips.size() > 0:
-		get_tree().create_timer(cycle_delay).timeout.connect(cycle_sfx.play_one)
+	Sfx.play_2d(sfx_prefix + "_fire")
+	if Sfx.has(sfx_prefix + "_cycle"):
+		get_tree().create_timer(cycle_delay).timeout.connect(func() -> void: Sfx.play_2d(sfx_prefix + "_cycle"))
 	ammo_changed.emit(magazine.count, magazine.capacity)
 	return true
 
@@ -344,6 +347,7 @@ func start_reload() -> bool:
 	_reload_began = _clock
 	_reload_until = _clock + reload_time
 	reload_started.emit(reload_time)
+	Sfx.play_2d(sfx_prefix + "_mag_out")
 	if log_shots:
 		print("Reloading %s, %.1f s" % [weapon_model, reload_time])
 	return true
@@ -367,7 +371,7 @@ func _finish_reload() -> void:
 	if log_shots and magazine != null and magazine.count > 0:
 		print("Discarded %s with %d left" % [magazine.type_label(), magazine.count])
 	magazine = fresh
-	mag_sfx.play_one()
+	Sfx.play_2d(sfx_prefix + "_mag_in")
 	reload_finished.emit(magazine)
 	magazine_changed.emit(magazine)
 	ammo_changed.emit(magazine.count, magazine.capacity)
@@ -383,6 +387,10 @@ func reset_cadence() -> void:
 func _reject(reason: FireBlock) -> void:
 	var message := block_message(reason)
 	fire_failed.emit(reason, message)
+	## a trigger pulled on nothing clicks, once per pull and not once per frame the trigger is held
+	if (reason == FireBlock.EMPTY or reason == FireBlock.NO_MAGAZINE) and _clock >= _dry_at:
+		_dry_at = _clock + 0.25
+		Sfx.play_2d(sfx_prefix + "_dry")
 	if log_shots and reason != FireBlock.COOLDOWN:
 		print("Blocked: %s" % message)
 

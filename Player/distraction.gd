@@ -53,6 +53,7 @@ func throw() -> Noisemaker:
 		return null
 	count -= 1
 	_cooldown = cooldown
+	Sfx.play_2d(&"throw")
 	var mag := Noisemaker.new()
 	var world := get_tree().current_scene
 	world.add_child(mag)

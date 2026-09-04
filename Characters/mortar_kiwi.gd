@@ -21,8 +21,6 @@ extends Kiwi
 @export var cover_factor := 0.35
 ## the tube's report. a clip at this path is used when it exists; until then the synthesised cough
 ## below stands in, so a missing file leaves the mortar quiet rather than breaking the scene.
-@export var fire_sound_path := "res://Sounds/mortar_fire.ogg"
-@export var fire_db := 0.0
 ## a mortar is no use at arm's length. a player it can SEE inside this sends it running, and it
 ## goes back to the tube once it has put some ground between you. the shells have a minimum range
 ## for the same reason, so closing in is the counter and this is what makes closing in a chase.
@@ -77,13 +75,18 @@ func _step_bombard(delta: float) -> void:
 		_end_bombard()
 		return
 	var player := get_tree().get_first_node_in_group("player") as Node3D
+	## the same sense the alarm uses, so a crouched player creeps closer before it bolts: exposure_to
+	## applies the crouch range scale and sees_point does not.
 	if player != null and global_position.distance_to(player.global_position) <= flee_range \
-			and vision.sees_point(VisionCone.sight_point(player), flee_range):
+			and vision.exposure_to(player) > 0.0:
 		_begin_flee(player.global_position)
 		return
 	velocity.x = move_toward(velocity.x, 0.0, walk_speed * 6.0 * delta)
 	velocity.z = move_toward(velocity.z, 0.0, walk_speed * 6.0 * delta)
-	## the compound's knowledge is the fire plan: a bird seeing you, a runner's shout, the gunship's mark
+	## the compound's knowledge is the fire plan, and that is what indirect fire IS: a bird seeing
+	## you, a runner's shout, the gunship's mark. it is only worth aiming at because VisionCone keeps
+	## it fresh while ANY bird can see you, alerted or not; before that it froze at the spot where
+	## the mortar first caught you and every shell after that landed there.
 	if Alarm.has_last_known:
 		_aim_at = Alarm.last_known
 		_has_aim = true
@@ -105,15 +108,7 @@ func _fire(at: Vector3) -> void:
 	_shots += 1
 	var from := _tube.global_position + Vector3.UP * 0.3 if _tube != null else global_position + Vector3.UP * 0.6
 	MortarShell.launch(get_tree().current_scene, from, at, flight_time, blast_radius, blast_damage, cover_factor, self)
-	var pop := AudioStreamPlayer3D.new()
-	pop.stream = load(fire_sound_path) if ResourceLoader.exists(fire_sound_path) else pop_sound()
-	pop.volume_db = fire_db
-	pop.unit_size = 18.0
-	pop.max_distance = 160.0
-	get_tree().current_scene.add_child(pop)
-	pop.global_position = from
-	pop.finished.connect(pop.queue_free)
-	pop.play()
+	Sfx.play(&"mortar_fire", from)
 	BurstFx.spawn(get_tree().current_scene, from, Color(0.6, 0.55, 0.5), 10, 2.5, 0.5)
 
 
@@ -215,23 +210,3 @@ func _build_tube() -> void:
 		leg.position = Vector3(side * 0.1, 0.16, 0.08)
 		leg.rotation_degrees = Vector3(20.0, 0.0, side * -18.0)
 		_tube.add_child(leg)
-
-
-static var _pop: AudioStreamWAV
-
-
-## the tube: a short deep cough.
-static func pop_sound() -> AudioStreamWAV:
-	if _pop != null:
-		return _pop
-	var rate := Tone.RATE
-	var n := int(rate * 0.3)
-	var out := PackedFloat32Array()
-	out.resize(n)
-	for i in n:
-		var t := float(i) / float(rate)
-		var u := float(i) / float(n)
-		var env := exp(-u * 9.0)
-		out[i] = tanh((sin(TAU * 95.0 * t) * 0.8 + (randf() * 2.0 - 1.0) * 0.5) * env * 1.5)
-	_pop = Tone.wav(out)
-	return _pop

@@ -7,7 +7,6 @@ extends CanvasLayer
 ## the player is frozen underneath rather than the tree paused, so the range keeps living and the pause
 ## menu keeps its own escape.
 
-signal deploy_pressed
 signal closed
 
 const WEAPON_VIEW := preload("res://UI/weapon_view.gd")
@@ -174,13 +173,14 @@ func open() -> void:
 	visible = true
 	_page = Page.LOADOUT
 	_refresh()
+	UiSfx.play("bench_open")
 
 
 func close(silent := false) -> void:
 	if not visible:
 		return
 	if not silent:
-		UiSfx.play("back")
+		UiSfx.play("bench_close")
 	remove_from_group("holds_mouse")
 	visible = false
 	var hud := get_tree().get_first_node_in_group("hud")
@@ -227,9 +227,9 @@ func _say(text: String) -> void:
 	_message_tween.tween_property(_message, "modulate:a", 0.0, 0.6)
 
 
+## no sound of its own: every way in here is a card or a button, and both already click. a weapon
+## card and a part card are the same act and now make the same noise.
 func _go(page: Page, slot := -1) -> void:
-	if page != _page or (slot >= 0 and slot != _slot):
-		UiSfx.play("switch")
 	_page = page
 	if slot >= 0:
 		_slot = slot
@@ -765,13 +765,13 @@ func _scroll_column(scroll: ScrollContainer) -> VBoxContainer:
 ## a label. wrap is for the long lines inside a column: a wrapped label has no minimum width, so it
 ## can never widen its column and push the right edge of every row out of view. never wrap a label
 ## whose container has no width of its own (the wallet in the header), it would collapse to a word a line.
-func _text(parent: Control, text: String, size: int, colour: Color, wrap := false) -> Label:
+func _text(parent: Control, text: String, size: int, colour: Color, wrapped := false) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", colour)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if wrap:
+	if wrapped:
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(l)

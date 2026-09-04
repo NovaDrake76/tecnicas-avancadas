@@ -82,14 +82,22 @@ enum State { IDLE, WALK, DOWN, FLEE, LOOK, HUNT, ATTACK, SUSPECT, RUNNER, HORN, 
 ## single clip into a flock instead of a row of clones.
 @export var voice: AudioStream
 ## found on its own once godot has imported it, so a missing file never breaks the scene.
-@export var voice_path := "res://Sounds/kiwi.wav"
+@export var voice_path := "res://Sounds/kiwi/voice.wav"
 @export var call_interval := Vector2(6.0, 17.0)
 ## the three bands do not overlap, so you can tell what happened without looking.
 @export var idle_pitch := Vector2(0.94, 1.06)
 @export var alert_pitch := Vector2(1.08, 1.16)
 @export var down_pitch := Vector2(0.84, 0.92)
-@export var idle_db := -8.0
-@export var alert_db := 1.0
+@export var idle_db := -14.0
+@export var alert_db := -5.0
+@export var down_db := -10.0
+## the short rising call of a bird that has half noticed something: the calm band, cut short.
+@export var query_db := -12.0
+@export var query_clip := 0.42
+## the settling call some birds give when the compound stands down.
+@export var calm_db := -12.0
+## a runner keeps calling as it goes, so the thing carrying the alarm can be followed by ear.
+@export var runner_call_interval := 1.8
 
 @export_group("Clips")
 @export var idle_clips: Array[String] = ["IdleA", "IdleB", "IdleC", "IdleD"]
@@ -136,6 +144,7 @@ var _post := Vector3.ZERO
 var _target := Vector3.ZERO
 var _detected := false
 var _call_timer := 0.0
+var _runner_call := 0.0
 var _suspect_at := Vector3.ZERO
 var _alarm_from := Vector3.ZERO
 var _goal_horn: Node3D
@@ -379,6 +388,7 @@ func _update_suspicion() -> void:
 ## bird that has stopped and squared up to you has noticed something.
 func _begin_suspect() -> void:
 	_state = State.SUSPECT
+	speak(idle_pitch, query_db, query_clip)
 	_suspect_at = vision.last_seen if vision.has_last_seen() \
 		else global_position - global_transform.basis.z * 2.0
 	if not still_clips.is_empty():
@@ -524,11 +534,16 @@ func _begin_alarm_run(from: Vector3) -> void:
 		_flee_target(from)
 	_timer = lone_runner_time
 	_shout_timer = 0.0
+	_runner_call = runner_call_interval
 	_runner_stuck = 0.0
 	_state = State.RUNNER
 
 
 func _step_runner(delta: float) -> void:
+	_runner_call -= delta
+	if _runner_call <= 0.0:
+		_runner_call = runner_call_interval
+		speak(alert_pitch, alert_db)
 	_shout_timer -= delta
 	if _shout_timer <= 0.0:
 		_shout_timer = shout_interval
@@ -591,6 +606,7 @@ func _step_runner(delta: float) -> void:
 
 ## a runner that cannot get where it was going still gets the word out, just later.
 func _use_radio() -> void:
+	Sfx.play(&"kiwi_radio", global_position + Vector3.UP * 0.4)
 	_goal_horn = null
 	_goal_bird = null
 	_flee_target(_alarm_from)
@@ -727,14 +743,18 @@ func stand_down() -> void:
 	_target = _post
 	_state = State.WALK
 	_play(walk_clip)
+	## some of them, not all: thirty birds settling on the same tick is one noise
+	if randf() < 0.35:
+		speak(Vector2(0.9, 0.97), calm_db)
 
 
 ## called by a BB that lands on us, an airsoft hit puts a target out rather than killing it. the
 ## energy is how hard it arrived; a plain kiwi does not care, one bb is one bb. -1 means nobody
 ## measured, which is what a scripted hit says.
-func take_bb_hit(damage := 1.0, _at := Vector3.INF, _energy := -1.0) -> void:
+func take_bb_hit(damage := 1.0, at := Vector3.INF, _energy := -1.0) -> void:
 	if _state == State.DOWN:
 		return
+	Sfx.play(&"bb_body", at if at.is_finite() else global_position + Vector3.UP * 0.3)
 	health.take_damage(damage)
 
 
@@ -751,7 +771,7 @@ func _go_down() -> void:
 	BurstFx.spawn(world, at, burst_light, burst_count, burst_speed)
 	BurstFx.spawn(world, at, burst_dark, int(burst_count * 0.6), burst_speed * 0.8)
 
-	speak(down_pitch, idle_db)
+	speak(down_pitch, down_db)
 	_alert_witnesses()
 
 	## the signal goes out while we are still here, so a listener can read our position.
@@ -762,18 +782,26 @@ func _go_down() -> void:
 		return
 
 	model.visible = false
+	Sfx.play(&"kiwi_poof", at)
 	set_physics_process(false)
 	## the node outlives the burst by a moment, the particles are parented to the world not to us.
 	get_tree().create_timer(despawn_delay).timeout.connect(queue_free)
 
 
 ## the same clip every time, pulled to a different pitch so thirty birds are not one bird.
-func speak(band: Vector2, db: float) -> void:
+func speak(band: Vector2, db: float, clip_after := 0.0) -> void:
 	if throat == null or throat.stream == null:
 		return
 	throat.pitch_scale = randf_range(band.x, band.y)
 	throat.volume_db = db
 	throat.play()
+	## a call cut short is a different word from the same throat: the query of a bird that has
+	## stopped to look, against the full call of one that is sure
+	if clip_after > 0.0:
+		var started := throat.get_playback_position()
+		get_tree().create_timer(clip_after).timeout.connect(func() -> void:
+			if is_instance_valid(throat) and throat.playing and throat.get_playback_position() >= started + clip_after * 0.5:
+				throat.stop())
 
 
 func is_down() -> bool:

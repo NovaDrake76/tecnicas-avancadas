@@ -6,21 +6,37 @@ extends Node
 ## non positional on purpose: the interface is not in the world.
 
 const BANKS := {
-	"hover": ["res://Sounds/ui_hover.ogg"],
-	"click": ["res://Sounds/ui_click_1.ogg", "res://Sounds/ui_click_2.ogg", "res://Sounds/ui_click_3.ogg"],
-	"confirm": ["res://Sounds/ui_confirm.ogg"],
-	"deploy": ["res://Sounds/ui_deploy.ogg"],
-	"switch": ["res://Sounds/ui_switch.ogg"],
-	"back": ["res://Sounds/ui_back.ogg"],
-	"buy": ["res://Sounds/ui_buy.ogg"],
-	"install": ["res://Sounds/ui_install.ogg"],
-	"error": ["res://Sounds/ui_error.ogg"],
+	"hover": ["res://Sounds/ui/hover_1.ogg"],
+	"click": ["res://Sounds/ui/click_1.ogg", "res://Sounds/ui/click_2.ogg", "res://Sounds/ui/click_3.ogg"],
+	"confirm": ["res://Sounds/ui/confirm_1.ogg"],
+	"deploy": ["res://Sounds/ui/deploy_1.ogg"],
+	"switch": ["res://Sounds/ui/switch_1.ogg"],
+	"back": ["res://Sounds/ui/back_1.ogg"],
+	"buy": ["res://Sounds/ui/buy_1.ogg"],
+	"install": ["res://Sounds/ui/install_1.ogg"],
+	"error": ["res://Sounds/ui/error_1.ogg"],
+	"tick": ["res://Sounds/ui/tick_1.ogg", "res://Sounds/ui/tick_2.ogg", "res://Sounds/ui/tick_3.ogg"],
+	"stamp": ["res://Sounds/ui/stamp_1.ogg"],
+	"objective": ["res://Sounds/ui/objective_1.ogg"],
+	"bench_open": ["res://Sounds/ui/bench_open_1.ogg"],
+	"bench_close": ["res://Sounds/ui/bench_close_1.ogg"],
+	"page": ["res://Sounds/ui/page_1.ogg"],
+	## deliberately EMPTY, after Nathan listened: leaving the pause menu says nothing, the game coming
+	## back is what says it. its own name rather than "back", so the bench and the board keep theirs.
+	"pause_close": [],
 }
-## the hover tick is the one sound that plays a hundred times, so it sits far under the rest.
-const GAIN_DB := {"hover": -22.0, "click": -6.0, "confirm": -6.0, "deploy": -2.0, "switch": -10.0,
-	"back": -8.0, "buy": -4.0, "install": -6.0, "error": -8.0}
+## the clips are normalised to a quiet body level already (the build script does that), so these are
+## small offsets between them. the hover tick is the one sound that plays a hundred times, so it
+## sits far under the rest.
+const GAIN_DB := {"hover": -12.0, "click": -4.0, "confirm": -4.0, "deploy": 0.0, "switch": -6.0,
+	"back": -4.0, "buy": -2.0, "install": -4.0, "error": -4.0, "tick": -6.0, "stamp": -4.0, "objective": -6.0,
+	"bench_open": -6.0, "bench_close": -6.0, "page": -6.0}
 ## buttons with this meta stay silent, for the ones that play their own sound.
 const QUIET := &"ui_quiet"
+## banks that are empty ON PURPOSE. the name stays so the call site stays and a clip can go back in;
+## the smoke probe asserts these are empty and every other bank is not, so a missing file is still
+## a failure and a cut is not.
+const SILENT := ["pause_close"]
 
 var _streams := {}
 var _last := {}
@@ -31,15 +47,15 @@ var _played := {}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for name in BANKS:
+	for sound in BANKS:
 		var takes: Array[AudioStream] = []
-		for path in BANKS[name]:
+		for path in BANKS[sound]:
 			if ResourceLoader.exists(path):
 				takes.append(load(path))
-		_streams[name] = takes
+		_streams[sound] = takes
 	for _i in 4:
 		var p := AudioStreamPlayer.new()
-		p.bus = &"Master"
+		p.bus = &"UI"
 		add_child(p)
 		_players.append(p)
 	get_tree().node_added.connect(_on_node_added)
@@ -47,27 +63,27 @@ func _ready() -> void:
 		_on_node_added(n)
 
 
-func has(name: String) -> bool:
-	return _streams.has(name) and not (_streams[name] as Array).is_empty()
+func has(sound: String) -> bool:
+	return _streams.has(sound) and not (_streams[sound] as Array).is_empty()
 
 
 ## how many times a sound has played, for the probe.
-func count(name: String) -> int:
-	return int(_played.get(name, 0))
+func count(sound: String) -> int:
+	return int(_played.get(sound, 0))
 
 
-func play(name: String) -> void:
-	if not has(name):
+func play(sound: String) -> void:
+	if not has(sound):
 		return
-	var takes: Array = _streams[name]
+	var takes: Array = _streams[sound]
 	var pick := randi() % takes.size()
-	if takes.size() > 1 and pick == int(_last.get(name, -1)):
+	if takes.size() > 1 and pick == int(_last.get(sound, -1)):
 		pick = (pick + 1) % takes.size()
-	_last[name] = pick
-	_played[name] = count(name) + 1
+	_last[sound] = pick
+	_played[sound] = count(sound) + 1
 	var player := _free_player()
 	player.stream = takes[pick]
-	player.volume_db = float(GAIN_DB.get(name, -6.0))
+	player.volume_db = float(GAIN_DB.get(sound, -6.0))
 	player.pitch_scale = randf_range(0.97, 1.03)
 	player.play()
 

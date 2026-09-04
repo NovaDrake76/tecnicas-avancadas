@@ -17,6 +17,8 @@ var window_mode := WindowMode.WINDOWED
 var vsync := 1
 var max_fps := 0
 var master_volume := 0.8
+var music_volume := 0.8
+var sfx_volume := 1.0
 ## a multiplier over the player's tuned base, never the raw number. storing the raw value would mean
 ## a player who nudged it once could never get the default back, and it would compound per spawn.
 var look_scale := 1.0
@@ -64,6 +66,10 @@ func _apply_audio() -> void:
 	var master := AudioServer.get_bus_index(&"Master")
 	if master >= 0:
 		AudioServer.set_bus_volume_db(master, linear_to_db(clampf(master_volume, 0.0001, 1.0)))
+	## the music and effects sliders are one voice each in the mix, on top of the layout's own levels,
+	## so they never compound and never fight the ducking
+	Sfx.set_gain(&"Music", &"settings", linear_to_db(clampf(music_volume, 0.0001, 1.0)))
+	Sfx.set_gain(&"SFX", &"settings", linear_to_db(clampf(sfx_volume, 0.0001, 1.0)))
 
 
 func save() -> void:
@@ -72,6 +78,8 @@ func save() -> void:
 	cfg.set_value("video", "vsync", vsync)
 	cfg.set_value("video", "max_fps", max_fps)
 	cfg.set_value("audio", "master", master_volume)
+	cfg.set_value("audio", "music", music_volume)
+	cfg.set_value("audio", "sfx", sfx_volume)
 	cfg.set_value("controls", "look_scale", look_scale)
 	cfg.set_value("controls", "invert_look", invert_look)
 	cfg.save(path)
@@ -81,9 +89,11 @@ func load_from_disk() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(path) != OK:
 		return
-	window_mode = clampi(int(cfg.get_value("video", "window_mode", window_mode)), 0, 2)
+	window_mode = clampi(int(cfg.get_value("video", "window_mode", window_mode)), 0, 2) as WindowMode
 	vsync = clampi(int(cfg.get_value("video", "vsync", vsync)), 0, 2)
 	max_fps = int(cfg.get_value("video", "max_fps", max_fps))
 	master_volume = clampf(float(cfg.get_value("audio", "master", master_volume)), 0.0, 1.0)
+	music_volume = clampf(float(cfg.get_value("audio", "music", music_volume)), 0.0, 1.0)
+	sfx_volume = clampf(float(cfg.get_value("audio", "sfx", sfx_volume)), 0.0, 1.0)
 	look_scale = clampf(float(cfg.get_value("controls", "look_scale", look_scale)), 0.25, 3.0)
 	invert_look = bool(cfg.get_value("controls", "invert_look", invert_look))

@@ -94,11 +94,11 @@ func _build_kiwi() -> Control:
 	_kiwi = kiwi
 	var anim := kiwi.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if anim != null:
-		for name in anim.get_animation_list():
-			if String(name).to_lower().ends_with("run"):
-				anim.get_animation(name).loop_mode = Animation.LOOP_LINEAR
-				anim.play(name)
-				_clip = String(name)
+		for clip in anim.get_animation_list():
+			if String(clip).to_lower().ends_with("run"):
+				anim.get_animation(clip).loop_mode = Animation.LOOP_LINEAR
+				anim.play(clip)
+				_clip = String(clip)
 				break
 	var cam := Camera3D.new()
 	## side on from +x. the angle is set outright rather than with look_at, which needs the node in the
@@ -156,6 +156,9 @@ func is_busy() -> bool:
 
 ## fade to black. returns once the screen is fully covered.
 func cover() -> void:
+	## the world goes quiet behind the curtain, the way it goes dark
+	Sfx.set_gain(&"SFX", &"curtain", -14.0)
+	Sfx.set_gain(&"Ambience", &"curtain", -14.0)
 	_busy = true
 	visible = true
 	if _instant():
@@ -171,6 +174,8 @@ func cover() -> void:
 
 ## fade back in. waits out min_black first, so a fast load still shows the curtain for a beat.
 func uncover() -> void:
+	Sfx.set_gain(&"SFX", &"curtain", 0.0)
+	Sfx.set_gain(&"Ambience", &"curtain", 0.0)
 	if not visible:
 		_busy = false
 		return

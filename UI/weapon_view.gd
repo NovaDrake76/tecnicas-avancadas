@@ -146,10 +146,10 @@ func anchor_names() -> Array:
 
 
 ## where a part sits on the picture, in this control's own pixels. Vector2(-1, -1) if there is none.
-func anchor_point(name: String) -> Vector2:
-	if not _anchors.has(name) or _camera == null:
+func anchor_point(part: String) -> Vector2:
+	if not _anchors.has(part) or _camera == null:
 		return Vector2(-1, -1)
-	var node := _anchors[name] as Node3D
+	var node := _anchors[part] as Node3D
 	var p := _camera.unproject_position(node.global_position)
-	var scale := size / Vector2(_viewport.size)
-	return p * scale
+	var ratio := size / Vector2(_viewport.size)
+	return p * ratio

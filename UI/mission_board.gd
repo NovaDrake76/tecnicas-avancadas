@@ -197,27 +197,27 @@ func _refresh() -> void:
 			MenuStyle.sheet_text(col, "OPEN", 13, MenuStyle.ACCENT, true)
 
 	var sel: Dictionary = Run.LEVELS[_selected]
-	var open: bool = Run.is_unlocked(_selected)
-	MenuStyle.sheet_text(_right, "MISSION %d   %s" % [_selected + 1, "OPEN" if open else "LOCKED"], 13, MenuStyle.ACCENT)
+	var selected_open: bool = Run.is_unlocked(_selected)
+	MenuStyle.sheet_text(_right, "MISSION %d   %s" % [_selected + 1, "OPEN" if selected_open else "LOCKED"], 13, MenuStyle.ACCENT)
 	MenuStyle.sheet_text(_right, String(sel["name"]), 44, MenuStyle.BRIGHT, true)
 	MenuStyle.sheet_gap(_right, 6)
 	var big := _picture(_right, String(sel.get("image", "")), Vector2(0, 380))
 	big.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	if not open:
+	if not selected_open:
 		big.modulate = Color(0.5, 0.5, 0.5)
 	MenuStyle.sheet_gap(_right, 10)
 	MenuStyle.sheet_text(_right, String(sel.get("brief", "")), 20, MenuStyle.BRIGHT, true)
 	MenuStyle.sheet_gap(_right, 14)
 	MenuStyle.sheet_section(_right, "INTEL")
-	MenuStyle.sheet_kv(_right, "PAR TIME", "%d:%02d" % [int(float(sel["par"])) / 60, int(float(sel["par"])) % 60])
+	MenuStyle.sheet_kv(_right, "PAR TIME", "%d:%02d" % [floori(float(sel["par"]) / 60.0), int(float(sel["par"])) % 60])
 	MenuStyle.sheet_kv(_right, "BEST GRADE", Run.grade_letter(Run.best_grade(_selected)) if Run.best(_selected) > 0 else "none yet")
 	MenuStyle.sheet_kv(_right, "BEST SCORE", "$%s" % MenuStyle.thousands(Run.best(_selected)) if Run.best(_selected) > 0 else "none yet")
 	MenuStyle.sheet_kv(_right, "REWARD", "the score, minus what this mission already paid")
-	if not open:
+	if not selected_open:
 		var need: int = Run.unlock_needs(_selected)
 		MenuStyle.sheet_kv(_right, "UNLOCK", "complete %d more mission%s" % [need, "" if need == 1 else "s"])
-	_deploy_btn.disabled = not open
-	_deploy_btn.modulate.a = 1.0 if open else 0.4
+	_deploy_btn.disabled = not selected_open
+	_deploy_btn.modulate.a = 1.0 if selected_open else 0.4
 
 
 func _picture(parent: Control, path: String, size: Vector2) -> TextureRect:

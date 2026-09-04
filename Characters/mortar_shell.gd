@@ -29,11 +29,11 @@ var _fill: MeshInstance3D
 var _done := false
 
 
-static func launch(world: Node, from: Vector3, target: Vector3, flight_time: float, radius: float,
+static func launch(world: Node, from: Vector3, landing: Vector3, flight_time: float, radius: float,
 		damage: float, cover_factor: float, shooter: Node3D) -> MortarShell:
 	var shell := MortarShell.new()
 	shell._from = from
-	shell._target = target
+	shell._target = landing
 	shell._flight = maxf(flight_time, 0.3)
 	shell._radius = radius
 	shell._damage = damage
@@ -139,14 +139,9 @@ func _explode() -> void:
 	tw.tween_property(light, "light_energy", 0.0, 0.35)
 	tw.tween_callback(light.queue_free)
 
-	var thump := AudioStreamPlayer3D.new()
-	thump.stream = thump_sound()
-	thump.unit_size = 26.0
-	thump.max_distance = 220.0
-	world.add_child(thump)
-	thump.global_position = at
-	thump.finished.connect(thump.queue_free)
-	thump.play()
+	## the biggest sound in the game: it pushes everything else down for a beat when it lands near you
+	Sfx.play(&"mortar_blast", at)
+	Sfx.hdr(at, 10.0, 30.0)
 
 	_hurt(at)
 	burst.emit(at)
@@ -182,26 +177,3 @@ func target() -> Vector3:
 
 func time_left() -> float:
 	return maxf(0.0, _flight - _t)
-
-
-static var _thump: AudioStreamWAV
-
-
-## the blast: a low thud with a crack on the front and noise decaying behind it.
-static func thump_sound() -> AudioStreamWAV:
-	if _thump != null:
-		return _thump
-	var rate := Tone.RATE
-	var n := int(rate * 0.9)
-	var out := PackedFloat32Array()
-	out.resize(n)
-	for i in n:
-		var t := float(i) / float(rate)
-		var u := float(i) / float(n)
-		var env := exp(-u * 6.0)
-		var low := sin(TAU * 48.0 * t) * exp(-u * 3.0) * 0.9
-		var noise := (randf() * 2.0 - 1.0) * env * 0.8
-		var crack := (randf() * 2.0 - 1.0) * exp(-t * 90.0)
-		out[i] = tanh((low + noise + crack) * 1.4)
-	_thump = Tone.wav(out)
-	return _thump

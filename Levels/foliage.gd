@@ -114,7 +114,7 @@ func build() -> void:
 	for band in bands:
 		var is_tree := band.sink >= 0.3 and band.scenes[0].begins_with("tree")
 		var is_rock := band.scenes[0].begins_with("stone")
-		var per_species: int = maxi(1, band.count / band.scenes.size())
+		var per_species := maxi(1, floori(float(band.count) / band.scenes.size()))
 		for source in band.scenes:
 			var placements := _place(band, per_species)
 			var box := _emit(source, placements, band.tint)
@@ -176,9 +176,9 @@ func _place(band: Band, wanted: int) -> Array[Transform3D]:
 		if band.slope_max < 1.0 and _slope(x, z) > band.slope_max:
 			continue
 
-		var scale := _rng.randf_range(band.scale_min, band.scale_max)
-		var basis := Basis.from_euler(Vector3(UPRIGHT.x, _rng.randf() * TAU, 0.0)).scaled(Vector3.ONE * scale)
-		out.append(Transform3D(basis, Vector3(x, y - band.sink * scale, z)))
+		var grow := _rng.randf_range(band.scale_min, band.scale_max)
+		var orient := Basis.from_euler(Vector3(UPRIGHT.x, _rng.randf() * TAU, 0.0)).scaled(Vector3.ONE * grow)
+		out.append(Transform3D(orient, Vector3(x, y - band.sink * grow, z)))
 	return out
 
 

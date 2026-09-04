@@ -30,7 +30,8 @@ func _ready() -> void:
 	_menu = MenuStyle.column(_root)
 	MenuStyle.title(_menu, "PAUSED", MenuStyle.T_HEADING)
 	MenuStyle.spacer(_menu, 40)
-	MenuStyle.button(_menu, "CONTINUE", close)
+	## the click too: coming back to the game is the whole of the feedback
+	MenuStyle.button(_menu, "CONTINUE", close).set_meta(UiSfx.QUIET, true)
 	MenuStyle.button(_menu, "OPTIONS", func() -> void: _show(_options))
 	MenuStyle.button(_menu, "QUIT TO MENU", quit_to_menu)
 
@@ -75,7 +76,7 @@ func close() -> void:
 	if not visible:
 		return
 	visible = false
-	UiSfx.play("back")
+	UiSfx.play("pause_close")
 	get_tree().paused = false
 	## the cursor goes back only if there is a game to give it to.
 	if can_pause() and DisplayServer.window_is_focused():

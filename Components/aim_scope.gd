@@ -45,6 +45,7 @@ func _process(delta: float) -> void:
 	if want != _aiming:
 		_aiming = want
 		aim_changed.emit(_aiming)
+		Sfx.play_2d(&"ads")
 
 	_t = move_toward(_t, 1.0 if _aiming else 0.0, ads_in_speed * delta)
 	_cam.fov = lerpf(_base_fov, ads_fov, _t)
