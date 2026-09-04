@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://dn3ueaxw2ww60"
-path="res://.godot/imported/supply_crate_1.glb-cbe9a330e0e8c62cc20bd3f836d067a0.scn"
+uid="uid://boxkc8nutfjc1"
+path="res://.godot/imported/wall_hr_1.glb-d9e427f6ce1ab78c47775b001fde30f9.scn"
 
 [deps]
 
-source_file="res://Models/Props/supply_crate_1.glb"
-dest_files=["res://.godot/imported/supply_crate_1.glb-cbe9a330e0e8c62cc20bd3f836d067a0.scn"]
+source_file="res://Models/Props/Walls/wall_hr_1.glb"
+dest_files=["res://.godot/imported/wall_hr_1.glb-d9e427f6ce1ab78c47775b001fde30f9.scn"]
 
 [params]
 

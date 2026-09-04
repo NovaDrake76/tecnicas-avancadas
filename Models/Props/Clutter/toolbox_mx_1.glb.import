@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://ce04qhppjd3r4"
-path="res://.godot/imported/wooden_barrel_1.glb-39a2d154db6d4da8cdad967955a37d8b.scn"
+uid="uid://cuodaad3728t1"
+path="res://.godot/imported/toolbox_mx_1.glb-a7f316cb9902886f81c47fb1aecb7a80.scn"
 
 [deps]
 
-source_file="res://Models/Props/wooden_barrel_1.glb"
-dest_files=["res://.godot/imported/wooden_barrel_1.glb-39a2d154db6d4da8cdad967955a37d8b.scn"]
+source_file="res://Models/Props/Clutter/toolbox_mx_1.glb"
+dest_files=["res://.godot/imported/toolbox_mx_1.glb-a7f316cb9902886f81c47fb1aecb7a80.scn"]
 
 [params]
 

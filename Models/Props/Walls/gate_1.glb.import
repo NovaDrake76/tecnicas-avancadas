@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://boxkc8nutfjc1"
-path="res://.godot/imported/wall_hr_1.glb-8cb157ee12e405276f60916e73f83927.scn"
+uid="uid://ccp1q8m7ld2c2"
+path="res://.godot/imported/gate_1.glb-840d627e98afbb99396d9dba00e2725d.scn"
 
 [deps]
 
-source_file="res://Models/Props/wall_hr_1.glb"
-dest_files=["res://.godot/imported/wall_hr_1.glb-8cb157ee12e405276f60916e73f83927.scn"]
+source_file="res://Models/Props/Walls/gate_1.glb"
+dest_files=["res://.godot/imported/gate_1.glb-840d627e98afbb99396d9dba00e2725d.scn"]
 
 [params]
 

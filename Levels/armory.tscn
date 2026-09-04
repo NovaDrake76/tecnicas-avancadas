@@ -6,12 +6,12 @@
 [ext_resource type="Script" uid="uid://d1d8ife10a532" path="res://Levels/range_target.gd" id="4_target"]
 [ext_resource type="Script" uid="uid://ce7thhydb1ntv" path="res://Props/prop.gd" id="5_prop"]
 [ext_resource type="Script" uid="uid://d0pcr78tjv351" path="res://Levels/mission_board_3d.gd" id="6_board"]
-[ext_resource type="PackedScene" uid="uid://c0cdoivyho4dv" path="res://Models/Props/barricade_b_4.glb" id="m_bar"]
-[ext_resource type="PackedScene" uid="uid://neeyatftobvw" path="res://Models/Props/shipping_container_mx_1.glb" id="m_container"]
-[ext_resource type="PackedScene" uid="uid://c1rvbshlk47qy" path="res://Models/Props/wooden_crate_1.glb" id="m_crate1"]
-[ext_resource type="PackedScene" uid="uid://dn3ueaxw2ww60" path="res://Models/Props/supply_crate_1.glb" id="m_supply"]
-[ext_resource type="PackedScene" uid="uid://cuodaad3728t1" path="res://Models/Props/toolbox_mx_1.glb" id="m_toolbox"]
-[ext_resource type="PackedScene" uid="uid://boxkc8nutfjc1" path="res://Models/Props/wall_hr_1.glb" id="m_wall"]
+[ext_resource type="PackedScene" uid="uid://c0cdoivyho4dv" path="res://Models/Props/Barricades/barricade_b_4.glb" id="m_bar"]
+[ext_resource type="PackedScene" uid="uid://neeyatftobvw" path="res://Models/Props/Containers/shipping_container_mx_1.glb" id="m_container"]
+[ext_resource type="PackedScene" uid="uid://c1rvbshlk47qy" path="res://Models/Props/Containers/wooden_crate_1.glb" id="m_crate1"]
+[ext_resource type="PackedScene" uid="uid://dn3ueaxw2ww60" path="res://Models/Props/Containers/supply_crate_1.glb" id="m_supply"]
+[ext_resource type="PackedScene" uid="uid://cuodaad3728t1" path="res://Models/Props/Clutter/toolbox_mx_1.glb" id="m_toolbox"]
+[ext_resource type="PackedScene" uid="uid://boxkc8nutfjc1" path="res://Models/Props/Walls/wall_hr_1.glb" id="m_wall"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
 size = Vector3(60, 1, 90)

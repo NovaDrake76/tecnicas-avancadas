@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://UI/main_menu.gd" id="1_root"]
 [ext_resource type="Script" path="res://UI/menu_ui.gd" id="2_ui"]
-[ext_resource type="PackedScene" path="res://Characters/kiwi.tscn" id="3_kiwi"]
+[ext_resource type="PackedScene" path="res://Characters/Enemy/kiwi.tscn" id="3_kiwi"]
 [ext_resource type="Shader" path="res://Shaders/sky.gdshader" id="4_sky"]
 [ext_resource type="Shader" path="res://Shaders/terrain_grass.gdshader" id="5_grass"]
 [ext_resource type="Script" path="res://Levels/foliage.gd" id="6_foliage"]

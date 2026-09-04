@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://dhpuquy54qv7n"
-path="res://.godot/imported/barricade_a_2.glb-7125b7569f1ac19240053613dcc7b196.scn"
+uid="uid://bksexa5yxidgj"
+path="res://.godot/imported/pillar_hr_5.glb-0929d9b07a5b10c45de6b46f9b208342.scn"
 
 [deps]
 
-source_file="res://Models/Props/barricade_a_2.glb"
-dest_files=["res://.godot/imported/barricade_a_2.glb-7125b7569f1ac19240053613dcc7b196.scn"]
+source_file="res://Models/Props/Walls/pillar_hr_5.glb"
+dest_files=["res://.godot/imported/pillar_hr_5.glb-0929d9b07a5b10c45de6b46f9b208342.scn"]
 
 [params]
 

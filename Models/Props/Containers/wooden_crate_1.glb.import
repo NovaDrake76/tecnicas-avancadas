@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://c0cdoivyho4dv"
-path="res://.godot/imported/barricade_b_4.glb-498fd8c3d45c879e7a951976295c213c.scn"
+uid="uid://c1rvbshlk47qy"
+path="res://.godot/imported/wooden_crate_1.glb-4b11a26e42ba050610b2f0b1cb79a64e.scn"
 
 [deps]
 
-source_file="res://Models/Props/barricade_b_4.glb"
-dest_files=["res://.godot/imported/barricade_b_4.glb-498fd8c3d45c879e7a951976295c213c.scn"]
+source_file="res://Models/Props/Containers/wooden_crate_1.glb"
+dest_files=["res://.godot/imported/wooden_crate_1.glb-4b11a26e42ba050610b2f0b1cb79a64e.scn"]
 
 [params]
 

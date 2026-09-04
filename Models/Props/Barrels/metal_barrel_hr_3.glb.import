@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://dvn8h2rvjilo0"
-path="res://.godot/imported/barricade_a_1.glb-b98ea71ac4f57f1c4ca93c29ea76f718.scn"
+uid="uid://vhcrdiu3ggxg"
+path="res://.godot/imported/metal_barrel_hr_3.glb-bbba27cb4926a5387de2e1153480b730.scn"
 
 [deps]
 
-source_file="res://Models/Props/barricade_a_1.glb"
-dest_files=["res://.godot/imported/barricade_a_1.glb-b98ea71ac4f57f1c4ca93c29ea76f718.scn"]
+source_file="res://Models/Props/Barrels/metal_barrel_hr_3.glb"
+dest_files=["res://.godot/imported/metal_barrel_hr_3.glb-bbba27cb4926a5387de2e1153480b730.scn"]
 
 [params]
 

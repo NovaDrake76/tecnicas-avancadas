@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://bvyl5nbih384s"
-path="res://.godot/imported/floor_ceiling_hr_1.glb-b2f514608888483e0f073f874fd2aa4f.scn"
+uid="uid://dhpuquy54qv7n"
+path="res://.godot/imported/barricade_a_2.glb-bcb9544cafb38a0f3fd54c85cc729f0e.scn"
 
 [deps]
 
-source_file="res://Models/Props/floor_ceiling_hr_1.glb"
-dest_files=["res://.godot/imported/floor_ceiling_hr_1.glb-b2f514608888483e0f073f874fd2aa4f.scn"]
+source_file="res://Models/Props/Barricades/barricade_a_2.glb"
+dest_files=["res://.godot/imported/barricade_a_2.glb-bcb9544cafb38a0f3fd54c85cc729f0e.scn"]
 
 [params]
 
