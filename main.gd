@@ -50,10 +50,15 @@ func _ready() -> void:
 		_ask_again()
 
 
+## the ask is repeated until this machine actually HAS an operative, not merely until something
+## turned up. anything less leaves a player with no body, no camera and no way to fix it from inside
+## the game: the host may not have opened the world yet, an answer may have arrived while this
+## machine was still building it, a packet may simply have been lost. the ask is cheap, the host
+## ignores one it has already answered, and asking again is the only thing here that cannot go wrong.
 func _ask_again() -> void:
 	var tries := 0
-	while tries < 40 and is_inside_tree() and not multiplayer.is_server() \
-			and players.get_child_count() == 0:
+	while tries < 150 and is_inside_tree() and not multiplayer.is_server() \
+			and Player.local(get_tree()) == null:
 		_report_in.rpc_id(1)
 		tries += 1
 		await get_tree().create_timer(0.4).timeout
@@ -90,6 +95,9 @@ func _report_in() -> void:
 	if not multiplayer.is_server():
 		return
 	var newcomer := multiplayer.get_remote_sender_id()
+	## every operative that exists, then theirs. a repeat of this is harmless on both sides -- the
+	## make is a no-op for a node that is already there -- which is what lets the asking side simply
+	## keep asking until it has what it needs.
 	for node in players.get_children():
 		_make_player.rpc_id(newcomer, String(node.name).to_int())
 	_make_player.rpc(newcomer)
