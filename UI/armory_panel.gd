@@ -701,13 +701,22 @@ func _kind_of(model: String) -> String:
 	var gun := _gun_named(model)
 	if gun == null:
 		return ""
-	match gun.action:
-		Gun.Action.AEG:
+	## the kind is read off the AMMUNITION, not off the action. the action says how the weapon
+	## cycles, and two different weapons can cycle the same way: one shell or one round per stroke
+	## is the same mechanism, so a page that named the class after it called the marksman rifle a
+	## pump shotgun. the magazine is what actually tells a kit apart, and it is the thing the
+	## player has to match to a pickup anyway.
+	match gun.accepted_mag:
+		Ordnance.MagType.Rifle:
 			return "ASSAULT RIFLE"
-		Gun.Action.PUMP:
+		Ordnance.MagType.Shotgun:
 			return "PUMP SHOTGUN"
-		Gun.Action.GAS_BLOWBACK:
-			return "PISTOL"
+		Ordnance.MagType.Marksman:
+			return "BOLT RIFLE"
+		Ordnance.MagType.PistolHeavy:
+			return "HEAVY PISTOL"
+		Ordnance.MagType.PistolMachine:
+			return "MACHINE PISTOL"
 	return ""
 
 

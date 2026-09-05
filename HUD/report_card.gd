@@ -6,7 +6,13 @@ extends Control
 ## and the numbers under it. it is handed the summary and plays; it never asks Run for anything except
 ## the letter for a ratio, which is the one piece of the rule it has to draw.
 
-const PANEL_SIZE := Vector2(1240, 700)
+## the card grows to whatever it holds, so this is a MINIMUM rather than a size. it has to leave room
+## under it at 1080: the objective list pushed the card off the bottom of the screen the moment a
+## mission had more than a couple of lines, and a scoreboard that runs past the edge is worse than one
+## that says less.
+const PANEL_SIZE := Vector2(1240, 660)
+## the objectives go in two columns for the same reason: seven lines in one column is 180 px of card.
+const JOB_COLUMNS := 2
 const RING_BOX := 300.0
 const RING_RADIUS := 118.0
 const RING_THICKNESS := 18.0
@@ -45,7 +51,7 @@ var _letter: Label
 var _percent: Label
 var _rows: Array = []
 var _stats: Array[Label] = []
-var _jobs: VBoxContainer
+var _jobs: GridContainer
 var _footer: Control
 var _earned: Label
 var _best: Label
@@ -117,16 +123,20 @@ func _ready() -> void:
 	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(scrim)
 
+	## a CENTER CONTAINER holds the card, rather than the card anchoring itself to the middle with
+	## fixed offsets. those offsets pin the TOP edge at centre minus half of PANEL_SIZE, and a
+	## PanelContainer grows to whatever its content needs by pushing its BOTTOM edge down: the moment
+	## the objective list made the card taller than PANEL_SIZE it stopped being centred and started
+	## hanging off the bottom of the screen, which is exactly what it looked like. a CenterContainer
+	## measures the child's real minimum and centres THAT, on both axes, whatever it ends up holding.
+	var centre := CenterContainer.new()
+	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(centre)
+
 	_panel = PanelContainer.new()
-	_panel.set_anchors_preset(Control.PRESET_CENTER)
-	_panel.anchor_left = 0.5
-	_panel.anchor_top = 0.5
-	_panel.anchor_right = 0.5
-	_panel.anchor_bottom = 0.5
-	_panel.offset_left = -PANEL_SIZE.x * 0.5
-	_panel.offset_top = -PANEL_SIZE.y * 0.5
-	_panel.offset_right = PANEL_SIZE.x * 0.5
-	_panel.offset_bottom = PANEL_SIZE.y * 0.5
+	## a floor, not a size: a short card still reads as a card rather than as a label in a box.
+	_panel.custom_minimum_size = PANEL_SIZE
 	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.05, 0.055, 0.05, 0.97)
@@ -137,15 +147,15 @@ func _ready() -> void:
 	style.content_margin_top = 44.0
 	style.content_margin_bottom = 40.0
 	_panel.add_theme_stylebox_override("panel", style)
-	add_child(_panel)
+	centre.add_child(_panel)
 
 	var page := VBoxContainer.new()
 	page.add_theme_constant_override("separation", 0)
 	_panel.add_child(page)
 
-	_title = _text(page, "", 32, MenuStyle.ACCENT)
-	_mission = _text(page, "", 64, MenuStyle.BRIGHT)
-	_gap(page, 26)
+	_title = _text(page, "", 30, MenuStyle.ACCENT)
+	_mission = _text(page, "", 56, MenuStyle.BRIGHT)
+	_gap(page, 18)
 
 	var body := HBoxContainer.new()
 	body.add_theme_constant_override("separation", 56)
@@ -155,7 +165,7 @@ func _ready() -> void:
 	var terms := VBoxContainer.new()
 	terms.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	terms.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	terms.add_theme_constant_override("separation", 22)
+	terms.add_theme_constant_override("separation", 18)
 	body.add_child(terms)
 	for term in TERMS:
 		var row := TermRow.new()
@@ -163,7 +173,7 @@ func _ready() -> void:
 		row.setup(String(term[0]))
 		_rows.append(row)
 
-	_gap(page, 22)
+	_gap(page, 16)
 	_footer = VBoxContainer.new()
 	_footer.add_theme_constant_override("separation", 0)
 	page.add_child(_footer)
@@ -178,8 +188,10 @@ func _ready() -> void:
 	## what the mission asked for and what the player did about it, under the numbers. objectives
 	## are ticked or crossed rather than scored: the letter already says how the run went, and
 	## this says what it was FOR, which no number on the row above answers.
-	_jobs = VBoxContainer.new()
-	_jobs.add_theme_constant_override("separation", 2)
+	_jobs = GridContainer.new()
+	_jobs.columns = JOB_COLUMNS
+	_jobs.add_theme_constant_override("v_separation", 2)
+	_jobs.add_theme_constant_override("h_separation", 40)
 	_footer.add_child(_jobs)
 	_gap(_footer, 22)
 	var money := HBoxContainer.new()
@@ -258,7 +270,7 @@ func _fill_jobs(s: Dictionary) -> void:
 		var text := "%s  %s" % [mark, String(line.get("name", ""))]
 		if bool(row[1]):
 			text += "   (optional)"
-		var label := _text(_jobs, text, 20,
+		var label := _text(_jobs, text, 18,
 			MenuStyle.HOT if done else MenuStyle.DIM)
 		label.visible = true
 
@@ -268,6 +280,12 @@ func term_letters() -> Array:
 	for row in _rows:
 		out.append(row.letter())
 	return out
+
+
+## where the card actually ends up. it GROWS to whatever it holds, so adding a line to it can push
+## it off the bottom of the screen, which is exactly what the objective list did.
+func panel_rect() -> Rect2:
+	return _panel.get_global_rect() if _panel != null else Rect2()
 
 
 func is_showing() -> bool:

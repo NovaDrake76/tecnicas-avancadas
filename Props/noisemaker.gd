@@ -9,7 +9,7 @@ extends RigidBody3D
 
 signal landed(at: Vector3)
 
-const MODEL := "res://Models/Ammo/m4a1_mag.obj"
+const MODEL := "res://Models/Ammo/rifle_mag.obj"
 
 ## a landing slower than this is a roll, not a clatter, and makes no noise.
 @export var clank_speed := 2.5

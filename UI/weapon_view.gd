@@ -19,10 +19,11 @@ var _t := 0.0
 var _model_name := ""
 
 const SCENES := {
-	"M4A1": "res://Guns/gun/gun.tscn",
-	"M870": "res://Guns/gun/m870.tscn",
-	"M1911": "res://Guns/gun/m1911.tscn",
-	"G18C": "res://Guns/gun/g18c.tscn",
+	"KESTREL": "res://Guns/gun/kestrel.tscn",
+	"SHRIKE": "res://Guns/gun/shrike.tscn",
+	"HARRIER": "res://Guns/gun/harrier.tscn",
+	"MERLIN": "res://Guns/gun/merlin.tscn",
+	"OSPREY": "res://Guns/gun/osprey.tscn",
 }
 
 

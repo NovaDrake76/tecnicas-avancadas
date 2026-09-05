@@ -307,6 +307,14 @@ func apply_recoil(amount := 1.0) -> void:
 		deg_to_rad(randf_range(-recoil_random_deg, recoil_random_deg))) * 12.0
 
 
+## a jab, for the takedown. it borrows the RECOIL spring rather than owning one: the shape is the
+## same, a shove that settles, and the only difference is the sign. forward and slightly down, which
+## is a hand going out rather than a weapon coming back.
+func apply_punch(amount := 1.0) -> void:
+	_recoil_pos_vel += Vector3(0.02, -0.05, -0.16) * amount * 12.0
+	_recoil_rot_vel += Vector3(deg_to_rad(-7.0), deg_to_rad(5.0), deg_to_rad(9.0)) * amount * 12.0
+
+
 func _process(delta: float) -> void:
 	## a frame hitch must not destabilise the springs, the damping term flips negative past about 1/6 s.
 	delta = minf(delta, 1.0 / 30.0)

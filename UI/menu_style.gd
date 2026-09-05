@@ -4,6 +4,14 @@ extends RefCounted
 ## the look of every menu screen in one place, so the main menu and the pause menu cannot drift apart.
 ## static factories rather than a theme resource, because these screens are built in code.
 
+## the game speaks in one condensed face, three weights. the project default is the regular one, so
+## a paragraph never has to be overridden; a heading and a thing you can press step up, because on a
+## menu the reader is looking for what to DO and weight is what points at it. condensed rather than
+## plain because a mission brief and a parts list are both narrow columns of words, and a condensed
+## face fits about a fifth more of them on a line at the same height.
+const FACE_BOLD := preload("res://Fonts/IBMPlexSansCondensed-Bold.ttf")
+const FACE_MEDIUM := preload("res://Fonts/IBMPlexSansCondensed-SemiBold.ttf")
+
 const DIM := Color(0.72, 0.78, 0.7)
 const BRIGHT := Color(0.95, 0.97, 0.92)
 const HOT := Color(1.0, 0.82, 0.3)
@@ -24,6 +32,7 @@ const T_LABEL := 24
 static func title(parent: Control, text: String, size := T_TITLE) -> Label:
 	var l := Label.new()
 	l.text = text
+	l.add_theme_font_override("font", FACE_BOLD)
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", BRIGHT)
 	l.add_theme_color_override("font_outline_color", INK)
@@ -47,6 +56,7 @@ static func button(parent: Control, text: String, on_press: Callable) -> Button:
 	b.flat = true
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.custom_minimum_size = Vector2(500, 72)
+	b.add_theme_font_override("font", FACE_MEDIUM)
 	b.add_theme_font_size_override("font_size", T_BODY)
 	b.add_theme_color_override("font_color", DIM)
 	b.add_theme_color_override("font_hover_color", HOT)
@@ -154,6 +164,7 @@ static func sheet_kv(parent: Control, key: String, value: String) -> void:
 	k.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	k.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var v := sheet_text(row, value, 18, BRIGHT)
+	v.add_theme_font_override("font", FACE_MEDIUM)
 	v.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	v.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var line := ColorRect.new()
@@ -227,6 +238,7 @@ static func sheet_solid(parent: Control, text: String, cb: Callable, accent := f
 	var b := Button.new()
 	b.text = text
 	b.custom_minimum_size = Vector2(230, 44)
+	b.add_theme_font_override("font", FACE_MEDIUM)
 	b.add_theme_font_size_override("font_size", 16)
 	var normal := StyleBoxFlat.new()
 	normal.bg_color = ACCENT if accent else Color(0.12, 0.125, 0.12)

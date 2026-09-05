@@ -27,6 +27,11 @@ signal level_failed(index: int, summary: Dictionary)
 signal results_dismissed
 signal run_finished(summary: Dictionary)
 signal state_changed(state: int)
+## the player gave up on this attempt and wants the same mission from the top. nothing here reloads
+## anything: main hosts the level scene, so main is what swaps it, and this is only the word going
+## out. it is a signal rather than a call into main so the pause menu, which is an autoload with no
+## idea what is hosting the level, does not have to go looking for it.
+signal restart_requested(index: int)
 signal alert_changed(value: float)
 signal watcher_changed(kiwi: Node3D, value: float)
 ## the same birds, but what each of them KNOWS rather than how close it is to seeing you.
@@ -152,6 +157,19 @@ func start_run() -> void:
 	## the gun lives on the player, and quitting to the menu freed that player with its gun.
 	_gun_bound = false
 	_set_state(State.IDLE)
+
+
+## start this mission again from the beginning. nothing is booked and nothing is kept: begin_level
+## already zeroes the clock, the shots, the detections, the alarm and the squad, so a restart is the
+## level scene being built again and nothing more. only a mission in progress can be restarted -- in
+## the safe house there is nothing to restart, and once the report card is up the run is already
+## scored, and letting a bad grade be taken back would make every letter mean "the best of however
+## many times I tried".
+func restart_level() -> bool:
+	if state != State.PLAYING:
+		return false
+	restart_requested.emit(level_index)
+	return true
 
 
 ## called by main once the level scene is in the tree and its kiwis have run _ready.

@@ -9,11 +9,16 @@ const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 @onready var mass_label: Label = %Mass
 @onready var mode_label: Label = %Mode
 @onready var mode_icon: FireModeIcon = %ModeIcon
-@onready var mode_hint: Label = %ModeHint
+@onready var mode_hint: KeyCap = %ModeHint
 @onready var hopup_label: Label = %Hopup
 @onready var gear_label: Label = %Gear
+@onready var gear_key: KeyCap = %GearKey
+@onready var melee_label: Label = %Melee
+@onready var melee_key: KeyCap = %MeleeKey
 @onready var message_label: Label = %Message
 @onready var prompt_label: Label = %Prompt
+@onready var prompt_key: KeyCap = %PromptKey
+@onready var prompt_row: HBoxContainer = %PromptRow
 @onready var objective_label: Label = %Objective
 @onready var targets_label: Label = %Targets
 @onready var timer_label: Label = %Timer
@@ -44,12 +49,14 @@ func _ready() -> void:
 	add_to_group("hud")
 	message_label.text = ""
 	prompt_label.text = ""
+	prompt_row.visible = false
 	_style()
 	_clear_field_readout()
 	alert_ring.clear()
 	## the key is read off the input map instead of typed into the scene, so a rebind can
-	## never leave the hud telling the player to press a key that does nothing.
-	mode_hint.text = "[%s]" % _key_label(&"toggle_fire_mode")
+	## never leave the hud telling the player to press a key that does nothing. the cap resolves
+	## its own letter; the scene says which ACTION it is showing and nothing more.
+	mode_hint.refresh()
 
 	Run.level_started.connect(_on_level_started)
 	report_card.dismissed.connect(func() -> void: Run.dismiss_results())
@@ -84,12 +91,12 @@ func _style() -> void:
 	HudStyle.tune(ammo_label, HudStyle.T_HERO, HudStyle.BRIGHT)
 	HudStyle.tune(capacity_label, HudStyle.T_UNIT, HudStyle.DIM)
 	HudStyle.tune(spare_label, HudStyle.T_UNIT, HudStyle.DIM)
-	HudStyle.tune(mode_hint, HudStyle.T_LABEL, HudStyle.FAINT)
 	HudStyle.tune(mode_label, HudStyle.T_VALUE, HudStyle.HOT)
 	## the brief wants these two permanently on screen. they stay, quietly, and speak up on change.
 	HudStyle.tune(mass_label, HudStyle.T_MICRO, HudStyle.FAINT)
 	HudStyle.tune(hopup_label, HudStyle.T_MICRO, HudStyle.FAINT)
 	HudStyle.tune(gear_label, HudStyle.T_MICRO, HudStyle.FAINT)
+	HudStyle.tune(melee_label, HudStyle.T_MICRO, HudStyle.FAINT)
 	HudStyle.tune(objective_label, HudStyle.T_LABEL, HudStyle.DIM)
 	HudStyle.tune(targets_label, HudStyle.T_VALUE, HudStyle.BRIGHT)
 	HudStyle.tune(timer_label, HudStyle.T_UNIT, HudStyle.FAINT)
@@ -127,6 +134,19 @@ func _bind_weapon() -> void:
 		_pouch.added.connect(_on_spare_added)
 	_update_spare()
 
+	## the takedown is the one verb with nothing to count, so it sits with the quiet figures saying
+	## only that it exists -- a verb nobody knows they have is not a verb -- and brightens when there
+	## is actually a bird within reach of it. that brightening is the whole prompt: it says "here,
+	## now" without another line of text in the middle of the screen, which is where the player is
+	## trying to see the bird from.
+	var hands := get_tree().get_first_node_in_group("takedown")
+	if hands != null:
+		hands.reach_changed.connect(_on_takedown_reach)
+		hands.started.connect(func(_t: Node3D) -> void: pulse(melee_label))
+	else:
+		melee_label.text = ""
+		melee_key.visible = false
+
 	## the thrown magazines sit with the other quiet figures and speak up when one is thrown
 	var throw := get_tree().get_first_node_in_group("distraction")
 	if throw != null:
@@ -134,8 +154,19 @@ func _bind_weapon() -> void:
 		_on_gear_changed(throw.count, throw.max_count)
 
 
+## the only readout in the block that changes with where the player is STANDING rather than with
+## what they are carrying, so it is the only one that brightens on its own.
+func _on_takedown_reach(within: bool) -> void:
+	var shade := HudStyle.BRIGHT if within else HudStyle.FAINT
+	melee_label.add_theme_color_override("font_color", shade)
+	melee_key.ink = shade
+	melee_key.edge = Color(shade, 0.55)
+	melee_key.refresh()
+
+
 func _on_gear_changed(count: int, max_count: int) -> void:
-	gear_label.text = "[%s] MAG  x%d" % [_key_label(&"throw"), count] if max_count > 0 else ""
+	gear_label.text = "MAG  x%d" % count if max_count > 0 else ""
+	gear_key.visible = max_count > 0
 	pulse(gear_label)
 
 
@@ -330,19 +361,14 @@ func _clock(seconds: float) -> String:
 
 
 func _on_focus_changed(text: String, action: StringName, _target: Node) -> void:
-	prompt_label.text = "[%s]  %s" % [_key_label(action), text]
+	prompt_key.action = action
+	prompt_label.text = text
+	prompt_row.visible = true
 
 
 func _on_focus_lost() -> void:
 	prompt_label.text = ""
-
-
-## resolves the bound key so the prompt still reads correctly after a rebind.
-func _key_label(action: StringName) -> String:
-	for event in InputMap.action_get_events(action):
-		if event is InputEventKey:
-			return OS.get_keycode_string((event as InputEventKey).physical_keycode)
-	return String(action).to_upper()
+	prompt_row.visible = false
 
 
 ## the count is the hero and the figure after the slash hangs off it at a third of the size, which is

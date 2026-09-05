@@ -1,4 +1,4 @@
-[gd_resource type="AudioBusLayout" load_steps=4 format=3]
+[gd_resource type="AudioBusLayout" format=3 uid="uid://pciln5hl262k"]
 
 [sub_resource type="AudioEffectHardLimiter" id="AudioEffectHardLimiter_master"]
 ceiling_db = -1.0
@@ -6,7 +6,6 @@ release = 0.12
 
 [sub_resource type="AudioEffectCompressor" id="AudioEffectCompressor_music"]
 threshold = -30.0
-ratio = 4.0
 attack_us = 3000.0
 release_ms = 320.0
 sidechain = &"Threat"
@@ -19,12 +18,6 @@ release_ms = 400.0
 sidechain = &"Threat"
 
 [resource]
-bus/0/name = &"Master"
-bus/0/solo = false
-bus/0/mute = false
-bus/0/bypass_fx = false
-bus/0/volume_db = 0.0
-bus/0/send = &""
 bus/0/effect/0/effect = SubResource("AudioEffectHardLimiter_master")
 bus/0/effect/0/enabled = true
 bus/1/name = &"SFX"

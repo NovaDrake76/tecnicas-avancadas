@@ -4,8 +4,11 @@ extends RefCounted
 enum MagType {
 	Shotgun,
 	Rifle,
-	Pistol1911,
-	PistolGlock,
+	PistolHeavy,
+	PistolMachine,
+	## the bolt rifle's. added at the END on purpose: a magazine .tres stores the type as a NUMBER,
+	## so an insertion anywhere else would silently turn every saved shotgun magazine into a rifle one.
+	Marksman,
 }
 
 
@@ -15,8 +18,10 @@ static func type_name(t: MagType) -> String:
 			return "Shotgun"
 		MagType.Rifle:
 			return "Rifle"
-		MagType.Pistol1911:
-			return "Pistol 1911"
-		MagType.PistolGlock:
-			return "Pistol Glock"
+		MagType.PistolHeavy:
+			return "Heavy Pistol"
+		MagType.PistolMachine:
+			return "Machine Pistol"
+		MagType.Marksman:
+			return "Marksman"
 	return "Unknown"

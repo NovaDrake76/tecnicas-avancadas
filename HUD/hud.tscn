@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://HUD/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://HUD/alert_ring.gd" id="2_ring"]
@@ -8,6 +8,9 @@
 [ext_resource type="Script" path="res://HUD/vitals.gd" id="6_vitals"]
 [ext_resource type="Script" path="res://HUD/crosshair.gd" id="7_cross"]
 [ext_resource type="Script" path="res://HUD/hit_marker.gd" id="8_marker"]
+[ext_resource type="Script" path="res://HUD/key_cap.gd" id="9_key"]
+[ext_resource type="Script" path="res://HUD/waypoint.gd" id="10_way"]
+[ext_resource type="Script" path="res://HUD/scope_view.gd" id="11_scope"]
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_hud")
@@ -16,6 +19,13 @@ script = ExtResource("1_hud")
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
+
+[node name="ScopeView" type="Control" parent="Root"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("11_scope")
 
 [node name="Crosshair" type="Control" parent="Root"]
 unique_name_in_owner = true
@@ -101,7 +111,7 @@ mouse_filter = 2
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Prompt" type="Label" parent="Root"]
+[node name="PromptRow" type="HBoxContainer" parent="Root"]
 unique_name_in_owner = true
 anchor_left = 0.5
 anchor_top = 0.63
@@ -112,7 +122,20 @@ offset_top = -30.0
 offset_right = 533.0
 offset_bottom = 30.0
 mouse_filter = 2
-horizontal_alignment = 1
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="PromptKey" type="Control" parent="Root/PromptRow"]
+unique_name_in_owner = true
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("9_key")
+action = &"interact"
+text_size = 26
+
+[node name="Prompt" type="Label" parent="Root/PromptRow"]
+unique_name_in_owner = true
+mouse_filter = 2
 vertical_alignment = 1
 
 [node name="Stats" type="VBoxContainer" parent="Root"]
@@ -166,11 +189,13 @@ mouse_filter = 2
 theme_override_constants/separation = 15
 alignment = 2
 
-[node name="ModeHint" type="Label" parent="Root/Stats/ModeRow"]
+[node name="ModeHint" type="Control" parent="Root/Stats/ModeRow"]
 unique_name_in_owner = true
+size_flags_vertical = 4
 mouse_filter = 2
-text = "[F]"
-vertical_alignment = 1
+script = ExtResource("9_key")
+action = &"toggle_fire_mode"
+text_size = 22
 
 [node name="ModeIcon" type="Control" parent="Root/Stats/ModeRow"]
 unique_name_in_owner = true
@@ -205,11 +230,48 @@ mouse_filter = 2
 text = "HOP-UP  --"
 vertical_alignment = 1
 
-[node name="Gear" type="Label" parent="Root/Stats/Footer"]
+[node name="MeleeRow" type="HBoxContainer" parent="Root/Stats/Footer"]
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="MeleeKey" type="Control" parent="Root/Stats/Footer/MeleeRow"]
+unique_name_in_owner = true
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("9_key")
+action = &"takedown"
+text_size = 19
+
+[node name="Melee" type="Label" parent="Root/Stats/Footer/MeleeRow"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "TAKEDOWN"
+vertical_alignment = 1
+
+[node name="GearRow" type="HBoxContainer" parent="Root/Stats/Footer"]
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="GearKey" type="Control" parent="Root/Stats/Footer/GearRow"]
+unique_name_in_owner = true
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("9_key")
+action = &"throw"
+text_size = 19
+
+[node name="Gear" type="Label" parent="Root/Stats/Footer/GearRow"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
 vertical_alignment = 1
+
+[node name="Waypoint" type="Control" parent="Root"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("10_way")
 
 [node name="Vitals" type="Control" parent="Root"]
 unique_name_in_owner = true

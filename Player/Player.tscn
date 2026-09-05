@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bh7clxqxu8qbe"]
 
 [ext_resource type="Script" uid="uid://bw74jtn6krfi4" path="res://Player/player.gd" id="1_q3lat"]
-[ext_resource type="PackedScene" uid="uid://ble4klsjtx5q2" path="res://Guns/gun/gun.tscn" id="2_tok1r"]
+[ext_resource type="PackedScene" uid="uid://ble4klsjtx5q2" path="res://Guns/gun/kestrel.tscn" id="2_tok1r"]
 [ext_resource type="Resource" path="res://Components/resources/movement_default.tres" id="3_move"]
 [ext_resource type="Script" uid="uid://bpeghu0xl0aqj" path="res://Components/StateMachine/state_machine.gd" id="4_sm"]
 [ext_resource type="Script" uid="uid://b21lmmsuw8lr8" path="res://Player/States/grounded_state.gd" id="5_ground"]
@@ -12,12 +12,14 @@
 [ext_resource type="Script" uid="uid://cliulu5264l7k" path="res://Components/aim_scope.gd" id="10_aim"]
 [ext_resource type="Script" path="res://Components/footsteps.gd" id="11_steps"]
 [ext_resource type="Script" path="res://Player/weapon_rack.gd" id="12_rack"]
-[ext_resource type="PackedScene" path="res://Guns/gun/m870.tscn" id="13_m870"]
-[ext_resource type="PackedScene" path="res://Guns/gun/m1911.tscn" id="14_m1911"]
-[ext_resource type="PackedScene" path="res://Guns/gun/g18c.tscn" id="15_g18c"]
+[ext_resource type="PackedScene" path="res://Guns/gun/shrike.tscn" id="13_shrike"]
+[ext_resource type="PackedScene" path="res://Guns/gun/harrier.tscn" id="14_harrier"]
+[ext_resource type="PackedScene" path="res://Guns/gun/merlin.tscn" id="15_merlin"]
+[ext_resource type="PackedScene" path="res://Guns/gun/osprey.tscn" id="19_osprey"]
 [ext_resource type="Script" path="res://Player/magazine_pouch.gd" id="16_pouch"]
 [ext_resource type="Script" path="res://Components/health.gd" id="17_health"]
 [ext_resource type="Script" path="res://Player/distraction.gd" id="18_throw"]
+[ext_resource type="Script" path="res://Player/takedown.gd" id="20_takedown"]
 [ext_resource type="Script" path="res://Player/body_drag.gd" id="19_drag"]
 [ext_resource type="Script" path="res://Components/viewmodel_pass.gd" id="20_vmpass"]
 
@@ -67,13 +69,15 @@ transform = Transform3D(1, 0, 0, 0, 0.9999556, 0.009424636, 0, -0.009424636, 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, -0.19, -0.5)
 script = ExtResource("12_rack")
 
-[node name="M4A1" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("2_tok1r")]
+[node name="KESTREL" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("2_tok1r")]
 
-[node name="M870" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("13_m870")]
+[node name="SHRIKE" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("13_shrike")]
 
-[node name="M1911" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("14_m1911")]
+[node name="HARRIER" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("14_harrier")]
 
-[node name="G18C" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("15_g18c")]
+[node name="MERLIN" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("15_merlin")]
+
+[node name="OSPREY" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("19_osprey")]
 
 [node name="StateMachine" type="Node" parent="." unique_id=1775062315]
 script = ExtResource("4_sm")
@@ -100,6 +104,9 @@ max_health = 100.0
 [node name="Distraction" type="Node" parent="."]
 script = ExtResource("18_throw")
 
+[node name="Takedown" type="Node" parent="."]
+script = ExtResource("20_takedown")
+
 [node name="BodyDrag" type="Node" parent="."]
 script = ExtResource("19_drag")
 
@@ -113,7 +120,8 @@ max_distance = 30.0
 panning_strength = 0.0
 script = ExtResource("11_steps")
 
-[editable path="Head/Camera3D/Viewmodel/Weapons/M4A1"]
-[editable path="Head/Camera3D/Viewmodel/Weapons/M870"]
-[editable path="Head/Camera3D/Viewmodel/Weapons/M1911"]
-[editable path="Head/Camera3D/Viewmodel/Weapons/G18C"]
+[editable path="Head/Camera3D/Viewmodel/Weapons/KESTREL"]
+[editable path="Head/Camera3D/Viewmodel/Weapons/SHRIKE"]
+[editable path="Head/Camera3D/Viewmodel/Weapons/HARRIER"]
+[editable path="Head/Camera3D/Viewmodel/Weapons/MERLIN"]
+[editable path="Head/Camera3D/Viewmodel/Weapons/OSPREY"]

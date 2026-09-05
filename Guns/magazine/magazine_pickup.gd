@@ -13,11 +13,14 @@ const LOOKS := {
 	Ordnance.MagType.Shotgun: {
 		"single": "res://Models/Ammo/shotgun_ammo_1.glb", "box": "res://Models/Ammo/shotgun_ammo_2.glb"},
 	Ordnance.MagType.Rifle: {
-		"single": "res://Models/Ammo/m4a1_mag.obj", "box": "res://Models/Ammo/ammo_box_mp_5.glb"},
-	Ordnance.MagType.Pistol1911: {
+		"single": "res://Models/Ammo/rifle_mag.obj", "box": "res://Models/Ammo/ammo_box_mp_5.glb"},
+	Ordnance.MagType.PistolHeavy: {
 		"single": "res://Models/Ammo/pistol_mp_1_mag_loaded.glb", "box": "res://Models/Ammo/ammo_box_mp_1.glb"},
-	Ordnance.MagType.PistolGlock: {
+	Ordnance.MagType.PistolMachine: {
 		"single": "res://Models/Ammo/pistol_mp_1_mag_extended_loaded.glb", "box": "res://Models/Ammo/ammo_box_mp_2.glb"},
+	## the pack has no bolt-rifle magazine, so the marksman borrows the rifle's own and a carton.
+	Ordnance.MagType.Marksman: {
+		"single": "res://Models/Ammo/rifle_mag.obj", "box": "res://Models/Ammo/ammo_box_mp_5.glb"},
 }
 
 @export var magazine: Magazine

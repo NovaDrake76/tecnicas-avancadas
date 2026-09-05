@@ -17,6 +17,15 @@ const T_LABEL := 23
 ## the two figures the brief wants permanently on screen but the eye does not need mid fight.
 const T_MICRO := 20
 
+## the face. the project's default font is the REGULAR weight, which is right for a paragraph and
+## wrong for a figure read in one glance against a lit world: at a distance a thin stroke on grass
+## disappears into it, and the outline that fixes that eats the letter instead. so every hud label
+## steps up to semibold, and the one number the whole screen is built around steps up again to bold.
+## weight is doing what size cannot here -- the clock and the caption are the same 23 px as each
+## other and still read as different things.
+const FACE := preload("res://Fonts/IBMPlexSansCondensed-SemiBold.ttf")
+const FACE_HERO := preload("res://Fonts/IBMPlexSansCondensed-Bold.ttf")
+
 const BRIGHT := Color(0.95, 0.97, 0.92)
 const DIM := Color(0.78, 0.85, 0.82, 0.8)
 const FAINT := Color(0.78, 0.85, 0.82, 0.5)
@@ -34,6 +43,7 @@ static func outline_for(size: int) -> int:
 ## everything a hud label needs, applied in one call. the scene sets the text and the position; the
 ## look comes from here, so a new label cannot quietly invent a fourteenth size.
 static func tune(label: Label, size: int, colour: Color) -> Label:
+	label.add_theme_font_override("font", FACE_HERO if size >= T_VALUE else FACE)
 	label.add_theme_font_size_override("font_size", size)
 	label.add_theme_color_override("font_color", colour)
 	label.add_theme_color_override("font_outline_color", INK)

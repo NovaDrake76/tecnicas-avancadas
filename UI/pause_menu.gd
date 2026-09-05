@@ -5,9 +5,16 @@ extends CanvasLayer
 
 const MENU_SCENE := "res://UI/main_menu.tscn"
 
+## the second press. a mission thrown away by a click that landed on the wrong line is the one
+## mistake this menu can make that the player cannot undo, so the button asks once.
+const RESTART := "RESTART MISSION"
+const RESTART_ARMED := "PRESS AGAIN TO RESTART"
+
 var _root: Control
 var _menu: VBoxContainer
 var _options: OptionsPanel
+var _restart: Button
+var _armed := false
 
 
 func _ready() -> void:
@@ -32,6 +39,9 @@ func _ready() -> void:
 	MenuStyle.spacer(_menu, 40)
 	## the click too: coming back to the game is the whole of the feedback
 	MenuStyle.button(_menu, "CONTINUE", close).set_meta(UiSfx.QUIET, true)
+	## between continuing and the options rather than down by QUIT: it belongs with the mission,
+	## and the two irreversible lines should not sit next to each other.
+	_restart = MenuStyle.button(_menu, RESTART, _on_restart)
 	MenuStyle.button(_menu, "OPTIONS", func() -> void: _show(_options))
 	MenuStyle.button(_menu, "QUIT TO MENU", quit_to_menu)
 
@@ -65,6 +75,10 @@ func open() -> void:
 	if visible:
 		return
 	_options.reset_view()
+	_disarm()
+	## there is nothing to restart in the safe house, and once the report card is up the mission is
+	## already scored: a letter that could be taken back and tried again would rate nothing.
+	_restart.visible = Run.state == Run.State.PLAYING
 	_show(_menu)
 	visible = true
 	UiSfx.play("switch")
@@ -76,6 +90,7 @@ func close() -> void:
 	if not visible:
 		return
 	visible = false
+	_disarm()
 	UiSfx.play("pause_close")
 	get_tree().paused = false
 	## the cursor goes back only if there is a game to give it to.
@@ -92,6 +107,33 @@ func quit_to_menu() -> void:
 	get_tree().change_scene_to_file(MENU_SCENE)
 
 
+## the same mission from the top. the first press only arms the button; the second one is the
+## decision, and anything else the player does takes it back.
+func _on_restart() -> void:
+	if not _armed:
+		_armed = true
+		_restart.text = RESTART_ARMED
+		_restart.add_theme_color_override("font_color", MenuStyle.ACCENT)
+		return
+	_disarm()
+	Run.restart_level()
+
+
+func _disarm() -> void:
+	if _restart == null:
+		return
+	_armed = false
+	_restart.text = RESTART
+	_restart.add_theme_color_override("font_color", MenuStyle.DIM)
+
+
+## for the probe: whether the button is waiting for its second press.
+func restart_armed() -> bool:
+	return _armed
+
+
 func _show(which: Control) -> void:
+	if which != _menu:
+		_disarm()
 	_menu.visible = which == _menu
 	_options.visible = which == _options

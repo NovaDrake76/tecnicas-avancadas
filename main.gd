@@ -28,6 +28,7 @@ func _ready() -> void:
 	player.health.died.connect(Run.fail_level)
 	Alarm.reinforcements_due.connect(_on_reinforcements_due)
 	Armory.deploy_requested.connect(_on_deploy)
+	Run.restart_requested.connect(_on_restart)
 	Run.start_run()
 	Armory.reset()
 	_enter_armory()
@@ -66,6 +67,23 @@ func _settle_armory() -> void:
 func _on_deploy() -> void:
 	var who := _player()
 	if who != null:
+		Armory.apply_to_player(who)
+	await Fade.cover()
+	_load_level()
+
+
+## the same mission again, from the top. it goes through the same curtain and the same _load_level
+## as a deploy does, so there is one path that builds a level and a restart cannot drift away from
+## it. the loadout is re-applied for the same reason it is on deploy: the magazines spent in the
+## attempt being thrown away come back, because the attempt is being thrown away too.
+func _on_restart(_index: int) -> void:
+	if PauseMenu.is_open():
+		PauseMenu.close()
+	var who := _player()
+	if who != null:
+		## the report card freezes the player, and a restart from a pause is the one path where a
+		## level ends without one, so nothing else would ever hand it back.
+		who.process_mode = Node.PROCESS_MODE_INHERIT
 		Armory.apply_to_player(who)
 	await Fade.cover()
 	_load_level()

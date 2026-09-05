@@ -115,8 +115,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("weapon_prev"):
 		previous()
 	else:
-		for i in 4:
-			if event.is_action_pressed("weapon_%d" % (i + 1)):
+		## one key per weapon on the rack, whether or not it is carried: the loadout decides what a
+		## key finds, not how many keys there are.
+		for i in all_weapons().size():
+			if InputMap.has_action("weapon_%d" % (i + 1)) and event.is_action_pressed("weapon_%d" % (i + 1)):
 				if i < weapons().size():
 					select(i)
 				return

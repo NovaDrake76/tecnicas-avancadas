@@ -194,14 +194,10 @@ func _detonate() -> void:
 
 
 func _step_exfil() -> void:
-	## the marker is not just inert until the rest is done, it is INVISIBLE. a ring glowing on the
-	## ground from the first second of the mission is an arrow pointing at the end of a level the
-	## player has not started yet, and it gives away where the way out is before that is worth
-	## knowing.
-	var armed := is_armed()
-	if _marker != null and _marker.visible != armed:
-		_marker.visible = armed
-	if not armed:
+	## the way out is not just inert until the rest is done, it is UNSHOWN: the hud asks is_armed()
+	## before it draws anything, so nothing points at the end of a mission the player has not started
+	## yet, and where the way out is stays unknown until that is worth knowing.
+	if not is_armed():
 		return
 	if _player == null or not is_instance_valid(_player):
 		_player = get_tree().get_first_node_in_group("player") as Node3D
@@ -278,8 +274,13 @@ func _build_marker() -> void:
 	for child in get_children():
 		if child is VisualInstance3D:
 			return
+	## the way out has no marker in the world at all. it used to be a green ring on the ground, and a
+	## ring can only be read from somewhere it can be seen from: behind the container it was invisible
+	## at the one moment it mattered, and among crates and barrels it read as a thing to walk up to and
+	## press a key on. the hud draws it instead (HUD/waypoint.gd), as a direction and a distance that
+	## survive a hill being in the way. a level designer who wants something standing there puts a
+	## prop under the node, which skips this whole function.
 	if kind == Kind.EXFIL:
-		_build_exfil_ring()
 		return
 	var scene := model
 	if scene == null and DEFAULT_MODELS.has(kind):
@@ -300,31 +301,3 @@ func _build_marker() -> void:
 	lamp.position = Vector3(0.0, 0.55, 0.0)
 	add_child(lamp)
 	_lamp = lamp
-
-
-## the way out is a MARK on the ground, not an object: there is nothing in the pack that means "stand
-## here to leave", and a prop would invite the player to interact with it.
-func _build_exfil_ring() -> void:
-	var mesh := MeshInstance3D.new()
-	var ring := TorusMesh.new()
-	ring.inner_radius = maxf(reach - 0.35, 0.4)
-	ring.outer_radius = reach
-	## rings is the count AROUND the big circle and ring_segments around the tube, which is the
-	## opposite of what the names suggest. paid for once on the mortar's blast ring.
-	ring.rings = 48
-	ring.ring_segments = 6
-	mesh.mesh = ring
-	mesh.position = Vector3(0.0, 0.06, 0.0)
-	var mat := StandardMaterial3D.new()
-	mat.emission_enabled = true
-	mat.albedo_color = Color(0.35, 1.0, 0.55)
-	mat.emission = Color(0.2, 0.9, 0.4)
-	mat.emission_energy_multiplier = 0.6
-	mesh.material_override = mat
-	## _step_exfil owns this from the first tick onward, so this line is only about the frame BEFORE
-	## that tick: without it the ring is drawn once, green, on the ground, on the frame the level
-	## appears. no probe can see a single frame, so this is not covered by one and is not pretending
-	## to be.
-	mesh.visible = false
-	add_child(mesh)
-	_marker = mesh

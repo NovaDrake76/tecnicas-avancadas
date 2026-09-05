@@ -19,7 +19,7 @@ enum FireBlock { NONE, NO_MAGAZINE, EMPTY, COOLDOWN, RELOADING }
 ## how the weapon cycles. the cadence formula is the same for all three, rpm over sixty n, the
 ## brief's own. an aeg has a real motor and gearbox; for a gas or pump action rpm is the cyclic rate
 ## the action can manage and n is one. that is the documented conversion the brief asks for.
-enum Action { AEG, GAS_BLOWBACK, PUMP }
+enum Action { AEG, GAS_BLOWBACK, PUMP, BOLT }
 
 const BB_SCENE := preload("res://Guns/bb/bb.tscn")
 const DEFAULT_BB_MASS := 0.0002
@@ -33,7 +33,7 @@ const TRAIL_COLORS := [
 ]
 
 @export_group("Identity")
-@export var weapon_model: String = "M4A1"
+@export var weapon_model: String = "KESTREL"
 @export var accepted_mag: Ordnance.MagType = Ordnance.MagType.Rifle
 @export var action: Action = Action.AEG
 
@@ -65,6 +65,11 @@ const TRAIL_COLORS := [
 @export var fire_mode: FireMode = FireMode.SEMI
 
 @export_group("Aim")
+## the fov the camera narrows to for THIS weapon while aiming, or 0 to use the scope's own. a
+## telescopic sight is not a look down the iron sights with a nicer picture on it: the magnification
+## IS the weapon, and it is what the bolt rifle is bought for. AimScope still owns the camera and
+## nothing here writes it; this is only the weapon saying what it is worth looking through.
+@export_range(0.0, 90.0, 0.5) var aim_fov := 0.0
 ## the muzzle sits right of and below the eye, so firing straight down the barrel never crosses the
 ## crosshair. the shot is aimed at whatever the crosshair is actually on instead.
 @export var converge_on_crosshair := true
@@ -94,7 +99,7 @@ const TRAIL_COLORS := [
 @onready var muzzle: Marker3D = $Muzzle
 ## the weapon's sounds are events in the Sfx table, named by this prefix: <prefix>_fire, _dry,
 ## _cycle, _mag_out, _mag_in. the scene says which kit it is; the table says what it sounds like.
-@export var sfx_prefix := &"m4a1"
+@export var sfx_prefix := &"kestrel"
 var _dry_at := 0.0
 
 var _shot := 0
@@ -166,6 +171,8 @@ func action_label() -> String:
 			return "gas blowback"
 		Action.PUMP:
 			return "pump action"
+		Action.BOLT:
+			return "bolt action"
 	return "aeg"
 
 

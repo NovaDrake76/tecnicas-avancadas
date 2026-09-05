@@ -31,29 +31,34 @@ const OCCLUDE_EVERY := 0.15
 ## than a clip that went missing. sounds Nathan listened to and cut live here.
 const EVENTS := {
 	# ---- the player's weapons: in the head, on the Weapons bus, the loudness anchor
-	&"m4a1_fire": {"2d": true, "bus": &"Weapons", "db": -4.0, "voices": 6, "layers": [
-		{"clips": "weapons/m4a1_mech", "n": 3, "db": 0.0, "pitch": [0.95, 1.05]},
-		{"clips": "weapons/m4a1_pop", "n": 4, "db": -1.0, "pitch": [0.96, 1.04], "delay": 0.008}]},
-	&"m4a1_dry": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/m4a1_dry", "n": 2},
-	&"m4a1_mag_out": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/rifle_mag_out", "n": 3},
-	&"m4a1_mag_in": {"2d": true, "bus": &"Weapons", "db": -6.0, "clips": "weapons/rifle_mag_in", "n": 4},
-	&"m870_fire": {"2d": true, "bus": &"Weapons", "db": -3.0, "voices": 3, "clips": "weapons/m870_thwack", "n": 3, "pitch": [0.97, 1.03]},
-	&"m870_cycle": {"2d": true, "bus": &"Weapons", "db": -7.0, "clips": "weapons/m870_pump", "n": 4, "pitch": [0.96, 1.04]},
-	&"m870_dry": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/m870_dry", "n": 1},
-	&"m870_mag_out": {"2d": true, "bus": &"Weapons", "db": -12.0, "clips": "weapons/m870_pump", "n": 4, "pitch": [0.84, 0.9]},
-	&"m870_mag_in": {"2d": true, "bus": &"Weapons", "db": -6.0, "clips": "weapons/shell_in", "n": 3},
-	&"m1911_fire": {"2d": true, "bus": &"Weapons", "db": -5.0, "voices": 4, "layers": [
+	&"kestrel_fire": {"2d": true, "bus": &"Weapons", "db": -4.0, "voices": 6, "layers": [
+		{"clips": "weapons/kestrel_mech", "n": 3, "db": 0.0, "pitch": [0.95, 1.05]},
+		{"clips": "weapons/kestrel_pop", "n": 4, "db": -1.0, "pitch": [0.96, 1.04], "delay": 0.008}]},
+	&"kestrel_dry": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/kestrel_dry", "n": 2},
+	&"kestrel_mag_out": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/rifle_mag_out", "n": 3},
+	&"kestrel_mag_in": {"2d": true, "bus": &"Weapons", "db": -6.0, "clips": "weapons/rifle_mag_in", "n": 4},
+	&"shrike_fire": {"2d": true, "bus": &"Weapons", "db": -3.0, "voices": 3, "clips": "weapons/shrike_thwack", "n": 3, "pitch": [0.97, 1.03]},
+	&"shrike_cycle": {"2d": true, "bus": &"Weapons", "db": -7.0, "clips": "weapons/shrike_pump", "n": 4, "pitch": [0.96, 1.04]},
+	&"shrike_dry": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/shrike_dry", "n": 1},
+	&"shrike_mag_out": {"2d": true, "bus": &"Weapons", "db": -12.0, "clips": "weapons/shrike_pump", "n": 4, "pitch": [0.84, 0.9]},
+	&"shrike_mag_in": {"2d": true, "bus": &"Weapons", "db": -6.0, "clips": "weapons/shell_in", "n": 3},
+	&"harrier_fire": {"2d": true, "bus": &"Weapons", "db": -5.0, "voices": 4, "layers": [
 		{"clips": "weapons/pistol_pop", "n": 4, "db": 0.0, "pitch": [0.96, 1.03]},
 		{"clips": "weapons/pistol_slide", "n": 2, "db": -9.0, "delay": 0.05}]},
-	&"m1911_dry": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/pistol_dry", "n": 1},
-	&"m1911_mag_out": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/pistol_mag_out", "n": 2},
-	&"m1911_mag_in": {"2d": true, "bus": &"Weapons", "db": -6.0, "clips": "weapons/pistol_mag_in", "n": 2},
-	&"g18c_fire": {"2d": true, "bus": &"Weapons", "db": -6.0, "voices": 8, "layers": [
+	&"harrier_dry": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/pistol_dry", "n": 1},
+	&"harrier_mag_out": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/pistol_mag_out", "n": 2},
+	&"harrier_mag_in": {"2d": true, "bus": &"Weapons", "db": -6.0, "clips": "weapons/pistol_mag_in", "n": 2},
+	&"merlin_fire": {"2d": true, "bus": &"Weapons", "db": -6.0, "voices": 8, "layers": [
 		{"clips": "weapons/pistol_pop", "n": 4, "db": 0.0, "pitch": [1.05, 1.12]},
-		{"clips": "weapons/g18c_slide", "n": 2, "db": -10.0, "pitch": [1.0, 1.08], "delay": 0.035}]},
-	&"g18c_dry": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/pistol_dry", "n": 1, "pitch": [1.05, 1.1]},
-	&"g18c_mag_out": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/pistol_mag_out", "n": 2},
-	&"g18c_mag_in": {"2d": true, "bus": &"Weapons", "db": -6.0, "clips": "weapons/pistol_mag_in", "n": 2},
+		{"clips": "weapons/merlin_slide", "n": 2, "db": -10.0, "pitch": [1.0, 1.08], "delay": 0.035}]},
+	&"merlin_dry": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/pistol_dry", "n": 1, "pitch": [1.05, 1.1]},
+	&"merlin_mag_out": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/pistol_mag_out", "n": 2},
+	&"merlin_mag_in": {"2d": true, "bus": &"Weapons", "db": -6.0, "clips": "weapons/pistol_mag_in", "n": 2},
+	&"osprey_fire": {"2d": true, "bus": &"Weapons", "db": -2.0, "voices": 2, "clips": "weapons/osprey_fire", "n": 3, "pitch": [0.98, 1.02]},
+	&"osprey_cycle": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/osprey_bolt", "n": 2, "pitch": [0.97, 1.03]},
+	&"osprey_dry": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/osprey_dry", "n": 1},
+	&"osprey_mag_out": {"2d": true, "bus": &"Weapons", "db": -9.0, "clips": "weapons/rifle_mag_out", "n": 3, "pitch": [0.88, 0.94]},
+	&"osprey_mag_in": {"2d": true, "bus": &"Weapons", "db": -6.0, "clips": "weapons/osprey_round_in", "n": 2},
 	&"weapon_draw": {"2d": true, "bus": &"Weapons", "db": -10.0, "clips": "weapons/draw", "n": 2},
 	&"fire_select": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/select", "n": 2},
 	&"fire_refused": {"2d": true, "bus": &"Weapons", "db": -10.0, "clips": "weapons/refused", "n": 1},
@@ -71,6 +76,11 @@ const EVENTS := {
 	&"crouch": {"2d": true, "bus": &"Player", "silent": true},
 	&"land_hard": {"2d": true, "bus": &"Player", "db": -6.0, "clips": "player/land_hard", "n": 1},
 	&"throw": {"2d": true, "bus": &"Player", "db": -10.0, "clips": "player/throw", "n": 1},
+	## the takedown is two sounds because the wind-up is a real part of it: the swing says it started
+	## and the tap says it landed. positional, unlike the rest of the player's kit, since it happens
+	## at the bird rather than in the player's own hands.
+	&"takedown_swing": {"2d": true, "bus": &"Player", "db": -14.0, "clips": "player/takedown_swing", "n": 1},
+	&"takedown": {"bus": &"Player", "db": -9.0, "unit": 3.0, "max": 24.0, "clips": "player/takedown", "n": 3, "pitch": [0.96, 1.04]},
 	## hauling a body. the grab is the player's own hands, so it is in the head; the drop is out in
 	## the world where the body lands, and it is the cloth thump of the bb impact taken well down in
 	## pitch, which is a body settling rather than a pellet landing.

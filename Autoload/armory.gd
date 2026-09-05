@@ -15,41 +15,46 @@ const START_POINTS := 500
 const MAG_PATHS := {
 	Ordnance.MagType.Shotgun: "res://Guns/resources/mag_shotgun.tres",
 	Ordnance.MagType.Rifle: "res://Guns/resources/mag_rifle.tres",
-	Ordnance.MagType.Pistol1911: "res://Guns/resources/mag_pistol_1911.tres",
-	Ordnance.MagType.PistolGlock: "res://Guns/resources/mag_glock.tres",
+	Ordnance.MagType.PistolHeavy: "res://Guns/resources/mag_heavy.tres",
+	Ordnance.MagType.PistolMachine: "res://Guns/resources/mag_machine.tres",
+	Ordnance.MagType.Marksman: "res://Guns/resources/mag_marksman.tres",
 }
 
 ## the catalogue. prices are in run points; a clean level is worth roughly 600 to 1300.
 ## springs are per weapon family because a pistol's gas system and a rifle's gearbox are not the same
 ## spring; motors fit the aeg only, a pump or a gas slide has a cyclic rate and no motor to upgrade.
 const CATALOG := [
-	{"id": "spring_m100", "kind": Part.Kind.SPRING, "title": "M100 spring", "price": 0, "k": 300.0, "x": 0.1, "fits": ["M4A1", "M870"]},
-	{"id": "spring_m110", "kind": Part.Kind.SPRING, "title": "M110 spring", "price": 300, "k": 350.0, "x": 0.1, "fits": ["M4A1", "M870"]},
-	{"id": "spring_m120", "kind": Part.Kind.SPRING, "title": "M120 spring", "price": 550, "k": 400.0, "x": 0.1, "fits": ["M4A1", "M870"]},
-	{"id": "spring_p200", "kind": Part.Kind.SPRING, "title": "Stock recoil spring", "price": 0, "k": 200.0, "x": 0.095, "fits": ["M1911"]},
-	{"id": "spring_p180", "kind": Part.Kind.SPRING, "title": "Stock recoil spring", "price": 0, "k": 180.0, "x": 0.095, "fits": ["G18C"]},
-	{"id": "spring_p230", "kind": Part.Kind.SPRING, "title": "Heavy recoil spring", "price": 250, "k": 230.0, "x": 0.095, "fits": ["M1911", "G18C"]},
-	{"id": "motor_std", "kind": Part.Kind.MOTOR, "title": "Stock motor", "price": 0, "rpm": 9000.0, "fits": ["M4A1"]},
-	{"id": "motor_torque", "kind": Part.Kind.MOTOR, "title": "High torque motor", "price": 350, "rpm": 12000.0, "fits": ["M4A1"]},
-	{"id": "motor_speed", "kind": Part.Kind.MOTOR, "title": "High speed motor", "price": 650, "rpm": 15000.0, "fits": ["M4A1"]},
+	{"id": "spring_m100", "kind": Part.Kind.SPRING, "title": "M100 spring", "price": 0, "k": 300.0, "x": 0.1, "fits": ["KESTREL", "SHRIKE"]},
+	{"id": "spring_m110", "kind": Part.Kind.SPRING, "title": "M110 spring", "price": 300, "k": 350.0, "x": 0.1, "fits": ["KESTREL", "SHRIKE"]},
+	{"id": "spring_m120", "kind": Part.Kind.SPRING, "title": "M120 spring", "price": 550, "k": 400.0, "x": 0.1, "fits": ["KESTREL", "SHRIKE"]},
+	{"id": "spring_p200", "kind": Part.Kind.SPRING, "title": "Stock recoil spring", "price": 0, "k": 200.0, "x": 0.095, "fits": ["HARRIER"]},
+	{"id": "spring_p180", "kind": Part.Kind.SPRING, "title": "Stock recoil spring", "price": 0, "k": 180.0, "x": 0.095, "fits": ["MERLIN"]},
+	{"id": "spring_p230", "kind": Part.Kind.SPRING, "title": "Heavy recoil spring", "price": 250, "k": 230.0, "x": 0.095, "fits": ["HARRIER", "MERLIN"]},
+	{"id": "spring_m150", "kind": Part.Kind.SPRING, "title": "M150 spring", "price": 0, "k": 450.0, "x": 0.1, "fits": ["OSPREY"]},
+	{"id": "spring_m170", "kind": Part.Kind.SPRING, "title": "M170 spring", "price": 500, "k": 520.0, "x": 0.1, "fits": ["OSPREY"]},
+	{"id": "motor_std", "kind": Part.Kind.MOTOR, "title": "Stock motor", "price": 0, "rpm": 9000.0, "fits": ["KESTREL"]},
+	{"id": "motor_torque", "kind": Part.Kind.MOTOR, "title": "High torque motor", "price": 350, "rpm": 12000.0, "fits": ["KESTREL"]},
+	{"id": "motor_speed", "kind": Part.Kind.MOTOR, "title": "High speed motor", "price": 650, "rpm": 15000.0, "fits": ["KESTREL"]},
 	{"id": "bb_020", "kind": Part.Kind.BB_LOT, "title": "0.20 g BBs", "price": 0, "mass": 0.00020},
 	{"id": "bb_025", "kind": Part.Kind.BB_LOT, "title": "0.25 g BBs", "price": 150, "mass": 0.00025},
 	{"id": "bb_028", "kind": Part.Kind.BB_LOT, "title": "0.28 g BBs", "price": 250, "mass": 0.00028},
 	{"id": "bb_032", "kind": Part.Kind.BB_LOT, "title": "0.32 g BBs", "price": 400, "mass": 0.00032},
-	{"id": "weapon_m4a1", "kind": Part.Kind.WEAPON, "title": "M4A1", "price": 0, "model": "M4A1"},
-	{"id": "weapon_m1911", "kind": Part.Kind.WEAPON, "title": "M1911", "price": 0, "model": "M1911"},
-	{"id": "weapon_m870", "kind": Part.Kind.WEAPON, "title": "M870", "price": 900, "model": "M870"},
-	{"id": "weapon_g18c", "kind": Part.Kind.WEAPON, "title": "G18C", "price": 700, "model": "G18C"},
+	{"id": "weapon_kestrel", "kind": Part.Kind.WEAPON, "title": "KESTREL", "price": 0, "model": "KESTREL"},
+	{"id": "weapon_harrier", "kind": Part.Kind.WEAPON, "title": "HARRIER", "price": 0, "model": "HARRIER"},
+	{"id": "weapon_shrike", "kind": Part.Kind.WEAPON, "title": "SHRIKE", "price": 900, "model": "SHRIKE"},
+	{"id": "weapon_merlin", "kind": Part.Kind.WEAPON, "title": "MERLIN", "price": 700, "model": "MERLIN"},
+	{"id": "weapon_osprey", "kind": Part.Kind.WEAPON, "title": "OSPREY", "price": 1500, "model": "OSPREY"},
 	{"id": "mag_shotgun", "kind": Part.Kind.MAGAZINE, "title": "Shotgun shells", "price": 200, "mag_type": Ordnance.MagType.Shotgun},
 	{"id": "mag_rifle", "kind": Part.Kind.MAGAZINE, "title": "Rifle magazine", "price": 200, "mag_type": Ordnance.MagType.Rifle},
-	{"id": "mag_1911", "kind": Part.Kind.MAGAZINE, "title": "1911 magazine", "price": 150, "mag_type": Ordnance.MagType.Pistol1911},
-	{"id": "mag_glock", "kind": Part.Kind.MAGAZINE, "title": "Glock magazine", "price": 150, "mag_type": Ordnance.MagType.PistolGlock},
+	{"id": "mag_heavy", "kind": Part.Kind.MAGAZINE, "title": "Heavy pistol magazine", "price": 150, "mag_type": Ordnance.MagType.PistolHeavy},
+	{"id": "mag_machine", "kind": Part.Kind.MAGAZINE, "title": "Machine pistol magazine", "price": 150, "mag_type": Ordnance.MagType.PistolMachine},
+	{"id": "mag_marksman", "kind": Part.Kind.MAGAZINE, "title": "Marksman magazine", "price": 250, "mag_type": Ordnance.MagType.Marksman},
 ]
 
 ## the kit a fresh run starts with: two weapons, their stock parts, light bbs, two spares each.
-const STARTER_OWNED := ["spring_m100", "spring_p200", "spring_p180", "motor_std", "bb_020", "weapon_m4a1", "weapon_m1911"]
-const STARTER_MAGAZINES := {Ordnance.MagType.Rifle: 2, Ordnance.MagType.Pistol1911: 2}
-const STARTER_LOADOUT := ["M4A1", "M1911"]
+const STARTER_OWNED := ["spring_m100", "spring_p200", "spring_p180", "motor_std", "spring_m150", "bb_020", "weapon_kestrel", "weapon_harrier"]
+const STARTER_MAGAZINES := {Ordnance.MagType.Rifle: 2, Ordnance.MagType.PistolHeavy: 2}
+const STARTER_LOADOUT := ["KESTREL", "HARRIER"]
 
 var points := 0
 var owned := {}
@@ -92,10 +97,11 @@ func reset() -> void:
 	for id in STARTER_OWNED:
 		owned[id] = true
 	installed = {
-		"M4A1": {"spring": "spring_m100", "motor": "motor_std"},
-		"M870": {"spring": "spring_m100", "motor": ""},
-		"M1911": {"spring": "spring_p200", "motor": ""},
-		"G18C": {"spring": "spring_p180", "motor": ""},
+		"KESTREL": {"spring": "spring_m100", "motor": "motor_std"},
+		"SHRIKE": {"spring": "spring_m100", "motor": ""},
+		"HARRIER": {"spring": "spring_p200", "motor": ""},
+		"MERLIN": {"spring": "spring_p180", "motor": ""},
+		"OSPREY": {"spring": "spring_m150", "motor": ""},
 	}
 	bb_lot = {}
 	for t in MAG_PATHS:

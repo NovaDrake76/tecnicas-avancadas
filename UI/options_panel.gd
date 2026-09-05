@@ -20,10 +20,11 @@ const KEYS := [
 	["AIM", ["aim"]],
 	["RELOAD", ["reload"]],
 	["THROW MAGAZINE", ["throw"]],
+	["TAKEDOWN", ["takedown"]],
 	["FIRE MODE", ["toggle_fire_mode"]],
 	["INTERACT", ["interact"]],
 	["CYCLE WEAPON", ["weapon_next", "weapon_prev"]],
-	["WEAPON SLOTS", ["weapon_1", "weapon_2", "weapon_3", "weapon_4"]],
+	["WEAPON SLOTS", ["weapon_1", "weapon_2", "weapon_3", "weapon_4", "weapon_5"]],
 ]
 
 var _tab_buttons: Array[Button] = []
@@ -114,12 +115,30 @@ func _controls() -> Control:
 	page.add_child(invert)
 
 	MenuStyle.sheet_section(page, "KEYS")
+	## TWO columns. fourteen bindings in one ran off the bottom of the screen at 1080, and the last
+	## four -- interact, the fire selector, the weapon cycle and the slots -- were simply not there.
+	## this is the one page in the game whose entire job is to be looked something up in.
+	var pairs: Array = []
 	for row in KEYS:
-		MenuStyle.sheet_kv(page, String(row[0]), _binding(row[1] as Array))
-	MenuStyle.sheet_kv(page, "HOP-UP", "MOUSE WHEEL")
+		pairs.append([String(row[0]), _binding(row[1] as Array)])
+	pairs.append(["HOP-UP", "MOUSE WHEEL"])
+	var cols := HBoxContainer.new()
+	cols.add_theme_constant_override("separation", 56)
+	page.add_child(cols)
+	var half := int(ceil(float(pairs.size()) * 0.5))
+	for c in 2:
+		var col := VBoxContainer.new()
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		col.add_theme_constant_override("separation", 6)
+		cols.add_child(col)
+		for i in range(c * half, mini((c + 1) * half, pairs.size())):
+			MenuStyle.sheet_kv(col, String(pairs[i][0]), String(pairs[i][1]))
 	return page
 
 
+## where the open page actually ends, so the gate can ask whether it fits. it is a sheet built from a
+## list that grows every time the game gains a verb, which is exactly the shape that runs off screen
+## quietly.
 ## every key here is resolved from the input map, so the sheet says what the game actually
 ## listens for rather than what someone typed the day it was written.
 func _binding(actions: Array) -> String:
