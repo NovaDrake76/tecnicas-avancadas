@@ -27,8 +27,6 @@ func _ready() -> void:
 	Alarm.reinforcements_due.connect(_on_reinforcements_due)
 	Armory.deploy_requested.connect(_on_deploy)
 	Run.restart_requested.connect(_on_restart)
-	Net.local_player_ready.connect(_on_local_player)
-	multiplayer.peer_connected.connect(_on_peer_joined)
 	multiplayer.peer_disconnected.connect(_on_peer_left)
 
 	## solo, this is the one player and nothing else happens. hosting, the host's own operative goes
@@ -54,7 +52,8 @@ func _ready() -> void:
 
 func _ask_again() -> void:
 	var tries := 0
-	while tries < 40 and is_inside_tree() and not multiplayer.is_server() 			and players.get_child_count() == 0:
+	while tries < 40 and is_inside_tree() and not multiplayer.is_server() \
+			and players.get_child_count() == 0:
 		_report_in.rpc_id(1)
 		tries += 1
 		await get_tree().create_timer(0.4).timeout
@@ -97,28 +96,9 @@ func _report_in() -> void:
 	_send_world.rpc_id(newcomer, Run.state, Run.level_index)
 
 
-func _on_peer_joined(_id: int) -> void:
-	pass
-
-
 func _on_peer_left(id: int) -> void:
 	if multiplayer.is_server():
 		_drop_player.rpc(id)
-
-
-## the local operative exists: wire the one thing main owns about it, its death.
-func _on_local_player(who: Node) -> void:
-	var here := who as Player
-	if here == null or here.health == null:
-		return
-	if not here.health.died.is_connected(_on_local_died):
-		here.health.died.connect(_on_local_died)
-
-
-## solo this is simply the end of the run. in a joined game it is the co-op rule: one operative down
-## is not a failed mission, everybody down is.
-func _on_local_died() -> void:
-	Run.report_down(multiplayer.get_unique_id())
 
 
 ## the safe house sits in the level holder like a level, so the same player, hud and sky serve it.

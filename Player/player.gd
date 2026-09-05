@@ -266,11 +266,15 @@ func net_revive(amount: float) -> void:
 ## the kit stops working while an operative is down, and comes back with them. it is the same list
 ## a remote operative never runs at all, minus the footsteps: a body on the floor takes no steps.
 func _freeze_kit(off: bool) -> void:
+	## a REMOTE operative's kit is off for good, and being picked up must not switch it back on: every
+	## one of those nodes reads the keyboard, so an aim scope or a takedown running on somebody else's
+	## body would answer MY keys and act on their position. only the machine driving it gets it back.
+	var stop := off or not _local
 	for node in _kit:
 		if is_instance_valid(node):
-			node.process_mode = Node.PROCESS_MODE_DISABLED if off else Node.PROCESS_MODE_INHERIT
+			node.process_mode = Node.PROCESS_MODE_DISABLED if stop else Node.PROCESS_MODE_INHERIT
 	if _sm != null:
-		_sm.process_mode = Node.PROCESS_MODE_DISABLED if off else Node.PROCESS_MODE_INHERIT
+		_sm.process_mode = Node.PROCESS_MODE_DISABLED if stop else Node.PROCESS_MODE_INHERIT
 
 
 ## the operative this machine drives. everything on screen -- the hud, the reticle, the health bar,
@@ -318,7 +322,9 @@ func _notification(what: int) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not _local:
 		return
-	if event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED 			and DisplayServer.window_is_focused() and may_capture():
+	if event is InputEventMouseButton and event.pressed \
+			and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED \
+			and DisplayServer.window_is_focused() and may_capture():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:

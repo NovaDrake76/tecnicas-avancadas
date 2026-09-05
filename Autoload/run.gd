@@ -169,12 +169,10 @@ func start_run() -> void:
 ## of them it is not: a mission fails when EVERYBODY is down at once, and until then a player on the
 ## floor is a job for the other one (Player.go_down / revive). this is the only place that decides
 ## which of those it is, and it is the host's decision.
-func report_down(_who: int) -> void:
-	if not multiplayer.is_server():
-		## a client's own death is reported to the host, which is the machine that decides.
-		_report_down.rpc_id(1, multiplayer.get_unique_id())
-		return
-	_report_down(multiplayer.get_unique_id() if _who == 0 else _who)
+func report_down(who: int) -> void:
+	## the host is the machine that decides, so a client's own death is sent there and answered there.
+	## rpc_id to yourself calls straight through, which is why the host needs no second path.
+	_report_down.rpc_id(1, who)
 
 
 @rpc("any_peer", "call_local", "reliable")
@@ -718,6 +716,12 @@ func _push_over(cleared: bool, index: int, summary: Dictionary) -> void:
 	level_index = index
 	_set_state(State.CLEARED if cleared else State.FAILED)
 	if cleared:
+		## the record is booked here too. the host is the one that WORKED IT OUT -- the letter and
+		## the points in this summary are its numbers -- but a client that never wrote them down
+		## would open its board on a mission it had just finished and find it still waiting.
+		_last_gained = record_result(index, int(summary.get("level_score", 0)),
+			float(summary.get("grade", 0.0)))
+		run_score += _last_gained
 		level_cleared.emit(index, summary)
 	else:
 		level_failed.emit(index, summary)

@@ -105,7 +105,8 @@ func _tell_host_miss(point: Vector3, radius: float) -> void:
 		return
 	for node in get_tree().get_nodes_in_group("kiwi"):
 		var bird := node as Node3D
-		if bird != null and bird.has_method("investigate") 				and bird.global_position.distance_to(point) <= radius:
+		if bird != null and bird.has_method("investigate") \
+				and bird.global_position.distance_to(point) <= radius:
 			bird.investigate(point)
 
 

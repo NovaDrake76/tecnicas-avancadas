@@ -25,6 +25,8 @@ signal servers_found(servers: Array)
 
 enum State { OFFLINE, HOSTING, JOINING, CONNECTED }
 
+const MENU_SCENE := "res://UI/main_menu.tscn"
+const GAME_SCENE := "res://main.tscn"
 const PORT := 24545
 ## the beacon is a second, tiny socket: the host answers "who is there" so a client on the same
 ## network never has to be told an address. it is separate from the game port on purpose, because a
@@ -236,9 +238,17 @@ func _on_connect_failed() -> void:
 	leave()
 
 
+## the host quit, or the network went. a client left where it was would be standing in a compound
+## nobody is thinking about any more -- the birds have no brain on this machine and its own operative
+## is named after a peer id that no longer means anything, so it would not even be holding the
+## camera. it goes back to the menu, which is the only honest place to be.
 func _on_server_gone() -> void:
 	failed.emit("The host closed the game.")
 	leave()
+	var scene := get_tree().current_scene
+	if scene != null and scene.scene_file_path != MENU_SCENE:
+		await Fade.cover()
+		get_tree().change_scene_to_file(MENU_SCENE)
 
 
 ## the host said go. every machine leaves the menu for the same scene on the same call, which is
@@ -248,7 +258,7 @@ func _on_server_gone() -> void:
 @rpc("authority", "call_local", "reliable")
 func begin_game() -> void:
 	await Fade.cover()
-	get_tree().change_scene_to_file("res://main.tscn")
+	get_tree().change_scene_to_file(GAME_SCENE)
 
 
 ## called by a player node the moment it knows it is ours.
