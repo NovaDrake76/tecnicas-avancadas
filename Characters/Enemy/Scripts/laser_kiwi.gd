@@ -131,7 +131,7 @@ func has_contact() -> bool:
 
 func _begin_hunt(toward: Vector3) -> void:
 	if _player == null or not is_instance_valid(_player):
-		_player = get_tree().get_first_node_in_group("player") as Node3D
+		_player = Player.nearest(get_tree(), global_position)
 	if _player == null:
 		_begin_idle()
 		return
@@ -293,7 +293,7 @@ func _begin_suppress() -> void:
 	_attack = Attack.CHARGE
 	_attack_timer = charge_time
 	_beam_ready = beam_cooldown
-	eyes.charge_start(charge_time)
+	_net_charge.rpc(charge_time)
 	if not idle_clips.is_empty():
 		_play(idle_clips[0], 0.2)
 
@@ -339,11 +339,11 @@ func _step_attack(delta: float, at: Vector3, dist: float) -> void:
 			if not _suppressing:
 				_aim = _aim.move_toward(at, beam_track * delta)
 			var hit := _cast(eyes.between_eyes(), _aim)
-			eyes.beam_aim(hit["point"], hit["player"])
+			_net_beam_aim.rpc(hit["point"], hit["player"])
 			if hit["player"]:
 				_player.take_laser_hit(beam_dps * delta, global_position)
 			if _attack_timer <= 0.0:
-				eyes.beam_stop()
+				_net_beam.rpc(false)
 				eyes.set_glow(0.0)
 				_attack = Attack.RECOVER
 				_attack_timer = beam_recover
@@ -397,9 +397,24 @@ func aim_point() -> Vector3:
 ## the charge BEGAN (a beam that opened on your current position would make the charge a warning you
 ## could do nothing with). the sniper overrides this with a single shot.
 func _fire_charged() -> void:
-	eyes.beam_start()
+	_net_beam.rpc(true)
 	_attack = Attack.BEAM
 	_attack_timer = beam_time
+
+
+## the light itself, on every machine. where it LANDS is worked out where the bird is thought about
+## and sent, because the ray is cast against the host's world and the answer is the same everywhere.
+@rpc("authority", "call_local", "reliable")
+func _net_beam(on: bool) -> void:
+	if on:
+		eyes.beam_start()
+	else:
+		eyes.beam_stop()
+
+
+@rpc("authority", "call_local", "unreliable")
+func _net_beam_aim(at: Vector3, on_player: bool) -> void:
+	eyes.beam_aim(at, on_player)
 
 
 func _start_charge() -> void:
@@ -408,7 +423,12 @@ func _start_charge() -> void:
 	_attack_timer = charge_time
 	_aim = VisionCone.sight_point(_player)
 	_beam_ready = beam_cooldown
-	eyes.charge_start(charge_time)
+	_net_charge.rpc(charge_time)
+
+
+@rpc("authority", "call_local", "reliable")
+func _net_charge(seconds: float) -> void:
+	eyes.charge_start(seconds)
 
 
 ## the squad told this bird and another to charge together. whatever it was doing is dropped and
@@ -473,8 +493,17 @@ func _fire_pulse() -> void:
 		randf_range(-spread, spread),
 		randf_range(-spread, spread),
 		randf_range(-spread, spread))
+	## the bolt is thought about here and DRAWN everywhere. a joined player who was being shot at by
+	## a bird whose fire they could not see would be taking damage from nothing at all, which is the
+	## one thing a game may never do. only the host's copy carries damage: the others are the light.
+	_net_bolt.rpc(from, to)
+
+
+@rpc("authority", "call_local", "reliable")
+func _net_bolt(from: Vector3, to: Vector3) -> void:
 	eyes.zap()
-	LaserBolt.launch(get_parent(), from, to, bolt_speed, laser_range, pulse_damage, self, eyes)
+	LaserBolt.launch(get_parent(), from, to, bolt_speed, laser_range,
+		pulse_damage if multiplayer.is_server() else 0.0, self, eyes)
 
 
 ## the world and the player stop a laser, other kiwis do not. whatever it hits, the light ends there,
@@ -545,7 +574,7 @@ func take_bb_hit(damage := 1.0, at := Vector3.INF, energy := -1.0) -> void:
 		if armour != null:
 			armour.bounce(at)
 		if plate_alerts:
-			var shooter := get_tree().get_first_node_in_group("player") as Node3D
+			var shooter := Player.nearest(get_tree(), at)
 			saw(shooter.global_position if shooter != null else at)
 		return
 	_plate -= 1
@@ -553,7 +582,7 @@ func take_bb_hit(damage := 1.0, at := Vector3.INF, energy := -1.0) -> void:
 		if armour != null:
 			armour.dent(at)
 		if plate_alerts:
-			var shooter := get_tree().get_first_node_in_group("player") as Node3D
+			var shooter := Player.nearest(get_tree(), at)
 			saw(shooter.global_position if shooter != null else at)
 		return
 	if armour != null:

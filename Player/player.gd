@@ -1,11 +1,23 @@
+class_name Player
 extends CharacterBody3D
 
+## every operative in the level is one of these, and exactly one of them is THIS machine's. the game
+## is always a host -- godot hands out an OfflineMultiplayerPeer when nothing is connected, so a solo
+## run is a host with nobody else on it -- and a player node is owned by the peer whose id it is
+## named after. that is the whole of the ownership model: the name IS the authority.
+##
+## the owner runs its own movement, aim, weapons and verbs; every other machine only receives where
+## it ended up. that is client-side movement, which is the only way the game can feel right on the
+## machine you are playing on, and cheating is not a threat in a two person co-op on one network.
+##
 ## something hit the player. the hud and the camera answer this; nothing in here decides what it means.
 signal hurt(amount: float, from: Vector3)
 
 ## how far above and below a spawn marker to look for ground, and how far to stand clear of it.
 const SPAWN_PROBE := 300.0
 const SPAWN_CLEARANCE := 0.15
+## how far apart two operatives stand on the same insertion marker.
+const RIGHT_OF_SPAWN := 1.6
 
 @export var movement: MovementConfig
 
@@ -59,10 +71,65 @@ var _peak_fall_vy := 0.0
 var _pitch := 0.0
 var _lean := 0.0
 var _since_hurt := 999.0
+## the parts of a player that only the machine driving it may run: everything that reads the mouse
+## or the keyboard, and the footsteps, whose noise is sent by the owner instead so the birds hear it
+## once rather than once per machine.
+## every group here is one the game looks up GLOBALLY -- the hud asks for "the weapon", the reticle
+## for "the viewmodel", Run for "the pouch" -- and with two operatives in the tree those lookups
+## would hand back whichever came first. a remote operative's copies leave the groups AND stop
+## processing: they keep their meshes, which is what the other player sees, and nothing else.
+const REMOTE_SILENT := ["aim_scope", "viewmodel", "interactor", "distraction", "takedown",
+	"body_drag", "footsteps", "weapon_rack", "weapon", "pouch", "revive"]
+
+## whether this node is the one this machine drives. everything that reads the mouse, the keyboard,
+## the camera or the hud hangs off it.
+var _local := true
+var _down := false
+var _avatar: Avatar
+## the nodes that make up the operative's kit, collected once: the aim, the weapon, the verbs.
+var _kit: Array[Node] = []
 
 
 func _ready() -> void:
+	## a spawned player is named after the peer that owns it, so both machines agree on who is who
+	## without a handshake. the fixed node in a tool scene keeps the default authority of 1.
+	var owner_id := name.to_int()
+	if owner_id > 0:
+		set_multiplayer_authority(owner_id)
+	_local = is_multiplayer_authority()
+	## EVERY operative is in "player": that is the group the kiwis, the objectives and the kill plane
+	## read, and they must see all of them. only the one this machine drives is in "local_player",
+	## which is what the hud, the camera and the menus bind to.
+	for node in find_children("*", "", true, false):
+		for group in REMOTE_SILENT:
+			if node.is_in_group(group):
+				_kit.append(node)
+				break
+
 	add_to_group("player")
+	if _local:
+		add_to_group("local_player")
+		## godot makes the FIRST camera in the tree current, and in a joined game the first one to
+		## arrive is the teammate's -- which is then switched off for being theirs, leaving the
+		## viewport with no camera at all and the screen a flat grey. the operative this machine
+		## drives says outright that it is the one looking.
+		if camera != null:
+			camera.make_current()
+	else:
+		_go_remote()
+	## everything that draws for the player binds on this rather than looking for a node that may
+	## not have been spawned yet: in a joined game the operative arrives from the host a moment after
+	## the hud has already asked for it.
+	if _local:
+		Net.announce_local.call_deferred(self)
+
+	## what actually crosses the wire for an operative: where the body is, which way it is turned,
+	## and where its head is and where that is looking. everything else another machine needs about
+	## it -- the walk, the crouch, the lean, the aim line -- is worked out again from those four,
+	## because a result is smaller and truer than the reasons for it. every frame, because this is
+	## the one thing the other player is looking at.
+	Netlink.sync(self, [".:position", ".:rotation", "Head:position", "Head:rotation"],
+		get_multiplayer_authority())
 	_base_sensitivity = mouse_sensitivity
 	_apply_settings()
 	Settings.changed.connect(_apply_settings)
@@ -70,7 +137,7 @@ func _ready() -> void:
 		movement = MovementConfig.new()
 	## capturing an unfocused window warps the real cursor and drags focus over, so the mouse is taken
 	## only once the window has it. a launch that lands unfocused captures on the first click or focus.
-	if DisplayServer.window_is_focused():
+	if _local and DisplayServer.window_is_focused():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 	## a unique capsule, otherwise resizing for crouch mutates the shared sub resource.
@@ -84,7 +151,156 @@ func _ready() -> void:
 	_sm.setup(self)
 
 	if health != null:
-		health.died.connect(func() -> void: Sfx.play_2d(&"player_down"))
+		health.died.connect(_on_died)
+
+
+## everything that only makes sense for the operative this machine is driving: the camera, the mouse,
+## the weapon in the corner of the screen, the verbs on the keys. a remote one keeps its body and its
+## weapon (that is what the other player sees) and loses the rest.
+func _go_remote() -> void:
+	if camera != null:
+		camera.current = false
+	## disabling the viewmodel takes the weapon rack and all five guns with it, because they are its
+	## children: a remote operative's rifle must not fire on MY trigger. they stay VISIBLE, which is
+	## how you see what your teammate is carrying.
+	for node in _kit:
+		for group in REMOTE_SILENT:
+			if node.is_in_group(group):
+				node.remove_from_group(group)
+		node.process_mode = Node.PROCESS_MODE_DISABLED
+	if _sm != null:
+		_sm.process_mode = Node.PROCESS_MODE_DISABLED
+	## the viewmodel hangs where a first person camera wants it, which from the OUTSIDE is a rifle
+	## floating past somebody's ear. it is parked at chest height instead: nothing here moves any
+	## more, so where it is put is where it stays.
+	## the rack sits inside the viewmodel and BOTH carry an offset, which together hold the weapon
+	## most of a metre in front of the face: right for an eye that is inside the head, absurd for a
+	## body being looked at. the pair is zeroed and the weapon put on the chest instead.
+	var view := find_child("Viewmodel", true, false) as Node3D
+	if view != null:
+		view.position = Vector3.ZERO
+		view.rotation = Vector3.ZERO
+	var rack := get_node_or_null("Head/Camera3D/Viewmodel/Weapons") as Node3D
+	if rack != null:
+		rack.position = Vector3(0.20, -0.34, -0.26)
+		rack.rotation = Vector3(0.0, deg_to_rad(-8.0), 0.0)
+	_show_body()
+
+
+## the body other machines see. the operative driving it is inside it looking out, so it is only
+## built where it can actually be looked at -- except when its owner goes down, and then it is the
+## thing their teammate is running towards.
+func _show_body() -> void:
+	if _avatar != null:
+		return
+	_avatar = Avatar.new()
+	_avatar.name = "Avatar"
+	add_child(_avatar)
+	_avatar.set_tag(Net.name_of(get_multiplayer_authority()))
+
+
+func is_local() -> bool:
+	return _local
+
+
+func is_down() -> bool:
+	return _down
+
+
+## every operative on the floor, waiting for a hand. the revive looks here.
+static func downed(tree: SceneTree) -> Array[Player]:
+	var out: Array[Player] = []
+	for node in tree.get_nodes_in_group("player"):
+		var who := node as Player
+		if who != null and is_instance_valid(who) and who.is_down():
+			out.append(who)
+	return out
+
+
+## health reached zero. solo this is the end of the run and always was. with a teammate it is not:
+## an operative on the floor is alive, visible and out of the fight until somebody comes for them,
+## and the mission only fails when nobody is left standing. Run decides which of those it is; this
+## only puts the body down, and it does it on every machine because everybody has to see where.
+func _on_died() -> void:
+	Sfx.play_2d(&"player_down")
+	_net_down.rpc()
+	if _local:
+		Run.report_down(multiplayer.get_unique_id())
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _net_down() -> void:
+	if _down:
+		return
+	_down = true
+	velocity = Vector3.ZERO
+	_freeze_kit(true)
+	## the view drops to the grass. it is not a death screen: you are lying in the compound watching
+	## a patrol walk past your teammate, which is the whole of what being down is for.
+	head.position.y = 0.4
+	if _avatar != null:
+		_avatar.lie(true)
+
+
+## somebody got a hand to you. back on your feet with enough health to move and not enough to be
+## careless, which is what makes a revive a reprieve rather than a reset.
+@rpc("any_peer", "call_local", "reliable")
+func net_revive(amount: float) -> void:
+	if not _down:
+		return
+	_down = false
+	if health != null:
+		## revive() fills it; the amount is what a hand up is actually worth, and it is set after so
+		## the health_changed the bar listens to is the one carrying the real number.
+		health.revive()
+		health.current = clampf(amount, 1.0, health.max_health)
+		health.health_changed.emit(health.current, health.max_health)
+	_since_hurt = 0.0
+	_freeze_kit(false)
+	head.position.y = stand_eye
+	if _avatar != null:
+		_avatar.lie(false)
+	Sfx.play_2d(&"pickup")
+
+
+## the kit stops working while an operative is down, and comes back with them. it is the same list
+## a remote operative never runs at all, minus the footsteps: a body on the floor takes no steps.
+func _freeze_kit(off: bool) -> void:
+	for node in _kit:
+		if is_instance_valid(node):
+			node.process_mode = Node.PROCESS_MODE_DISABLED if off else Node.PROCESS_MODE_INHERIT
+	if _sm != null:
+		_sm.process_mode = Node.PROCESS_MODE_DISABLED if off else Node.PROCESS_MODE_INHERIT
+
+
+## the operative this machine drives. everything on screen -- the hud, the reticle, the health bar,
+## the bench, the board -- binds to this one and never to "a player".
+static func local(tree: SceneTree) -> Player:
+	return tree.get_first_node_in_group("local_player") as Player
+
+
+## every operative in the level, on any machine. this is what the kiwis, the objectives and the
+## scoring read: a garrison that only ever looked at one of two intruders is not a garrison.
+static func all(tree: SceneTree) -> Array[Player]:
+	var out: Array[Player] = []
+	for node in tree.get_nodes_in_group("player"):
+		var who := node as Player
+		if who != null and is_instance_valid(who) and who.is_alive():
+			out.append(who)
+	return out
+
+
+## the closest one to a point, alive. null when everybody is down, which is a real answer: it is
+## what tells a hunter there is nothing left to hunt.
+static func nearest(tree: SceneTree, from: Vector3) -> Player:
+	var best: Player = null
+	var near := INF
+	for who in all(tree):
+		var d := who.global_position.distance_squared_to(from)
+		if d < near:
+			near = d
+			best = who
+	return best
 
 
 ## the mouse is the player's only while nothing on screen owns it: not the pause menu (the tree is
@@ -95,11 +311,13 @@ func may_capture() -> bool:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_APPLICATION_FOCUS_IN and may_capture():
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN and _local and may_capture():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not _local:
+		return
 	if event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED 			and DisplayServer.window_is_focused() and may_capture():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		return
@@ -115,6 +333,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	## a body somebody else is driving is not simulated here: its transform arrives over the wire and
+	## anything this ran would fight it. the pieces that still have to happen for a remote operative
+	## -- its footstep noise, its shots, its takedowns -- are sent by the machine that owns it.
+	if not _local or _down:
+		return
 	## order matters, cache the floor state and run crouch plus the jump buffer first,
 	## then let the active state call solve_and_move exactly once.
 	var was_grounded := _grounded
@@ -170,7 +393,14 @@ func is_crouching() -> bool:
 
 
 ## a laser found you. the damage goes to the health component, the kick and the shake to the camera.
+##
+## the birds think on the host, so a beam that found a CLIENT found the host's puppet of them: the
+## damage has to be sent to the machine that owns that operative, or a joined player would be
+## immortal and would never know why. the host is still the one that decided; this only carries it.
 func take_laser_hit(amount: float, from: Vector3) -> void:
+	if not is_multiplayer_authority():
+		_net_hurt.rpc_id(get_multiplayer_authority(), amount, from)
+		return
 	if health == null or not health.is_alive():
 		return
 	health.take_damage(amount)
@@ -186,7 +416,17 @@ func take_laser_hit(amount: float, from: Vector3) -> void:
 	hurt.emit(amount, from)
 
 
+@rpc("any_peer", "call_remote", "reliable")
+func _net_hurt(amount: float, from: Vector3) -> void:
+	if is_multiplayer_authority():
+		take_laser_hit(amount, from)
+
+
+## alive AND on their feet. an operative on the floor is out of the fight: the birds stop looking for
+## them, the objectives stop counting them, and the mission asks whether ANYBODY is still standing.
 func is_alive() -> bool:
+	if _down:
+		return false
 	return health == null or health.is_alive()
 
 
@@ -377,7 +617,17 @@ func respawn_from_void() -> void:
 	if spawn == null:
 		push_warning("player.gd: no node in group 'player_spawn'; keeping current position.")
 		return
-	global_position = ground_under(spawn.global_position)
+	## every machine puts its OWN operative on the marker, so two of them would arrive inside each
+	## other and shove one another off it. they stand a step apart instead, in a fixed order taken
+	## from the peer id, so both machines agree on who is on which side without asking.
+	var apart := Vector3.ZERO
+	if Net.is_online():
+		var ids := Net.peers.keys()
+		ids.sort()
+		var index := maxi(ids.find(get_multiplayer_authority()), 0)
+		apart = Vector3(RIGHT_OF_SPAWN * float(index), 0.0, 0.0).rotated(
+			Vector3.UP, spawn.global_rotation.y)
+	global_position = ground_under(spawn.global_position + apart)
 	rotation.y = spawn.global_rotation.y
 
 

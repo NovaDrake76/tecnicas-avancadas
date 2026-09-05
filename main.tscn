@@ -46,8 +46,7 @@ light_energy = 1.1
 shadow_enabled = true
 
 
-[node name="Player" parent="." unique_id=659214260 instance=ExtResource("2_player")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 60)
+[node name="Players" type="Node3D" parent="."]
 
 [node name="HUD" parent="." instance=ExtResource("5_hud")]
 

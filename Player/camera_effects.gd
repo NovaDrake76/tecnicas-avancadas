@@ -65,7 +65,7 @@ func _ready() -> void:
 
 
 func _bind() -> void:
-	player = get_tree().get_first_node_in_group("player") as CharacterBody3D
+	player = Player.local(get_tree())
 	var rack := get_tree().get_first_node_in_group("weapon_rack") as WeaponRack
 	if rack != null:
 		for g in rack.weapons():

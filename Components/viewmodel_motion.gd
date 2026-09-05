@@ -263,7 +263,7 @@ func weapon() -> Node3D:
 
 
 func _bind() -> void:
-	_player = get_tree().get_first_node_in_group("player") as CharacterBody3D
+	_player = Player.local(get_tree())
 	if _player != null:
 		_head = _player.get_node_or_null("Head")
 	## the node this moves is the rack. every weapon on it kicks this node when it fires.

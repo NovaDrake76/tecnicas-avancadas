@@ -151,7 +151,14 @@ func _explode() -> void:
 ## damage falls off to the ring's edge, and cover between the blast and you cuts it hard. the ray is
 ## from knee height at the blast, so a crate you are crouched behind counts and a kerb does not.
 func _hurt(at: Vector3) -> void:
-	var player := get_tree().get_first_node_in_group("player") as Node3D
+	## a shell does not choose. everybody standing in the ring takes it, each with their own cover
+	## ray: two operatives sheltering behind the same crate is a decision they made together, and two
+	## standing in the open is a mistake they made together.
+	for who in Player.all(get_tree()):
+		_hurt_one(who, at)
+
+
+func _hurt_one(player: Player, at: Vector3) -> void:
 	if player == null or not player.has_method("take_laser_hit"):
 		return
 	var flat := Vector2(player.global_position.x - at.x, player.global_position.z - at.z).length()

@@ -74,7 +74,7 @@ func _step_bombard(delta: float) -> void:
 	if Alarm.stage == Alarm.Stage.CALM:
 		_end_bombard()
 		return
-	var player := get_tree().get_first_node_in_group("player") as Node3D
+	var player := Player.nearest(get_tree(), global_position)
 	## the same sense the alarm uses, so a crouched player creeps closer before it bolts: exposure_to
 	## applies the crouch range scale and sees_point does not.
 	if player != null and global_position.distance_to(player.global_position) <= flee_range \
@@ -110,7 +110,16 @@ func _step_bombard(delta: float) -> void:
 func _fire(at: Vector3) -> void:
 	_shots += 1
 	var from := _tube.global_position + Vector3.UP * 0.3 if _tube != null else global_position + Vector3.UP * 0.6
-	MortarShell.launch(get_tree().current_scene, from, at, flight_time, blast_radius, blast_damage, cover_factor, self)
+	## the ring on the ground and the disc filling inside it ARE the warning, and a warning one
+	## player cannot see is not one: the shell is launched on every machine. only the host's copy
+	## carries the blast, so two machines cannot hurt the same operative twice for one shell.
+	_net_shell.rpc(from, at)
+
+
+@rpc("authority", "call_local", "reliable")
+func _net_shell(from: Vector3, at: Vector3) -> void:
+	MortarShell.launch(get_tree().current_scene, from, at, flight_time, blast_radius,
+		blast_damage if multiplayer.is_server() else 0.0, cover_factor, self)
 	Sfx.play(&"mortar_fire", from)
 	BurstFx.spawn(get_tree().current_scene, from, Color(0.6, 0.55, 0.5), 10, 2.5, 0.5)
 

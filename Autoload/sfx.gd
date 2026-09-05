@@ -270,11 +270,15 @@ func clip_paths(layer: Dictionary) -> PackedStringArray:
 # ---------------------------------------------------------------- one-shots
 
 ## a sound at a place in the world.
-func play(event: StringName, at: Vector3, extra_db := 0.0, pitch_mul := 1.0) -> bool:
+## `in_world` overrides the table's "2d": the weapons, the body and the interface are in the
+## player's head because they are THEIRS, and the moment a second operative is carrying the same
+## rifle its report has to come from where they are standing instead. the sound is the same, the
+## placement is not, and that is a property of who fired it rather than of the event.
+func play(event: StringName, at: Vector3, extra_db := 0.0, pitch_mul := 1.0, in_world := false) -> bool:
 	var evt: Dictionary = EVENTS.get(event, {})
 	if evt.is_empty() or evt.get("silent", false):
 		return false
-	if bool(evt.get("2d", false)):
+	if bool(evt.get("2d", false)) and not in_world:
 		return play_2d(event, extra_db, pitch_mul)
 	if _cooling(event, evt):
 		return false

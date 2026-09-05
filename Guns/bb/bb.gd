@@ -22,6 +22,10 @@ const BB_RADIUS := 0.003
 @export var trail_fade_time: float = 0.0
 @export var trail_every: int = 1
 
+## whether this bb is the real one or another machine's copy of it. the copy flies the same physics
+## from the same starting conditions -- it is the same drag and the same hop-up -- so what it draws
+## is honest; it simply does not get to decide anything when it lands.
+var mine := true
 var _area: float = PI * BB_RADIUS * BB_RADIUS
 var _frame := 0
 var _impacted := false
@@ -68,7 +72,11 @@ func _on_impact(point: Vector3, normal: Vector3, hit_body: Object, energy: float
 	ImpactFx.spawn(world, point, normal)
 
 	var target := hit_body != null and is_instance_valid(hit_body) and hit_body.has_method("take_bb_hit")
-	if target:
+	## a bb belongs to the machine that fired it. every other machine flies a COPY of it so the shot
+	## can be seen and heard, and that copy hits nothing: two machines each applying the same hit
+	## would take a bird down twice, and the shooter's own screen is the one the shot has to be
+	## honest on. what the copy is for is the tracer, the crack and the hole in the wall.
+	if target and mine:
 		hit_body.take_bb_hit(1.0, point, energy)
 		## asked AFTER the hit, so a kiwi that this bb just put down answers yes and the marker
 		## comes up red. a range target has no such answer and gets the plain one.
@@ -77,13 +85,28 @@ func _on_impact(point: Vector3, normal: Vector3, hit_body: Object, energy: float
 	## what it landed on says what it sounds like; the birds and the targets answer for themselves
 	if not target:
 		Sfx.play("bb_" + String(Sfx.surface_of(hit_body)), point)
-		_heard_at(point)
+		## and the birds walk over to the hole. that is a decision about the world, so it belongs to
+		## the host: a miss heard on two machines would send the same patrol to the same hole twice.
+		if mine and multiplayer.is_server():
+			_heard_at(point)
+		elif mine:
+			_tell_host_miss.rpc_id(1, point, impact_hearing)
 
 	## decals belong on static world surfaces only, a hole stamped on a kiwi hangs in the air once it moves.
 	if mark_surface and not target:
 		BulletHoles.mark(point, normal)
 	if despawn_on_impact:
 		queue_free()
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _tell_host_miss(point: Vector3, radius: float) -> void:
+	if not multiplayer.is_server():
+		return
+	for node in get_tree().get_nodes_in_group("kiwi"):
+		var bird := node as Node3D
+		if bird != null and bird.has_method("investigate") 				and bird.global_position.distance_to(point) <= radius:
+			bird.investigate(point)
 
 
 ## the birds walk over to the hole, the way they do for a thrown magazine. they are told about the

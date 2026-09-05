@@ -55,7 +55,7 @@ func _ready() -> void:
 ## spawns another, and a reticle bound to the old one would stop reacting for the rest of the
 ## session without ever looking broken. the vision cone re-finds its target exactly like this.
 func _bind() -> void:
-	_player = get_tree().get_first_node_in_group("player") as CharacterBody3D
+	_player = Player.local(get_tree())
 
 
 ## the hud hands over whichever weapon is in hand, because only that one's cone is on screen.

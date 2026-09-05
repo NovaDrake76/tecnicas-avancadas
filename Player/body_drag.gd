@@ -88,7 +88,11 @@ func grab(body: Node3D) -> bool:
 	_body = body
 	_raise = 0.0
 	_from = _body.global_transform
-	if _body.has_method("set_dragged"):
+	## every machine is told who is carrying it, which is what moves the right to say where it is
+	## onto the machine doing the carrying.
+	if _body.has_method("net_carried"):
+		_body.net_carried.rpc(multiplayer.get_unique_id())
+	elif _body.has_method("set_dragged"):
 		_body.set_dragged(true)
 	var p := _pass()
 	if p != null:
@@ -105,7 +109,9 @@ func drop() -> void:
 	var p := _pass()
 	if p != null:
 		p.hand_back(was)
-	if was.has_method("set_dragged"):
+	if was.has_method("net_carried"):
+		was.net_carried.rpc(0)
+	elif was.has_method("set_dragged"):
 		was.set_dragged(false)
 	_body = null
 	_just_dropped = true
@@ -170,6 +176,8 @@ func _throw(body: Node3D) -> void:
 	## further, which is what every hand expects.
 	toss += Vector3(_player.velocity.x, 0.0, _player.velocity.z)
 	if body.has_method("toss"):
-		body.toss(toss, throw_spin)
+		## thrown on every machine from the same push, so the arc is the same everywhere and the
+		## host's copy is the one whose landing counts.
+		body.toss.rpc(toss, throw_spin)
 	else:
 		body.global_position += aim * 0.6

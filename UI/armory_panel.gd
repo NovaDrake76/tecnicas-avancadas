@@ -160,7 +160,7 @@ func is_open() -> bool:
 func open() -> void:
 	if visible:
 		return
-	_player = get_tree().get_first_node_in_group("player")
+	_player = Player.local(get_tree())
 	if _player != null:
 		_player.process_mode = Node.PROCESS_MODE_DISABLED
 	## the hud is the field's readout; behind the bench it is only clutter

@@ -174,6 +174,14 @@ enum Alert { UNAWARE, CURIOUS, SUSPICIOUS, HUNTING, CALLING, ENGAGED }
 @onready var vision: VisionCone = $Vision
 @onready var throat: AudioStreamPlayer3D = $Voice
 
+## how often a bird's position goes on the wire. twenty a second: a kiwi walks at 1.2 m/s, so that
+## is six centimetres between packets, and the animation carries the eye over the gap.
+const NET_INTERVAL := 0.05
+
+## the clip the host is playing, replicated by name. public because a synchroniser writes it.
+var net_clip := ""
+var _shown := ""
+var _link: MultiplayerSynchronizer
 var _anim: AnimationPlayer
 var _clips := {}
 var _state := State.IDLE
@@ -231,6 +239,17 @@ func _ready() -> void:
 	vision.awareness_changed.connect(_on_awareness_changed)
 	_begin_idle()
 
+	## ONE BRAIN. every machine loads the same level, so every machine has this same bird at this
+	## same path -- which is what makes it addressable without a spawn message -- but only the host
+	## thinks with it. a bird that decided for itself on two machines would be two birds that agreed
+	## for a while and then did not, and the first thing to diverge would be who it was hunting.
+	if not multiplayer.is_server():
+		set_physics_process(false)
+	## where it ended up, which way it is facing, and which clip it is playing. the clip is sent
+	## rather than the state that chose it: the state machine is the host's business, and what the
+	## other machine has to draw is a bird mid-stride.
+	_link = Netlink.sync(self, [".:position", ".:rotation", ".:net_clip"], 1, NET_INTERVAL)
+
 
 func _enable_vertex_colors() -> void:
 	enable_vertex_colors(model, vertex_colors_are_srgb)
@@ -273,11 +292,27 @@ func _resolve_clips() -> void:
 
 
 func _play(clip: String, blend := 0.3) -> void:
+	net_clip = clip
+	_show(clip, blend)
+
+
+func _show(clip: String, blend := 0.3) -> void:
 	if _anim == null:
 		return
 	var full: String = _clips.get(clip, clip)
 	if _anim.has_animation(full) and _anim.current_animation != full:
 		_anim.play(full, blend)
+
+
+## a bird on a machine that is not the host does no thinking at all, so this is the whole of its
+## animation: the host says which clip, and the clip plays itself. it is checked every frame rather
+## than driven by a setter because a synchroniser writes the property directly.
+func _process(_delta: float) -> void:
+	if multiplayer.is_server():
+		return
+	if net_clip != "" and net_clip != _shown:
+		_shown = net_clip
+		_show(net_clip)
 
 
 func _physics_process(delta: float) -> void:
@@ -893,6 +928,7 @@ func is_found() -> bool:
 
 ## out of the hands and away. it keeps the velocity it was given until the ground stops it, and the
 ## model spins about its own long axis on the way so it reads as thrown rather than as slid.
+@rpc("any_peer", "call_local", "reliable")
 func toss(launch: Vector3, spin: float) -> void:
 	if _state != State.DOWN:
 		return
@@ -929,6 +965,19 @@ func _step_thrown(delta: float) -> void:
 
 func is_thrown() -> bool:
 	return _thrown
+
+
+## somebody picked this body up, or put it down. the body follows the hands that are carrying it, so
+## for as long as that is true the CARRIER is the machine that says where it is -- the host's copy
+## would otherwise keep sending the spot on the ground it was lifted from, and the body would flicker
+## between a player's hands and the grass. handing the authority over is the whole of it: a
+## synchroniser sends from whoever owns it, and everybody agrees who that is because everybody runs
+## this same line.
+@rpc("any_peer", "call_local", "reliable")
+func net_carried(by: int) -> void:
+	set_dragged(by > 0)
+	if _link != null:
+		_link.set_multiplayer_authority(by if by > 0 else 1)
 
 
 ## the player has it by the feet. the drag owns the position while this is true.
@@ -1009,11 +1058,41 @@ func stand_down() -> void:
 func take_bb_hit(damage := 1.0, at := Vector3.INF, _energy := -1.0) -> void:
 	if _state == State.DOWN:
 		return
+	## the shooter hears their own hit wherever they are. what happens NEXT is the host's: a bird
+	## that fell on one machine and stayed up on the other is the worst kind of disagreement, so a
+	## client asks rather than decides. the ask carries the energy, because whether a plate stopped
+	## it is the same question on either machine and only the host is entitled to answer it.
 	Sfx.play(&"bb_body", at if at.is_finite() else global_position + Vector3.UP * 0.3)
+	if not multiplayer.is_server():
+		_ask_hit.rpc_id(1, damage, at if at.is_finite() else global_position, _energy)
+		return
 	health.take_damage(damage)
 
 
+@rpc("any_peer", "call_remote", "reliable")
+func _ask_hit(damage: float, at: Vector3, energy: float) -> void:
+	if not multiplayer.is_server():
+		return
+	take_bb_hit(damage, at, energy)
+
+
+## the host decided. everybody watches the same bird fall, tip over and get its eyes crossed, and
+## the witness rule and the scoring run once, here.
 func _go_down() -> void:
+	if _state == State.DOWN:
+		return
+	if multiplayer.is_server():
+		_net_down.rpc()
+	else:
+		_fall()
+
+
+@rpc("authority", "call_local", "reliable")
+func _net_down() -> void:
+	_fall()
+
+
+func _fall() -> void:
 	if _state == State.DOWN:
 		return
 	_state = State.DOWN
@@ -1027,10 +1106,13 @@ func _go_down() -> void:
 	BurstFx.spawn(world, at, burst_dark, int(burst_count * 0.6), burst_speed * 0.8)
 
 	speak(down_pitch, down_db)
-	_alert_witnesses()
-
-	## the signal goes out while we are still here, so a listener can read our position.
-	downed.emit(self)
+	## the two things that are DECISIONS rather than pictures: who saw it happen, and what it is
+	## worth. both are the host's, and both reach the other machines as their own consequences --
+	## a witness raises the alarm and the alarm is replicated; the count is pushed by Run.
+	if multiplayer.is_server():
+		_alert_witnesses()
+		## the signal goes out while we are still here, so a listener can read our position.
+		downed.emit(self)
 
 	if not vanish_on_down:
 		_play(down_clip, 0.15)

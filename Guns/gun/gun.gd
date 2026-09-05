@@ -109,6 +109,19 @@ var _reload_until := -1.0
 var _reload_began := 0.0
 
 
+## the operative holding this weapon. every gun is a descendant of the player carrying it, so the
+## answer is up the tree and never in a group: a group would be right in a solo run and wrong the
+## moment there are two of them.
+func owning_player() -> Player:
+	var node := get_parent()
+	while node != null:
+		var who := node as Player
+		if who != null:
+			return who
+		node = node.get_parent()
+	return null
+
+
 func _ready() -> void:
 	## the rack decides which weapon is in the group. a weapon on its own joins by itself.
 	if not (get_parent() is WeaponRack):
@@ -405,21 +418,17 @@ func _reject(reason: FireBlock) -> void:
 func _spawn_shot(mass_kg: float) -> void:
 	var speed := muzzle_speed(mass_kg)
 	var dir := aim_direction()
-	var world := get_tree().current_scene
 	_shot += 1
 
+	## the velocities are worked out ONCE and sent, rather than each machine rolling its own: a
+	## shotgun's pellets go where the spread put them, and a spread rolled twice is two different
+	## shots. everything else a bb needs is the same on both sides, so this is the whole message.
+	var shots := PackedVector3Array()
 	for i in maxi(1, pellets):
-		var bb: BB = BB_SCENE.instantiate()
-		bb.bb_mass = mass_kg
-		bb.BackspinDrag = hopup
-		bb.trail_color = TRAIL_COLORS[(_shot + i) % TRAIL_COLORS.size()]
-		world.add_child(bb)
-		bb.global_transform = muzzle.global_transform
-		bb.linear_velocity = _scatter(dir) * speed
-
-	if muzzle_fx:
-		MuzzleFlashFx.spawn(world, muzzle.global_position, dir,
-			MuzzleFlashFx.GAS_COLOR, muzzle_fx_scale, muzzle_fx_intensity)
+		shots.append(_scatter(dir) * speed)
+	_lay_shot(muzzle.global_transform, shots, mass_kg, hopup, true)
+	if Net.is_online():
+		_net_shot.rpc(muzzle.global_transform, shots, mass_kg, hopup)
 
 	fired.emit(speed, mass_kg)
 
@@ -427,6 +436,39 @@ func _spawn_shot(mass_kg: float) -> void:
 		print("Shot %d | %d x %.2f m/s | %.1f fps | %.2f g | hop-up %.5f | ammo %d/%d"
 			% [_shot, pellets, speed, speed * 3.28084, mass_kg * 1000.0, hopup,
 			   magazine.count, magazine.capacity])
+
+
+## another machine's shot, flown here so it can be seen and heard. unreliable on purpose: a bb that
+## did not arrive is a bb nobody sees, and re-sending it late would draw a tracer for a shot that
+## landed a moment ago.
+@rpc("any_peer", "call_remote", "unreliable")
+func _net_shot(from: Transform3D, shots: PackedVector3Array, mass_kg: float, spin: float) -> void:
+	_lay_shot(from, shots, mass_kg, spin, false)
+
+
+## the bbs themselves, on whichever machine this is. `mine` is the whole difference: an owned bb
+## decides what it hit, a copy only shows it.
+func _lay_shot(from: Transform3D, shots: PackedVector3Array, mass_kg: float, spin: float,
+		mine: bool) -> void:
+	var world := get_tree().current_scene
+	if world == null:
+		return
+	for i in shots.size():
+		var bb: BB = BB_SCENE.instantiate()
+		bb.bb_mass = mass_kg
+		bb.BackspinDrag = spin
+		bb.mine = mine
+		bb.trail_color = TRAIL_COLORS[(_shot + i) % TRAIL_COLORS.size()]
+		world.add_child(bb)
+		bb.global_transform = from
+		bb.linear_velocity = shots[i]
+	if muzzle_fx:
+		MuzzleFlashFx.spawn(world, from.origin, -from.basis.z,
+			MuzzleFlashFx.GAS_COLOR, muzzle_fx_scale, muzzle_fx_intensity)
+	if not mine:
+		## the report is heard where the weapon is, not in the listener's head: it is somebody else's
+		## rifle. the table's own event is 2d, so the world hears the impact family instead.
+		Sfx.play(sfx_prefix + "_fire", from.origin, 0.0, 1.0, true)
 
 
 ## a random direction inside the spread cone, uniform over the cap so pellets do not bunch up
@@ -461,9 +503,12 @@ func aim_direction() -> Vector3:
 
 	var query := PhysicsRayQueryParameters3D.create(from, to, AIM_MASK)
 	query.collide_with_areas = false
-	var player := get_tree().get_first_node_in_group("player") as CollisionObject3D
-	if player != null:
-		query.exclude = [player.get_rid()]
+	## the shooter's OWN body, found by walking up the tree rather than by asking the scene for "a
+	## player": with two operatives in the level, asking the group could hand back the other one and
+	## the aim ray would start by passing through the shooter and stopping on their teammate.
+	var body := owning_player()
+	if body != null:
+		query.exclude = [body.get_rid()]
 
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	var point: Vector3 = hit.position if not hit.is_empty() else to

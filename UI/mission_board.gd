@@ -123,7 +123,7 @@ func detail_overflow() -> float:
 func open() -> void:
 	if visible:
 		return
-	_player = get_tree().get_first_node_in_group("player")
+	_player = Player.local(get_tree())
 	if _player != null:
 		_player.process_mode = Node.PROCESS_MODE_DISABLED
 	var hud := get_tree().get_first_node_in_group("hud")
@@ -167,6 +167,12 @@ func select(index: int) -> void:
 
 ## deploys into the selected mission. a locked one is refused with what it still needs.
 func deploy() -> bool:
+	## the mission is one mission, so choosing it is one machine's job. a client may read the whole
+	## board -- the briefs are how you know what you are walking into -- and the host is the one who
+	## says go. told plainly, because a button that did nothing would read as a broken button.
+	if not Net.is_host():
+		_say("The host chooses the mission.")
+		return false
 	if not Run.select_level(_selected):
 		_say("Locked. Complete %d more mission%s first." % [Run.unlock_needs(_selected), "" if Run.unlock_needs(_selected) == 1 else "s"])
 		return false

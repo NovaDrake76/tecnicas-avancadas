@@ -81,16 +81,39 @@ func _ready() -> void:
 
 
 func _find_target() -> void:
-	_target = get_tree().get_first_node_in_group("player") as Node3D
+	_target = Player.nearest(get_tree(), _eye() if _body != null else Vector3.ZERO)
+
+
+## which operative these eyes can see best right now, and how plainly. with one player it is the
+## same question it always was; with two it is the one that matters, and it is deliberately the
+## most EXPOSED rather than the nearest -- a teammate crouched behind the container two metres away
+## must not blind a bird to the one standing in the open at fifteen.
+func _most_exposed() -> Array:
+	var best: Node3D = null
+	var most := 0.0
+	for who in Player.all(get_tree()):
+		var seen := exposure_to(who)
+		if seen > most:
+			most = seen
+			best = who
+	return [best, most]
 
 
 ## called by the owner every physics tick while it is still standing.
 func poll(delta: float) -> void:
 	if _body == null:
 		return
+	var looked := _most_exposed()
+	var who := looked[0] as Node3D
+	var exposure: float = looked[1]
+	## the bird keeps looking at whoever it last saw when it can see nobody, so the spot it turns to
+	## and the report it makes still name somebody.
+	if who != null:
+		_target = who
 	if _target == null or not is_instance_valid(_target):
 		_find_target()
-		return
+		if _target == null:
+			return
 
 	## a bird that has already raised the alarm stops FILLING its bar, because there is nothing left
 	## to warn about, but it does not stop LOOKING. while it can see you, the compound's last known
@@ -98,13 +121,12 @@ func poll(delta: float) -> void:
 	## what the gunship orbits. without this every one of them worked from the place you were
 	## standing when the bird first caught you, for the rest of the fight.
 	if alerted:
-		if exposure_to(_target) > 0.0:
+		if exposure > 0.0:
 			last_seen = _target.global_position
 			_seen_once = true
 			Alarm.report_contact(last_seen)
 		return
 
-	var exposure := exposure_to(_target)
 	if exposure > 0.0:
 		last_seen = _target.global_position
 		_seen_once = true

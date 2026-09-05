@@ -165,6 +165,30 @@ func start_run() -> void:
 ## the safe house there is nothing to restart, and once the report card is up the run is already
 ## scored, and letting a bad grade be taken back would make every letter mean "the best of however
 ## many times I tried".
+## an operative's health reached zero. solo that is the end of the run, exactly as it was. with two
+## of them it is not: a mission fails when EVERYBODY is down at once, and until then a player on the
+## floor is a job for the other one (Player.go_down / revive). this is the only place that decides
+## which of those it is, and it is the host's decision.
+func report_down(_who: int) -> void:
+	if not multiplayer.is_server():
+		## a client's own death is reported to the host, which is the machine that decides.
+		_report_down.rpc_id(1, multiplayer.get_unique_id())
+		return
+	_report_down(multiplayer.get_unique_id() if _who == 0 else _who)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _report_down(_who: int) -> void:
+	if not multiplayer.is_server() or state != State.PLAYING:
+		return
+	## anybody still on their feet means the mission is still on.
+	for node in get_tree().get_nodes_in_group("player"):
+		var who := node as Player
+		if who != null and who.is_alive():
+			return
+	fail_level()
+
+
 func restart_level() -> bool:
 	if state != State.PLAYING:
 		return false
@@ -234,8 +258,21 @@ func begin_level(level: Node) -> void:
 ## later, so it hands the fact over rather than expecting anyone to have watched it fly.
 func report_hit(lethal: bool) -> void:
 	if state == State.PLAYING:
-		shots_hit += 1
+		if multiplayer.is_server():
+			shots_hit += 1
+		else:
+			_add_tally.rpc_id(1, 0, 1)
 	shot_hit.emit(lethal)
+
+
+## the accuracy term is the TEAM's: one mission, one number. a client's shots and hits are counted
+## where the score is worked out, which is the only machine that ever divides one by the other.
+@rpc("any_peer", "call_remote", "reliable")
+func _add_tally(shots: int, hits: int) -> void:
+	if not multiplayer.is_server() or state != State.PLAYING:
+		return
+	shots_fired += shots
+	shots_hit += hits
 
 
 func alert_level() -> float:
@@ -472,13 +509,20 @@ func _bind_gun() -> void:
 
 func _on_shot_fired(_speed: float, _mass_kg: float) -> void:
 	if state == State.PLAYING:
-		shots_fired += 1
+		if multiplayer.is_server():
+			shots_fired += 1
+		else:
+			_add_tally.rpc_id(1, 1, 0)
 
 
 func _on_kiwi_alerted(_kiwi: Kiwi) -> void:
 	if state != State.PLAYING:
 		return
+	## being seen is one infiltration's problem, not one operative's: a bird that spots either of
+	## them costs both of them the same bonus, so the count is shared.
 	detections += 1
+	if multiplayer.is_server():
+		_push_detections.rpc(detections)
 	detections_changed.emit(detections)
 	## the meter is a warning. once this one has seen you there is nothing left to warn about.
 	_awareness.erase(_kiwi.get_instance_id())
@@ -599,11 +643,16 @@ func _push_alert() -> void:
 func _on_target_down(kiwi) -> void:
 	if state != State.PLAYING:
 		return
+	## a bird's signal only fires on the host: the count, and everything the count decides, is one
+	## number for the whole mission and it is pushed to the other machines rather than counted twice.
+	if not multiplayer.is_server():
+		return
 	## a bird that is out is no longer watching, so its share of the meter has to go with it.
 	_awareness.erase(kiwi.get_instance_id())
 	watcher_changed.emit(kiwi, 0.0)
 	_push_alert()
 	targets_down += 1
+	_push_targets.rpc(targets_down)
 	targets_changed.emit(targets_down, targets_total)
 	## clearing the field is only the win condition on a level that declared no objectives of its
 	## own. where there are objectives the birds are the obstacle course, not the point, and a
@@ -617,7 +666,7 @@ func _on_target_down(kiwi) -> void:
 ## the player is down. a failed mission is an F on everything: there is no partial credit for the
 ## kiwis taken out before the laser found you, and nothing reaches the wallet or the records.
 func fail_level() -> void:
-	if state != State.PLAYING:
+	if state != State.PLAYING or not multiplayer.is_server():
 		return
 	_level_score = 0
 	_last_gained = 0
@@ -627,18 +676,51 @@ func fail_level() -> void:
 		s[key] = 0.0
 	s["letter"] = "F"
 	s["failed"] = true
+	_push_over.rpc(false, level_index, s)
 	level_failed.emit(level_index, s)
 
 
 func _clear_level() -> void:
+	if not multiplayer.is_server():
+		return
 	_level_score = _score_level()
 	var was_done := all_done()
 	_last_gained = record_result(level_index, _level_score)
 	run_score += _last_gained
 	_set_state(State.CLEARED)
+	_push_over.rpc(true, level_index, _summary())
 	level_cleared.emit(level_index, _summary())
 	if all_done() and not was_done:
 		run_finished.emit(_summary())
+
+
+## ---------------------------------------------------------------- what the host tells the others
+## the mission is ONE thing: one clock, one count, one alarm, one result. these are the only pieces
+## of it a second machine cannot work out for itself, so they are the only pieces sent. everything
+## else -- which objective is live, what the ring says, what the reticle does -- each machine works
+## out again from its own copy of the same level.
+@rpc("authority", "call_remote", "reliable")
+func _push_targets(down: int) -> void:
+	targets_down = down
+	targets_changed.emit(targets_down, targets_total)
+	objectives_changed.emit()
+
+
+@rpc("authority", "call_remote", "reliable")
+func _push_detections(count: int) -> void:
+	detections = count
+	detections_changed.emit(detections)
+
+
+## the report card, word for word the host's, so two players read the same letter for the same run.
+@rpc("authority", "call_remote", "reliable")
+func _push_over(cleared: bool, index: int, summary: Dictionary) -> void:
+	level_index = index
+	_set_state(State.CLEARED if cleared else State.FAILED)
+	if cleared:
+		level_cleared.emit(index, summary)
+	else:
+		level_failed.emit(index, summary)
 
 
 var _last_gained := 0

@@ -43,6 +43,7 @@ var _aiming := false
 var _last_detections := -1
 var _status_tween: Tween
 var _pouch: MagazinePouch
+var _bound := false
 
 
 func _ready() -> void:
@@ -81,6 +82,7 @@ func _ready() -> void:
 	## later. Run carries the word across because it is the one node both ends already know.
 	Run.shot_hit.connect(hit_marker.strike)
 
+	Net.local_player_ready.connect(func(_who: Node) -> void: _bind_weapon())
 	_bind_weapon.call_deferred()
 
 
@@ -106,7 +108,15 @@ func _style() -> void:
 	HudStyle.tune(prompt_label, HudStyle.T_UNIT, HudStyle.BRIGHT)
 
 
+## everything on this screen that belongs to the operative this machine drives. it is called twice
+## on purpose: once a frame after the hud is built, which is when a solo player already exists, and
+## again the moment a player node arrives -- a joined machine gets its operative from the host a
+## beat after the hud has finished asking for one, and a hud that only ever asked once would spend
+## the whole mission blank. the flag is what stops the second call connecting everything twice.
 func _bind_weapon() -> void:
+	if _bound or Player.local(get_tree()) == null:
+		return
+	_bound = true
 	var rack := get_tree().get_first_node_in_group("weapon_rack") as WeaponRack
 	if rack != null:
 		rack.weapon_changed.connect(_follow_weapon)
@@ -116,7 +126,7 @@ func _bind_weapon() -> void:
 	if _weapon == null:
 		push_warning("hud.gd: no weapon to follow; HUD will stay blank.")
 
-	vitals.watch(get_tree().get_first_node_in_group("player"))
+	vitals.watch(Player.local(get_tree()))
 
 	_interactor = get_tree().get_first_node_in_group("interactor") as Interactor
 	if _interactor != null:
@@ -146,6 +156,20 @@ func _bind_weapon() -> void:
 	else:
 		melee_label.text = ""
 		melee_key.visible = false
+
+	## a teammate on the floor. the ring is the same one a reload and a job use, and the prompt is
+	## the same row an interactable uses: the game has one shape for "something is running" and one
+	## for "there is something here", and a third of either would be a third thing to learn.
+	var hands_up := get_tree().get_first_node_in_group("revive")
+	if hands_up != null:
+		hands_up.working_changed.connect(func(active: bool) -> void:
+			reload_ring.watch_job(hands_up if active else null)
+			_show_crosshair(not active and not _aiming))
+		hands_up.reach_changed.connect(func(within: bool) -> void:
+			if within:
+				_on_focus_changed("Revive", &"interact", null)
+			else:
+				_on_focus_lost())
 
 	## the thrown magazines sit with the other quiet figures and speak up when one is thrown
 	var throw := get_tree().get_first_node_in_group("distraction")

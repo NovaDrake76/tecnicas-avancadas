@@ -60,11 +60,25 @@ func advance(distance: float, crouched: bool) -> bool:
 
 
 ## broadcast rather than aimed at anything, so the player never has to know kiwis exist.
+##
+## the SOUND is played wherever the boots are, on the machine wearing them. what the birds do about
+## it is a decision, and every decision about a bird belongs to the host: two machines each turning
+## the same patrol towards the same footstep would be one player's steps heard twice.
 func carry(radius: float) -> void:
+	if multiplayer.is_server():
+		_heard(global_position, radius)
+	else:
+		_heard.rpc_id(1, global_position, radius)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _heard(at: Vector3, radius: float) -> void:
+	if not multiplayer.is_server():
+		return
 	for node in get_tree().get_nodes_in_group("kiwi"):
 		var listener := node as Kiwi
 		if listener != null:
-			listener.hear(global_position, radius)
+			listener.hear(at, radius)
 
 
 func _physics_process(delta: float) -> void:

@@ -117,7 +117,7 @@ func _physics_process(delta: float) -> void:
 	if _beacon_mat != null:
 		_beacon_mat.emission_energy_multiplier = 4.0 if fmod(_time, 1.0) < 0.12 else 0.0
 	if _player == null or not is_instance_valid(_player):
-		_player = get_tree().get_first_node_in_group("player") as Node3D
+		_player = Player.nearest(get_tree(), global_position)
 
 	match phase:
 		Phase.ARRIVE:

@@ -74,7 +74,7 @@ var _done := false
 var _work := 0.0
 var _working := false
 var _fuse_left := -1.0
-var _player: Node3D
+var _charged := false
 var _handle: Area3D
 var _interact: Interactable
 var _marker: Node3D
@@ -84,7 +84,6 @@ var _was_working := false
 
 func _ready() -> void:
 	add_to_group("objective")
-	_player = get_tree().get_first_node_in_group("player") as Node3D
 	if kind == Kind.STEAL or kind == Kind.SABOTAGE:
 		_build_handle()
 	_build_marker()
@@ -147,6 +146,14 @@ func _on_interacted(_by: Node) -> void:
 	Sfx.play_2d(&"objective_start")
 
 
+## true when not one operative is standing close enough.
+func _nobody_at(within: float) -> bool:
+	for who in Player.all(get_tree()):
+		if who.global_position.distance_to(global_position) <= within:
+			return false
+	return true
+
+
 func _step_work(delta: float) -> void:
 	if _fuse_left >= 0.0:
 		_fuse_left -= delta
@@ -156,11 +163,11 @@ func _step_work(delta: float) -> void:
 		return
 	if not _working:
 		return
-	if _player == null or not is_instance_valid(_player):
-		_player = get_tree().get_first_node_in_group("player") as Node3D
-	## walking off abandons it. the whole point of work_time is that it pins the player to one spot,
-	## and a timer that ran while they left would not do that.
-	if _player == null or _player.global_position.distance_to(global_position) > work_reach:
+	## walking off abandons it. the whole point of work_time is that it pins a player to one spot,
+	## and a timer that ran while they left would not do that. it is ANY of them standing on it:
+	## whoever started the job can be relieved by the other one, which is a reason to bring a second
+	## pair of hands.
+	if _nobody_at(work_reach):
 		_working = false
 		_work = 0.0
 		progress_changed.emit(0.0)
@@ -171,14 +178,43 @@ func _step_work(delta: float) -> void:
 	if _work < work_time:
 		return
 	_working = false
-	if kind == Kind.SABOTAGE:
-		_fuse_left = fuse
-		Sfx.play(&"charge_set", global_position)
+	## the work ran on the machine of the player doing it, which is what keeps the ring smooth in
+	## their hands. what it MEANT is the host's: it says the charge is set, or the case is taken, and
+	## says it to everybody at once. two operatives working the same objective is not a race, it is
+	## the same job finished once.
+	_ask_finish.rpc_id(1)
+	return
+## the host is the only machine that decides an objective is done, and it says so to everybody,
+## itself included. a client that finished the work asks; a host that finished it asks itself.
+@rpc("any_peer", "call_local", "reliable")
+func _ask_finish() -> void:
+	if not multiplayer.is_server() or _done:
 		return
+	## the charge is asked for TWICE: once when the work finishes, which starts the fuse, and once
+	## when the fuse runs out, which is what actually completes it. "has a fuse been started" cannot
+	## be read off the countdown, because a spent fuse and an unlit one are the same number.
+	if kind == Kind.SABOTAGE and not _charged:
+		_net_fuse.rpc()
+		return
+	_net_done.rpc()
+
+
+## the charge is on and burning, on every machine: the fuse is a warning to be somewhere else, and a
+## warning one player cannot see is not one.
+@rpc("authority", "call_local", "reliable")
+func _net_fuse() -> void:
+	_charged = true
+	_fuse_left = fuse
+	Sfx.play(&"charge_set", global_position)
+
+
+@rpc("authority", "call_local", "reliable")
+func _net_done() -> void:
 	## taking it is SILENT. the alarm has two sources and both are things the player did where a
 	## bird could see or hear them; a mission that raised the compound by itself the moment the
 	## objective was met would be the game undoing a clean infiltration on the player's behalf.
-	Sfx.play(&"objective_done", global_position)
+	if kind != Kind.SABOTAGE:
+		Sfx.play(&"objective_done", global_position)
 	_finish()
 
 
@@ -189,8 +225,12 @@ func _detonate() -> void:
 	Sfx.play(&"mortar_blast", global_position)
 	BurstFx.spawn(get_tree().current_scene, global_position + Vector3.UP * 0.5,
 		Color(1.0, 0.7, 0.3), 40, 6.0)
-	Alarm.raise_alarm(global_position)
-	_finish()
+	## the blast is a loud thing the player CHOSE, on a fuse they could watch, so it is the one
+	## objective that raises the compound. the alarm is the host's to raise and reaches the others
+	## as a stage; the bang, the light and the ring are drawn wherever they are seen.
+	if multiplayer.is_server():
+		Alarm.raise_alarm(global_position)
+		_ask_finish()
 
 
 func _step_exfil() -> void:
@@ -199,12 +239,16 @@ func _step_exfil() -> void:
 	## yet, and where the way out is stays unknown until that is worth knowing.
 	if not is_armed():
 		return
-	if _player == null or not is_instance_valid(_player):
-		_player = get_tree().get_first_node_in_group("player") as Node3D
-		if _player == null:
+	## EVERYBODY has to be on it. a way out that opened for the first operative to reach it would
+	## leave the second one in the compound, which is the one ending a co-op mission must not have.
+	## with one player it is the same test it always was.
+	var here := Player.all(get_tree())
+	if here.is_empty():
+		return
+	for who in here:
+		if who.global_position.distance_to(global_position) > reach:
 			return
-	if _player.global_position.distance_to(global_position) <= reach:
-		_finish()
+	_finish()
 
 
 ## the way out only counts once there is a reason to use it.

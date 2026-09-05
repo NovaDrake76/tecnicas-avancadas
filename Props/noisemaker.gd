@@ -16,6 +16,9 @@ const MODEL := "res://Models/Ammo/rifle_mag.obj"
 @export var noise_radius := 18.0
 @export var lifetime := 12.0
 
+## the copy on another machine falls and clatters like this one; only the thrower's asks the birds
+## to come and look, or one magazine would pull the same patrol twice.
+var mine := true
 var _landed := false
 
 
@@ -56,10 +59,24 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 ## nothing and touches no alarm stage, ever.
 func _on_landed(at: Vector3) -> void:
 	Sfx.play(&"clank", at)
+	## the clatter is heard on every machine that has a copy of this thing, and answered on one.
+	if multiplayer.is_server():
+		_walk_over(at)
+	elif mine:
+		_ask_walk_over.rpc_id(1, at)
+	landed.emit(at)
+
+
+func _walk_over(at: Vector3) -> void:
 	for node in get_tree().get_nodes_in_group("kiwi"):
 		if node.has_method("investigate") and node.global_position.distance_to(at) <= noise_radius:
 			node.investigate(at)
-	landed.emit(at)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _ask_walk_over(at: Vector3) -> void:
+	if multiplayer.is_server():
+		_walk_over(at)
 
 
 func has_landed() -> bool:

@@ -54,13 +54,33 @@ func throw() -> Noisemaker:
 	count -= 1
 	_cooldown = cooldown
 	Sfx.play_2d(&"throw")
-	var mag := Noisemaker.new()
-	var world := get_tree().current_scene
-	world.add_child(mag)
 	var forward := -cam.global_transform.basis.z
-	mag.global_position = cam.global_position + forward * 0.5 - cam.global_transform.basis.y * 0.15
-	mag.linear_velocity = forward * throw_speed + Vector3.UP * throw_lift + _player.velocity * 0.5
-	mag.angular_velocity = Vector3(randf_range(-6.0, 6.0), randf_range(-3.0, 3.0), randf_range(-6.0, 6.0))
+	var at := cam.global_position + forward * 0.5 - cam.global_transform.basis.y * 0.15
+	var push := forward * throw_speed + Vector3.UP * throw_lift + _player.velocity * 0.5
+	var spin := Vector3(randf_range(-6.0, 6.0), randf_range(-3.0, 3.0), randf_range(-6.0, 6.0))
+	var mag := _lay(at, push, spin, true)
+	## the same magazine, thrown the same way, on every machine: the arc is the tell, and a teammate
+	## who could not see it fly would not know where the birds are about to be looking.
+	if Net.is_online():
+		_net_throw.rpc(at, push, spin)
 	changed.emit(count, max_count)
 	thrown.emit(mag)
+	return mag
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _net_throw(at: Vector3, push: Vector3, spin: Vector3) -> void:
+	_lay(at, push, spin, false)
+
+
+func _lay(at: Vector3, push: Vector3, spin: Vector3, mine: bool) -> Noisemaker:
+	var mag := Noisemaker.new()
+	var world := get_tree().current_scene
+	if world == null:
+		return null
+	mag.mine = mine
+	world.add_child(mag)
+	mag.global_position = at
+	mag.linear_velocity = push
+	mag.angular_velocity = spin
 	return mag

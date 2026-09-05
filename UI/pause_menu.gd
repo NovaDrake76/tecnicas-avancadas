@@ -64,7 +64,7 @@ func _unhandled_input(event: InputEvent) -> void:
 ## only a level can be paused. the main menu has no player, and escape there must do nothing rather
 ## than freeze one menu behind another.
 func can_pause() -> bool:
-	return get_tree().get_first_node_in_group("player") != null
+	return Player.local(get_tree()) != null
 
 
 func is_open() -> bool:
@@ -100,6 +100,9 @@ func close() -> void:
 
 ## the run is abandoned, not saved. main.tscn starts a fresh one the next time play is pressed.
 func quit_to_menu() -> void:
+	## leaving takes this machine out of the session as well. a host that walked out and left the
+	## port open would have a client standing in a compound nobody is thinking about any more.
+	Net.leave()
 	visible = false
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

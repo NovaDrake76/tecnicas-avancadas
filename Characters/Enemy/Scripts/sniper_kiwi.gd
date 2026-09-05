@@ -72,14 +72,21 @@ func aim_locked() -> bool:
 ## the charge is done: one slug at the locked aim, then the recovery. a suppressing charge fires the
 ## same slug at the spot it was lighting up.
 func _fire_charged() -> void:
-	Sfx.play(&"laser_slug", eyes.between_eyes())
-	eyes.set_glow(0.0)
-	var bolt := LaserBolt.launch(get_parent(), eyes.between_eyes(), _aim, slug_speed, laser_range,
-		slug_damage, self, eyes)
-	bolt.thickness = slug_thickness
-	bolt.tail = 3.0
+	## the slug is the whole of the attack, so it is drawn on every machine for the same reason the
+	## laser kiwi's bolts are: a shot that could not be seen coming could not be stepped out of.
+	_net_slug.rpc(eyes.between_eyes(), _aim)
 	_attack = Attack.RECOVER
 	_attack_timer = beam_recover
+
+
+@rpc("authority", "call_local", "reliable")
+func _net_slug(from: Vector3, at: Vector3) -> void:
+	Sfx.play(&"laser_slug", from)
+	eyes.set_glow(0.0)
+	var bolt := LaserBolt.launch(get_parent(), from, at, slug_speed, laser_range,
+		slug_damage if multiplayer.is_server() else 0.0, self, eyes)
+	bolt.thickness = slug_thickness
+	bolt.tail = 3.0
 
 
 ## the aimed shot or nothing. a sniper waiting on its beam waits; it does not fall back to a burst.

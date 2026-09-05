@@ -235,6 +235,11 @@ func _set_stage(value: int) -> void:
 		_ever_hot = true
 	if stage == value:
 		return
+	## what the garrison KNOWS is the host's, and every machine has to agree on it: the strip at the
+	## top of the screen, the music, the sirens and whether a run was a ghost all read this. only the
+	## stage travels -- where the birds are looking is worked out where the birds are thought about.
+	if multiplayer.is_server():
+		_push_stage.rpc(value, _ever_hot)
 	## the same as Run._set_state: an autoload's enum has two identities to the analyser, so the
 	## warning is answered outright. the value is only ever one of Stage's own members.
 	@warning_ignore("int_as_enum_without_cast")
@@ -244,6 +249,18 @@ func _set_stage(value: int) -> void:
 	stage_changed.emit(stage)
 
 
+@rpc("authority", "call_remote", "reliable")
+func _push_stage(value: int, hot: bool) -> void:
+	_ever_hot = hot
+	if stage == value:
+		return
+	@warning_ignore("int_as_enum_without_cast")
+	stage = value
+	stage_changed.emit(stage)
+
+
+## the alarm time is what the stealth grade is paid on, and it is counted on the host. it is pushed
+## with the result rather than every tick: nothing on a client's screen reads it until the card.
 ## cancelled, not paused: dropping out of ALARM is what the player is paid for.
 func _cancel_reinforcements() -> void:
 	if _reinforce < 0.0:
