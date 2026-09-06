@@ -1,29 +1,19 @@
 class_name MortarKiwi
 extends Kiwi
 
-## indirect fire. the mortar kiwi holds its post and drops shells on the last place the compound knew
-## you were, whether or not IT can see you, and that makes cover TEMPORARY: the failure mode of cover
-## combat is both sides sitting still and trading, and this is what argues against sitting still.
-## every shell is telegraphed by a ring on the ground that fills as it falls, so the answer is always
-## on screen: be somewhere else when it lands. it is one bb to put down and it has no armour; it is
-## dangerous because of where it sits, not because of what it takes to kill.
 
 @export_group("Mortar")
 @export var min_range := 8.0
 @export var max_range := 60.0
 @export var flight_time := 2.6
 @export var cooldown := 6.0
-## how long after being alarmed before the first shell. the tube has to be swung round.
+## how long after being alarmed before the first shell.
 @export var first_shot_delay := 1.5
 @export var blast_radius := 3.5
 @export var blast_damage := 38.0
 ## what is left of the damage when cover stands between the blast and you.
 @export var cover_factor := 0.35
-## the tube's report. a clip at this path is used when it exists; until then the synthesised cough
-## below stands in, so a missing file leaves the mortar quiet rather than breaking the scene.
-## a mortar is no use at arm's length. a player it can SEE inside this sends it running, and it
-## goes back to the tube once it has put some ground between you. the shells have a minimum range
-## for the same reason, so closing in is the counter and this is what makes closing in a chase.
+## the tube's report.
 @export var flee_range := 10.0
 
 var _cool := 0.0
@@ -45,7 +35,6 @@ func _physics_process(delta: float) -> void:
 	super(delta)
 
 
-## every alarm a plain kiwi answers by running, this one answers by bombarding.
 func _on_alarmed(from: Vector3) -> void:
 	_begin_bombard(from)
 
@@ -65,7 +54,7 @@ func _begin_bombard(toward: Vector3) -> void:
 	_state = State.HUNT
 	if not idle_clips.is_empty():
 		_play(idle_clips[0], 0.2)
-	speak(alert_pitch, alert_db)
+	voice.alarm()
 	Alarm.raise_search(toward)
 	awareness_changed.emit(self, 1.0)
 
@@ -75,21 +64,13 @@ func _step_bombard(delta: float) -> void:
 		_end_bombard()
 		return
 	var player := Player.nearest(get_tree(), global_position)
-	## the same sense the alarm uses, so a crouched player creeps closer before it bolts: exposure_to
-	## applies the crouch range scale and sees_point does not.
+	## exposure_to and not sees_point: only exposure_to applies the crouch range scale, so a crouched player creeps closer before it bolts.
 	if player != null and global_position.distance_to(player.global_position) <= flee_range \
 			and vision.exposure_to(player) > 0.0:
 		_begin_flee(player.global_position)
 		return
 	velocity.x = move_toward(velocity.x, 0.0, walk_speed * 6.0 * delta)
 	velocity.z = move_toward(velocity.z, 0.0, walk_speed * 6.0 * delta)
-	## the compound's knowledge is the fire plan, and that is what indirect fire IS: a bird seeing
-	## you, a runner's shout, the gunship's mark. it is only worth aiming at because VisionCone keeps
-	## it fresh while ANY bird can see you, alerted or not; before that it froze at the spot where
-	## the mortar first caught you and every shell after that landed there.
-	## the fire plan is the compound's belief INCLUDING how old it is. a fresh contact is shelled
-	## accurately and a cold one is area fire you can walk out of, which is what stops a mortar
-	## from being a turret that always knows the answer.
 	if Alarm.has_last_known:
 		_aim_at = Alarm.search_point(get_instance_id())
 		_has_aim = true
@@ -110,9 +91,6 @@ func _step_bombard(delta: float) -> void:
 func _fire(at: Vector3) -> void:
 	_shots += 1
 	var from := _tube.global_position + Vector3.UP * 0.3 if _tube != null else global_position + Vector3.UP * 0.6
-	## the ring on the ground and the disc filling inside it ARE the warning, and a warning one
-	## player cannot see is not one: the shell is launched on every machine. only the host's copy
-	## carries the blast, so two machines cannot hurt the same operative twice for one shell.
 	_net_shell.rpc(from, at)
 
 
@@ -139,7 +117,6 @@ func stand_down() -> void:
 	super()
 
 
-## having run, it goes back to the tube if the compound is still hot, else back to loafing.
 func _end_flee() -> void:
 	if Alarm.is_hot() and _has_aim:
 		_home = global_position
@@ -148,8 +125,6 @@ func _end_flee() -> void:
 	super()
 
 
-## the tube goes with the bird. it is a child of the body, not of the model, so the vanish that hides
-## the model would have left a mortar standing on nothing.
 func _go_down() -> void:
 	if _state == State.DOWN:
 		return
@@ -172,7 +147,6 @@ func shots_fired() -> int:
 	return _shots
 
 
-## the mortar itself: a base plate and a tube on the bird's back, angled up and forward.
 func _build_tube() -> void:
 	var metal := StandardMaterial3D.new()
 	metal.albedo_color = Color(0.16, 0.17, 0.18)

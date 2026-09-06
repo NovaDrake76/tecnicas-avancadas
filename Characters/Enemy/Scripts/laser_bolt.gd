@@ -1,15 +1,9 @@
 class_name LaserBolt
 extends Node3D
 
-## one bolt of a burst: a projectile, not a ray. it leaves the eye at bolt speed and arrives a beat
-## later, and that beat belongs to the player. it is aimed where you WERE, so at 10 m a quarter of a
-## second is enough to step out of its way, and at 3 m it is nothing, which is why closing in on a
-## laser kiwi is the wrong idea and range is the player's tool. every tick it sweeps a ray over the
-## ground it covers, so nothing thin is skipped at speed.
 
 const LENGTH := 1.1
 
-## a heavier round draws fatter and longer. the sniper's is a slug, not a spark.
 var thickness := 1.0
 var tail := LENGTH
 
@@ -80,8 +74,6 @@ func _physics_process(delta: float) -> void:
 	_draw()
 
 
-## a tracer: the head is where the bolt is, the tail trails a metre behind but never behind the eye it
-## left, so the first frame is a spark and not a rod sticking out of the bird's face.
 func _draw() -> void:
 	if _core == null:
 		return

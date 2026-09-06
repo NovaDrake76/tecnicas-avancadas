@@ -1,7 +1,5 @@
 extends Node
 
-## pooled floating numbers, autoloaded as DamageNumbers.
-## fixed pool so a burst of hits degrades into fewer numbers, never into a frame spike.
 
 const POOL := 28
 const RISE := 1.1
@@ -26,7 +24,6 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 
 
-## labels are 3d nodes so they must live in the scene they annotate, and a scene change frees them.
 func _ensure_pool() -> void:
 	var scene := get_tree().current_scene
 	if scene == _host and not _pool.is_empty() and is_instance_valid(_pool[0]):
@@ -62,7 +59,6 @@ func show_at(at: Vector3, text: String, color := COLOR_HIT, big := false) -> voi
 	if _pool.is_empty():
 		return
 
-	## steal the oldest slot when the pool is exhausted rather than allocating.
 	var i := _next
 	for k in POOL:
 		var candidate := (_next + k) % POOL

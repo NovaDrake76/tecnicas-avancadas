@@ -1,7 +1,5 @@
 extends CanvasLayer
 
-## play, options, quit. built in code so there is no layout file to keep in step with the script,
-## and styled by the same helpers as the pause menu so the two cannot drift apart.
 
 const TITLE := "KIWI EMPIRE"
 const GAME_SCENE := "res://main.tscn"
@@ -40,8 +38,6 @@ func _ready() -> void:
 	_root.add_child(_lobby)
 
 
-## PLAY is a solo run, and a solo run is a host with nobody on it: any half open session is dropped
-## here so the game cannot start with a stale peer still attached.
 func start_game() -> void:
 	Net.leave()
 	await Fade.cover()

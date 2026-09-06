@@ -1,11 +1,6 @@
 extends VBoxContainer
 
-## what a weapon does, as bars: velocity, cadence, reach, impact at range, flight time. hovering a part
-## or a bb lot previews it: the bar keeps the current fill and grows a green piece for a gain or loses a
-## red piece for a loss, with both numbers written out. every value comes from the weapon's own formulas
-## and the bb's own flight, so a bar never promises what the range would not show.
 
-## key, caption, unit format, full-bar value, and whether less is better (flight time).
 const STATS := [
 	["v0", "VELOCITY", "%.0f m/s", 200.0, false],
 	["cadence", "CADENCE", "%.1f BB/s", 25.0, false],
@@ -56,14 +51,12 @@ func _ready() -> void:
 		_rows[key] = {"bar": bar, "value": value, "spec": spec}
 
 
-## the weapon as it is. clears any preview.
 func set_current(stats: Dictionary) -> void:
 	_current = stats
 	_preview = {}
 	_redraw()
 
 
-## the weapon as it would be with the hovered part. an empty dictionary ends the preview.
 func set_preview(stats: Dictionary) -> void:
 	_preview = stats
 	_redraw()
@@ -94,8 +87,6 @@ func _redraw() -> void:
 		(r["bar"] as Control).queue_redraw()
 
 
-## more is better for everything but flight time, where the bb that arrives sooner is the one to lead
-## a walking kiwi with.
 func _delta_colour(key: String, now: float, next: float) -> Color:
 	var spec: Array = _rows[key]["spec"]
 	var less_is_better: bool = spec[4]
@@ -119,7 +110,6 @@ func _draw_bar(key: String) -> void:
 		return
 	var next := clampf(float(_preview[key]) / full, 0.0, 1.0)
 	var colour := _delta_colour(key, float(_current.get(key, 0.0)), float(_preview[key]))
-	## the part that stays is drawn as it was; the part that changes is the coloured piece
 	var keep := minf(now, next)
 	bar.draw_rect(Rect2(Vector2.ZERO, Vector2(w * keep, h)), MenuStyle.BRIGHT, true)
 	if next > now:

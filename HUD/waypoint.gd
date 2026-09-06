@@ -1,27 +1,9 @@
 class_name Waypoint
 extends Control
 
-## the way out, drawn ON THE SCREEN rather than on the ground.
-##
-## it was a green ring lying in the grass, and a ring on the ground can only be seen from somewhere
-## it can be seen from: with a hill, a container or a wall between the player and the extraction it
-## says nothing at all, which is exactly the moment the player needs telling. worse, it reads as a
-## piece of level -- a glowing circle among crates and barrels looks like something to interact with,
-## not like a direction to walk in.
-##
-## a screen marker has neither problem. it is a direction and a DISTANCE, it survives anything being
-## in the way, and when the point is off the frame it slides to the edge and becomes an arrow, so it
-## can still be followed while the player is looking somewhere else entirely.
-##
-## it only ever draws the way out, and only once the way out is armed. the objectives themselves are
-## deliberately not marked: finding them is the mission, and leaving is not.
 
-## how far inside the frame the marker is allowed to sit once it clamps to an edge.
 const MARGIN := Vector2(90.0, 90.0)
-## the diamond's radius on screen.
 const SIZE := 14.0
-## up from the objective's own origin, so the marker sits at head height instead of at the ankles of
-## whatever is standing on the spot.
 const LIFT := 1.2
 const COLOR := Color(0.45, 1.0, 0.62)
 const INK := Color(0.0, 0.0, 0.0, 0.75)
@@ -38,14 +20,6 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 
 
-## polled rather than driven by a signal: the projection changes every time the player turns, so
-## this control is redrawing every frame regardless, and asking Run for the objective in the same
-## place keeps "is there a way out yet" and "where is it on screen" as one answer per frame.
-##
-## WHERE the marker goes is worked out here and not in _draw. a drawing function that also decides
-## things can only be checked by drawing, and this project has been bitten three times by layout
-## measured off the wrong thing; with the position settled in _process a probe can read it in a
-## headless run, where nothing is drawn at all.
 func _process(_delta: float) -> void:
 	var want := _exfil()
 	var on := want != null
@@ -67,10 +41,6 @@ func _track() -> void:
 	_distance = cam.global_position.distance_to(at)
 	var rect := Rect2(MARGIN, size - MARGIN * 2.0)
 	var middle := size * 0.5
-	## behind the camera unproject_position mirrors the point through the centre, so a marker placed
-	## with it would swing to the WRONG side of the screen and lead the player away from the thing
-	## they are being sent to. the camera's own space answers it: the sign of z is in front or
-	## behind, and x and y are the direction to turn either way.
 	var local := cam.global_transform.affine_inverse() * at
 	var point := Vector2.ZERO
 	if local.z < 0.0:
@@ -86,8 +56,6 @@ func _track() -> void:
 	_where = point
 
 
-## the way out, once there IS one. armed means every required objective is done, which is the same
-## test the objective itself uses to decide whether it can be stood on.
 func _exfil() -> Node3D:
 	if Run.state != Run.State.PLAYING:
 		return null
@@ -101,7 +69,6 @@ func _exfil() -> Node3D:
 	return null
 
 
-## where the marker sits for a probe to read, in screen pixels, and whether it had to clamp.
 func marker_position() -> Vector2:
 	return _where
 
@@ -120,9 +87,6 @@ func _draw() -> void:
 	_caption(_where)
 
 
-## the point where the line from the middle of the screen out to the marker leaves the frame. done
-## as a ratio on each axis rather than by clamping x and y on their own: clamping both moves the
-## point OFF that line and into a corner, and the arrow then points somewhere nothing is.
 func _clamp_to(rect: Rect2, middle: Vector2, point: Vector2) -> Vector2:
 	var ray := point - middle
 	if ray.length_squared() < 0.0001:
@@ -142,8 +106,6 @@ func _diamond(at: Vector2) -> void:
 	var points := PackedVector2Array([
 		at + Vector2(0.0, -SIZE), at + Vector2(SIZE, 0.0),
 		at + Vector2(0.0, SIZE), at + Vector2(-SIZE, 0.0)])
-	## the dark pass first and wider, for the same reason the crosshair has one: a thin bright line
-	## over a lit background has no edge of its own and disappears into whatever is behind it.
 	draw_polyline(points + PackedVector2Array([points[0]]), INK, 5.0, true)
 	draw_polyline(points + PackedVector2Array([points[0]]), COLOR, 2.0, true)
 
@@ -157,8 +119,6 @@ func _arrow(at: Vector2, dir: Vector2) -> void:
 	draw_colored_polygon(points, COLOR)
 
 
-## the distance is the half of this that is actually information: the direction is already the
-## marker's position, and how far it is decides whether the player runs or sneaks the rest of it.
 func _caption(at: Vector2) -> void:
 	var text := "EXTRACT  %d m" % roundi(_distance)
 	var font := HudStyle.FACE

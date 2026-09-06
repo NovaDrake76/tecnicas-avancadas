@@ -1,32 +1,13 @@
 class_name TeamMarkers
 extends Control
 
-## the two things a teammate needs to be able to find: what they pointed at, and where they fell.
-##
-## both are the same screen-space job the extraction marker does, so they are one node: a world
-## point, drawn where it is, sliding to the edge as an arrow when it is off the frame. they inherit
-## that node's two hard lessons -- `unproject_position` MIRRORS a point behind the camera, so the
-## sign of z in the camera's own space is what says in front or behind; and the clamp is taken as a
-## ratio along the line from the middle of the screen, because clamping x and y separately moves
-## the point off that line and the arrow then points at nothing.
-##
-## a DOWNED operative is the one marker here that is not allowed to be missed, and it is the reason
-## this node exists at all: the game had a revive verb, a three second hold and a ring for it, and
-## no way whatsoever to find the person it was for. in a two hundred metre compound that is a verb
-## that does not exist. it is drawn through everything, at any distance, and it never clips away --
-## the whole point of it is the moment when you cannot see them.
-##
-## the local operative is never drawn. you know where you are.
 
 const MARGIN := Vector2(80.0, 80.0)
 const SIZE := 12.0
 const TEXT_SIZE := 18
 const INK := Color(0.0, 0.0, 0.0, 0.75)
-## a ping is the team's colour, cool and quiet; a body on the floor is the one urgent thing on
-## the screen and wears the same red the alarm strip does.
 const PING := Color(0.55, 0.86, 0.95)
 const DOWN := Color(1.0, 0.36, 0.32)
-## a downed operative is lifted to chest height, a ping is drawn on the thing it landed on.
 const DOWN_LIFT := 1.0
 
 var _rows: Array = []
@@ -37,8 +18,6 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 
 
-## worked out here rather than in _draw, so a headless probe can read positions: a drawing cannot
-## be read at all in a run with no window.
 func _process(_delta: float) -> void:
 	var was := _rows.size()
 	_rows.clear()
@@ -89,7 +68,6 @@ func _clamp_to(rect: Rect2, middle: Vector2, point: Vector2) -> Vector2:
 	return middle + ray * reach
 
 
-## for the probe: how many markers are on screen, and where a named one is.
 func shown() -> int:
 	return _rows.size()
 
@@ -135,16 +113,12 @@ func _draw() -> void:
 		draw_string(font, where, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, TEXT_SIZE, tint)
 
 
-## a ping: a ring with a dot in it. deliberately not the mark's diamond and not the belief's hollow
-## one -- three markers that all draw a diamond are three things the player has to read the words
-## on to tell apart, and the words are the slowest part of a screen.
 func _pip(at: Vector2, tint: Color) -> void:
 	draw_arc(at, SIZE, 0.0, TAU, 24, INK, 4.0, true)
 	draw_arc(at, SIZE, 0.0, TAU, 24, tint, 1.8, true)
 	draw_circle(at, 2.6, tint)
 
 
-## a downed operative: a cross, which is the one shape on this screen that means a person.
 func _cross(at: Vector2, tint: Color) -> void:
 	var r := SIZE * 1.1
 	for pass_i in 2:

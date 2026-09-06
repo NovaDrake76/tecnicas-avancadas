@@ -1,28 +1,13 @@
 class_name HudStyle
 extends RefCounted
 
-## the type scale and palette of the in-game hud, in one place so the sizes talk to each other
-## instead of every label picking its own. one step is roughly a third bigger than the one below it,
-## which is what makes a glance land on the ammunition first and on the figures at the bottom last.
-## the colours are MenuStyle's, so the hud and the menus are the same game.
 
-## the ammunition count. the one number read mid fight, so it is the only one this big.
 const T_HERO := 96
-## the fire mode and the target count: read at a glance, not stared at.
 const T_VALUE := 40
-## the capacity, the spare count, the clock. attached to a value above them.
 const T_UNIT := 28
-## captions and key hints. they name a thing, they are not the thing.
 const T_LABEL := 23
-## the two figures the brief wants permanently on screen but the eye does not need mid fight.
 const T_MICRO := 20
 
-## the face. the project's default font is the REGULAR weight, which is right for a paragraph and
-## wrong for a figure read in one glance against a lit world: at a distance a thin stroke on grass
-## disappears into it, and the outline that fixes that eats the letter instead. so every hud label
-## steps up to semibold, and the one number the whole screen is built around steps up again to bold.
-## weight is doing what size cannot here -- the clock and the caption are the same 23 px as each
-## other and still read as different things.
 const FACE := preload("res://Fonts/IBMPlexSansCondensed-SemiBold.ttf")
 const FACE_HERO := preload("res://Fonts/IBMPlexSansCondensed-Bold.ttf")
 
@@ -35,13 +20,10 @@ const OK := Color(0.55, 0.85, 0.6)
 const INK := Color(0.0, 0.0, 0.0, 0.8)
 
 
-## the outline grows with the text, or a big number gets a hairline and a small one gets a border.
 static func outline_for(size: int) -> int:
 	return maxi(4, int(round(float(size) * 0.11)))
 
 
-## everything a hud label needs, applied in one call. the scene sets the text and the position; the
-## look comes from here, so a new label cannot quietly invent a fourteenth size.
 static func tune(label: Label, size: int, colour: Color) -> Label:
 	label.add_theme_font_override("font", FACE_HERO if size >= T_VALUE else FACE)
 	label.add_theme_font_size_override("font_size", size)

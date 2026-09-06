@@ -1,8 +1,6 @@
 class_name ImpactFx
 extends Node3D
 
-## procedural impact, a spark burst plus a one frame flash light oriented to the surface.
-## every render resource is a cached static so a hit never allocates a mesh or material.
 
 const BB_COLOR := Color(1.0, 0.62, 0.12)
 
@@ -44,8 +42,6 @@ static func _flash_mat(color: Color) -> StandardMaterial3D:
 	return _flash_mats[key]
 
 
-## build the caches at load so the first hit does not compile pipelines mid game.
-## keep the colour set closed, a continuous colour would grow the cache forever.
 static func warm() -> void:
 	if _spark_quad == null:
 		_spark_quad = QuadMesh.new()
@@ -77,7 +73,6 @@ static func spawn(world: Node, at: Vector3, normal: Vector3, color := BB_COLOR) 
 	world.add_child(root)
 	root.global_position = at
 
-	## point local -Z along the surface normal so sparks spray off it, not into it.
 	if normal.length() > 0.01:
 		var n := normal.normalized()
 		var up := Vector3.UP if absf(n.dot(Vector3.UP)) < 0.985 else Vector3.FORWARD
@@ -100,7 +95,6 @@ static func spawn(world: Node, at: Vector3, normal: Vector3, color := BB_COLOR) 
 	light.shadow_enabled = false
 	root.add_child(light)
 
-	## a dead light must not sit in the cluster for the rest of the node's life.
 	var tw := root.create_tween()
 	tw.tween_property(light, "light_energy", 0.0, 0.09).set_ease(Tween.EASE_OUT)
 	tw.tween_callback(func() -> void: light.visible = false)

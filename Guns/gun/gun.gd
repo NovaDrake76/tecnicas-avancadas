@@ -16,14 +16,10 @@ signal reload_failed(message: String)
 
 enum FireMode { SEMI, AUTO }
 enum FireBlock { NONE, NO_MAGAZINE, EMPTY, COOLDOWN, RELOADING }
-## how the weapon cycles. the cadence formula is the same for all three, rpm over sixty n, the
-## brief's own. an aeg has a real motor and gearbox; for a gas or pump action rpm is the cyclic rate
-## the action can manage and n is one. that is the documented conversion the brief asks for.
 enum Action { AEG, GAS_BLOWBACK, PUMP, BOLT }
 
 const BB_SCENE := preload("res://Guns/bb/bb.tscn")
 const DEFAULT_BB_MASS := 0.0002
-## world plus targets, the same set the bb itself collides with.
 const AIM_MASK := 0b1001
 
 const TRAIL_COLORS := [
@@ -46,12 +42,11 @@ const TRAIL_COLORS := [
 @export_range(1, 200, 1, "or_greater") var rotations_per_shot: int = 30
 
 @export_group("Shot")
-## bbs released per unit of ammunition. one for anything with a magazine of bbs; a shell shotgun
-## spends one shell and lets several bbs out of it, sharing the spring's energy between them.
+## bbs released per unit of ammunition.
 @export_range(1, 12) var pellets: int = 1
-## half angle of the cone the pellets leave in. zero is a single bb straight down the aim line.
+## half angle of the cone the pellets leave in.
 @export_range(0.0, 15.0, 0.1) var spread_deg: float = 0.0
-## a pump or a gas slide cannot hold the trigger down for continuous fire. f still answers, with why.
+## a pump or a gas slide cannot hold the trigger down for continuous fire.
 @export var allow_auto := true
 
 @export_group("Hop-up")
@@ -65,41 +60,27 @@ const TRAIL_COLORS := [
 @export var fire_mode: FireMode = FireMode.SEMI
 
 @export_group("Aim")
-## the fov the camera narrows to for THIS weapon while aiming, or 0 to use the scope's own. a
-## telescopic sight is not a look down the iron sights with a nicer picture on it: the magnification
-## IS the weapon, and it is what the bolt rifle is bought for. AimScope still owns the camera and
-## nothing here writes it; this is only the weapon saying what it is worth looking through.
+## the fov the camera narrows to for THIS weapon while aiming, or 0 to use the scope's own.
 @export_range(0.0, 90.0, 0.5) var aim_fov := 0.0
-## the muzzle sits right of and below the eye, so firing straight down the barrel never crosses the
-## crosshair. the shot is aimed at whatever the crosshair is actually on instead.
+## the muzzle sits right of and below the eye, so firing straight down the barrel never crosses the crosshair.
 @export var converge_on_crosshair := true
 @export var max_aim_distance := 300.0
 @export var min_aim_distance := 2.0
 
 @export_group("Muzzle")
 ## off by default, an aeg vents its air down the barrel and shows nothing.
-## turn it on for a gas blowback weapon, which really does puff propellant.
 @export var muzzle_fx := false
 @export var muzzle_fx_scale := 1.0
 @export var muzzle_fx_intensity := 0.4
-## how far the REPORT carries. an airsoft gun is quiet and it is not silent: a gearbox at nine
-## thousand rpm makes a noise, and until this existed a rifle fired two metres behind a sentry's
-## head was heard by nobody at all. it TURNS HEADS, the way a footstep does, and it never walks a
-## patrol onto the shooter -- that is `investigate`, and it belongs to the bb's impact, which is a
-## noise somewhere the player is not. so the promise is untouched: a miss still raises no alarm,
-## and nothing about a shot tells a bird who fired it. what it costs the player is a bird nearby
-## turning round, and its eyes take it from there, which is the same bargain crouching and walking
-## already make. 6 m sits between a crouched step (5) and a walked one (14), and a spring gun
-## sets its own lower number in its own scene.
+## how far the REPORT carries.
 @export var muzzle_hearing := 6.0
 
 @export_group("Reload")
-## the weapon is out of frame for this long, then the fullest spare of its type goes in and the old
-## magazine is gone, rounds and all. the brief allows the old one to simply be replaced.
+## the weapon is out of frame for this long, then the fullest spare of its type goes in and the old magazine is gone, ro...
 @export var reload_time := 2.2
 
 @export_group("Sound")
-## the pump rack or the slide coming back, a moment after the shot. optional.
+## the pump rack or the slide coming back, a moment after the shot.
 @export var cycle_delay := 0.25
 
 @export_group("Debug")
@@ -107,8 +88,7 @@ const TRAIL_COLORS := [
 @export var log_shots: bool = true
 
 @onready var muzzle: Marker3D = $Muzzle
-## the weapon's sounds are events in the Sfx table, named by this prefix: <prefix>_fire, _dry,
-## _cycle, _mag_out, _mag_in. the scene says which kit it is; the table says what it sounds like.
+## the weapon's sounds are events in the Sfx table, named by this prefix: <prefix>_fire, _dry, _cycle, _mag_out, _mag_in.
 @export var sfx_prefix := &"kestrel"
 var _dry_at := 0.0
 
@@ -119,9 +99,6 @@ var _reload_until := -1.0
 var _reload_began := 0.0
 
 
-## the operative holding this weapon. every gun is a descendant of the player carrying it, so the
-## answer is up the tree and never in a group: a group would be right in a solo run and wrong the
-## moment there are two of them.
 func owning_player() -> Player:
 	var node := get_parent()
 	while node != null:
@@ -133,7 +110,7 @@ func owning_player() -> Player:
 
 
 func _ready() -> void:
-	## the rack decides which weapon is in the group. a weapon on its own joins by itself.
+	## the rack decides which weapon is in the group; a weapon on its own joins by itself.
 	if not (get_parent() is WeaponRack):
 		add_to_group("weapon")
 	Engine.time_scale = slow_motion
@@ -148,12 +125,10 @@ func _ready() -> void:
 	print_config()
 
 
-## the spring's whole energy, one compression.
 func muzzle_energy() -> float:
 	return 0.5 * spring_constant * spring_compression * spring_compression
 
 
-## what each bb actually gets. a shotgun shell splits the one charge across its pellets.
 func pellet_energy() -> float:
 	return muzzle_energy() / float(maxi(1, pellets))
 
@@ -274,11 +249,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		var optic := get_tree().get_first_node_in_group("aim_scope") as AimScope
 		if optic != null and optic.has_optic():
 			return
-		## the brief: "garanta que o scroll nao altere o Hop-up enquanto o jogador estiver
-		## interagindo com outra interface". The bench answers it by freezing the player, which stops
-		## this node reading anything at all. A pair of binoculars is the other case and is NOT a
-		## freeze -- the operative is still standing there with the wheel under their finger -- so
-		## the refusal is said outright here rather than left to which node the tree visits first.
 		var button := event as InputEventMouseButton
 		if button.button_index == MOUSE_BUTTON_WHEEL_UP:
 			adjust_hopup(1)
@@ -308,8 +278,6 @@ func time_until_ready() -> float:
 	return maxf(0.0, _next_shot_at - _clock)
 
 
-## the brief's rule: switching modes never reloads and never lets the next shot come early.
-## the cadence gate is untouched here on purpose.
 func toggle_fire_mode() -> void:
 	if not allow_auto:
 		var message := "%s is %s: semi only" % [weapon_model, action_label()]
@@ -326,8 +294,6 @@ func toggle_fire_mode() -> void:
 			% [fire_mode_label(), shots_per_second(), shot_interval()])
 
 
-## one unit of ammunition per pull, exactly, and only if the shot happens. how many bbs that unit
-## lets out is the weapon's business, the magazine only counts units.
 func try_fire() -> bool:
 	if is_reloading():
 		_reject(FireBlock.RELOADING)
@@ -358,7 +324,6 @@ func is_reloading() -> bool:
 	return _reload_until >= 0.0
 
 
-## 0 as the weapon goes down, 1 as the fresh magazine seats.
 func reload_fraction() -> float:
 	if not is_reloading():
 		return 0.0
@@ -370,8 +335,6 @@ func _pouch() -> MagazinePouch:
 	return get_tree().get_first_node_in_group("pouch") as MagazinePouch
 
 
-## only starts if there is a spare to put in. asking first is what keeps a failed reload free: the
-## weapon never leaves the frame for nothing.
 func start_reload() -> bool:
 	if is_reloading():
 		return false
@@ -391,7 +354,6 @@ func start_reload() -> bool:
 	return true
 
 
-## switching weapons mid reload. nothing changed hands, the half magazine is still in.
 func cancel_reload() -> void:
 	if not is_reloading():
 		return
@@ -417,7 +379,6 @@ func _finish_reload() -> void:
 		print("Loaded: %s" % magazine.describe())
 
 
-## clears the cadence gate, for a harness that needs to fire twice in a row.
 func reset_cadence() -> void:
 	_next_shot_at = _clock
 
@@ -425,7 +386,6 @@ func reset_cadence() -> void:
 func _reject(reason: FireBlock) -> void:
 	var message := block_message(reason)
 	fire_failed.emit(reason, message)
-	## a trigger pulled on nothing clicks, once per pull and not once per frame the trigger is held
 	if (reason == FireBlock.EMPTY or reason == FireBlock.NO_MAGAZINE) and _clock >= _dry_at:
 		_dry_at = _clock + 0.25
 		Sfx.play_2d(sfx_prefix + "_dry")
@@ -438,9 +398,6 @@ func _spawn_shot(mass_kg: float) -> void:
 	var dir := aim_direction()
 	_shot += 1
 
-	## the velocities are worked out ONCE and sent, rather than each machine rolling its own: a
-	## shotgun's pellets go where the spread put them, and a spread rolled twice is two different
-	## shots. everything else a bb needs is the same on both sides, so this is the whole message.
 	var shots := PackedVector3Array()
 	for i in maxi(1, pellets):
 		shots.append(_scatter(dir) * speed)
@@ -457,9 +414,6 @@ func _spawn_shot(mass_kg: float) -> void:
 			   magazine.count, magazine.capacity])
 
 
-## the shot's own noise, at the MUZZLE. it is the same wire the footsteps use and for the same
-## reason: what a bird does about a noise is a decision about the world, so the host makes it once.
-## a client asks; two machines each turning the same sentry would be one shot heard twice.
 func _report_heard(at: Vector3) -> void:
 	if muzzle_hearing <= 0.0:
 		return
@@ -479,16 +433,11 @@ func _heard_shot(at: Vector3, radius: float) -> void:
 			listener.hear(at, radius)
 
 
-## another machine's shot, flown here so it can be seen and heard. unreliable on purpose: a bb that
-## did not arrive is a bb nobody sees, and re-sending it late would draw a tracer for a shot that
-## landed a moment ago.
 @rpc("any_peer", "call_remote", "unreliable")
 func _net_shot(from: Transform3D, shots: PackedVector3Array, mass_kg: float, spin: float) -> void:
 	_lay_shot(from, shots, mass_kg, spin, false)
 
 
-## the bbs themselves, on whichever machine this is. `mine` is the whole difference: an owned bb
-## decides what it hit, a copy only shows it.
 func _lay_shot(from: Transform3D, shots: PackedVector3Array, mass_kg: float, spin: float,
 		mine: bool) -> void:
 	var world := get_tree().current_scene
@@ -507,13 +456,9 @@ func _lay_shot(from: Transform3D, shots: PackedVector3Array, mass_kg: float, spi
 		MuzzleFlashFx.spawn(world, from.origin, -from.basis.z,
 			MuzzleFlashFx.GAS_COLOR, muzzle_fx_scale, muzzle_fx_intensity)
 	if not mine:
-		## the report is heard where the weapon is, not in the listener's head: it is somebody else's
-		## rifle. the table's own event is 2d, so the world hears the impact family instead.
 		Sfx.play(sfx_prefix + "_fire", from.origin, 0.0, 1.0, true)
 
 
-## a random direction inside the spread cone, uniform over the cap so pellets do not bunch up
-## in the middle. zero spread returns the aim line untouched.
 func _scatter(dir: Vector3) -> Vector3:
 	if spread_deg <= 0.0 or pellets <= 1:
 		return dir
@@ -528,7 +473,6 @@ func _scatter(dir: Vector3) -> Vector3:
 	return (dir * cos(theta) + (side * cos(phi) + up * sin(phi)) * sin(theta)).normalized()
 
 
-## where the shot should actually go, from the muzzle toward the point under the crosshair.
 func aim_direction() -> Vector3:
 	var barrel := -muzzle.global_transform.basis.z.normalized()
 	if not converge_on_crosshair:
@@ -544,9 +488,6 @@ func aim_direction() -> Vector3:
 
 	var query := PhysicsRayQueryParameters3D.create(from, to, AIM_MASK)
 	query.collide_with_areas = false
-	## the shooter's OWN body, found by walking up the tree rather than by asking the scene for "a
-	## player": with two operatives in the level, asking the group could hand back the other one and
-	## the aim ray would start by passing through the shooter and stopping on their teammate.
 	var body := owning_player()
 	if body != null:
 		query.exclude = [body.get_rid()]
@@ -554,7 +495,7 @@ func aim_direction() -> Vector3:
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	var point: Vector3 = hit.position if not hit.is_empty() else to
 
-	## anything nearer than the eye to muzzle offset would aim the barrel back at ourselves.
+	## anything nearer than the eye-to-muzzle offset would aim the barrel back at ourselves.
 	if from.distance_to(point) < min_aim_distance:
 		point = from + forward * min_aim_distance
 

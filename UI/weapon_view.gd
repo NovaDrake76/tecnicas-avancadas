@@ -1,8 +1,5 @@
 extends Control
 
-## a weapon rendered on its own, side on, in a viewport with its own world: the bench's picture of the
-## gun. it takes the MODEL node out of the weapon scene and never lets the Gun script run, so nothing
-## here joins the weapon group, fires, or prints a config. the part anchors come along for the callouts.
 
 @export var sway_degrees := 6.0
 @export var sway_period := 7.0
@@ -56,8 +53,6 @@ func _ready() -> void:
 
 	_pivot = Node3D.new()
 	_viewport.add_child(_pivot)
-	## the muzzle is -z in gun space. a camera on +x looking back at the origin puts -z on screen right,
-	## so every weapon points the same way the reference sheet does.
 	_camera = Camera3D.new()
 	_camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	_camera.near = 0.05
@@ -68,7 +63,7 @@ func _ready() -> void:
 	_rect = TextureRect.new()
 	_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_rect.stretch_mode = TextureRect.STRETCH_SCALE
-	## the texture follows the control, never the other way round, or a card would grow to its picture
+	## the texture follows the control, never the other way round, or a card grows to its picture.
 	_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_rect.texture = _viewport.get_texture()
 	_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -95,7 +90,6 @@ func model_name() -> String:
 	return _model_name
 
 
-## puts a weapon on the turntable by model name. anything that was there is gone.
 func show_model(model: String) -> void:
 	if model == _model_name and _model != null:
 		return
@@ -136,8 +130,6 @@ func show_model(model: String) -> void:
 func _fit() -> void:
 	if _camera == null:
 		return
-	## orthographic size is the vertical extent. a long gun is fitted by its length over the aspect,
-	## a tall one (a pistol) by its height, whichever asks for more.
 	var aspect := size.x / maxf(size.y, 1.0)
 	_camera.size = maxf(_extent.x * margin / maxf(aspect, 0.01), _extent.y * margin)
 
@@ -146,7 +138,6 @@ func anchor_names() -> Array:
 	return _anchors.keys()
 
 
-## where a part sits on the picture, in this control's own pixels. Vector2(-1, -1) if there is none.
 func anchor_point(part: String) -> Vector2:
 	if not _anchors.has(part) or _camera == null:
 		return Vector2(-1, -1)

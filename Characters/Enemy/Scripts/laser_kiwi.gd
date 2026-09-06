@@ -1,12 +1,6 @@
 class_name LaserKiwi
 extends Kiwi
 
-## a kiwi that does not run. once it has seen you it hunts you, and while it can see you it fires
-## lasers out of its eyes: short bursts of bolts, or one long beam that has to be charged first.
-## neither is a sure hit. a bolt is a projectile aimed where you were, so a step taken after it
-## leaves is a miss; the beam starts where you stood when the charge began and sweeps after you at
-## a speed a sprint beats. standing still is what gets you hit. it is still a kiwi: one bb puts it
-## down, its neighbours witness that, and it counts towards the mission like any other.
 
 enum Attack { NONE, BURST, CHARGE, BEAM, RECOVER }
 
@@ -24,15 +18,10 @@ enum Attack { NONE, BURST, CHARGE, BEAM, RECOVER }
 
 @export_group("Armour")
 ## a plain kiwi goes down to one bb because that is the airsoft fiction: a hit puts a target out.
-## "this one needs six" would have no fiction behind it. instead it wears plate you can see, and the
-## answer is precision or energy. a body hit only counts if the bb ARRIVES with at least this much,
-## which the stock kit manages inside about ten metres and a heavy bb on a stiff spring inside about
-## twenty-five: the bench's impact bar is the number that decides fights now.
 @export var armour_threshold := 0.6
 ## qualifying body hits before it goes down.
 @export var plate_health := 3
-## a bb that bounced still tells it where you are. plinking the plate is a mistake with a price,
-## which is what makes the eyes worth aiming for.
+## a bb that bounced still tells it where you are.
 @export var plate_alerts := true
 
 @export_group("Burst")
@@ -41,8 +30,7 @@ enum Attack { NONE, BURST, CHARGE, BEAM, RECOVER }
 ## a burst that connects is a real event on a player whose regeneration stops at seventy.
 @export var pulse_damage := 9.0
 @export var pulse_spread := 0.14
-## how fast a bolt flies. at 10 m that is a quarter of a second to step aside; at 3 m it is nothing,
-## which is what makes range the player's tool against a laser kiwi.
+## how fast a bolt flies.
 @export var bolt_speed := 38.0
 @export var burst_recover := 1.2
 
@@ -51,8 +39,7 @@ enum Attack { NONE, BURST, CHARGE, BEAM, RECOVER }
 @export var beam_time := 1.4
 @export var beam_dps := 30.0
 @export var beam_recover := 1.8
-## how fast the beam can follow you, in metres per second at the target. the player walks at 6.35
-## and runs at 9, so a walk is caught and a sprint is not, and a sprint is the loud one.
+## how fast the beam can follow you, in metres per second at the target.
 @export var beam_track := 7.0
 @export_range(0.0, 1.0) var beam_chance := 0.4
 @export var beam_cooldown := 6.0
@@ -88,7 +75,6 @@ func _ready() -> void:
 	armour = KiwiArmour.new()
 	add_child(armour)
 	armour.bind(self, eyes)
-	## the leader's trim is how the player tells the priority target from the rest
 	Squad.leader_changed.connect(func(k: Node3D) -> void:
 		if armour != null and is_instance_valid(armour):
 			armour.set_leader(k == self))
@@ -101,19 +87,15 @@ func _physics_process(delta: float) -> void:
 		_hunt_call -= delta
 		if _hunt_call <= 0.0:
 			_hunt_call = randf_range(hunt_call_interval.x, hunt_call_interval.y)
-			speak(alert_pitch, alert_db)
+			voice.alarm()
 		_step_hunt(delta)
 	super(delta)
 
 
-## every alarm a plain kiwi answers by running, this one answers by hunting. the point handed in is
-## where the trouble was: the player when it saw you, the body when it saw a neighbour go down, the
-## spot a runner shouted about.
 func _on_alarmed(from: Vector3) -> void:
 	_begin_hunt(from)
 
 
-## a hunter told about you while already hunting only learns the newer spot.
 func told(at: Vector3) -> void:
 	if is_hunting():
 		_last_seen = at
@@ -123,8 +105,6 @@ func told(at: Vector3) -> void:
 	super(at)
 
 
-## a hunter that can see the player right now is ENGAGED rather than merely hunting, and the ring
-## says which.
 func has_contact() -> bool:
 	return _seen
 
@@ -144,14 +124,8 @@ func _begin_hunt(toward: Vector3) -> void:
 	_state = State.HUNT
 	_hunt_call = randf_range(hunt_call_interval.x, hunt_call_interval.y)
 	_play(run_clip, 0.15)
-	speak(alert_pitch, alert_db)
-	## nothing is raised here. a hunter reaches this line either because its own radio call went
-	## through, or because it was shouted at by a bird whose call went through; raising it again
-	## on the way into the hunt would put the compound's knowledge back on the same tick as the
-	## sighting, which is the whole thing being fixed.
-	## the squad is who decides whether this bird gets to shoot or has to move.
+	voice.alarm()
 	Squad.join(self)
-	## the hud's ring keeps an arc on a bird that is hunting you, at its bearing, for as long as it is.
 	awareness_changed.emit(self, 1.0)
 
 
@@ -160,8 +134,6 @@ func _step_hunt(delta: float) -> void:
 			or (_player.has_method("is_alive") and not _player.is_alive()):
 		_end_hunt()
 		return
-	## the compound calming down is what ends a hunt. one clock drives the whole encounter, and the
-	## player has exactly one job under fire: break contact and keep it broken.
 	if Alarm.stage == Alarm.Stage.CALM:
 		_end_hunt()
 		return
@@ -174,19 +146,12 @@ func _step_hunt(delta: float) -> void:
 		_search = search_time
 		Alarm.report_contact(_last_seen)
 	elif Alarm.stage == Alarm.Stage.ALARM:
-		## under a full alarm it never gives up: it works the last place anyone saw you, and when the
-		## compound learns something new it goes there.
 		_search = search_time
-		## the compound's belief, WIDENED by how old it is: every hunter picks its own spot on the
-		## ring, so a stale search fans out instead of three birds standing on one patch of grass.
 		var believed := Alarm.search_point(get_instance_id())
 		if Alarm.has_last_known and believed.distance_to(_last_seen) > 1.5:
 			_last_seen = believed
 			_stuck = 0.0
 
-	## the search clock is the whole hunt while the compound is only searching. it runs through a
-	## suppressing beam too, or a bird would light up your cover every six seconds for as long as the
-	## cooldown let it and never actually give up. a beam already on is allowed to finish.
 	var idle_phase := _attack == Attack.NONE or _attack == Attack.RECOVER
 	if not _seen and Alarm.stage != Alarm.Stage.ALARM and _search <= 0.0 and idle_phase:
 		_end_hunt()
@@ -196,8 +161,6 @@ func _step_hunt(delta: float) -> void:
 		_step_attack(delta, at, dist)
 		return
 
-	## in sight and in range: an attack, if the squad gives this bird the turn. otherwise a role,
-	## which is movement: the birds without a turn are the ones the player sees running about.
 	if _seen and dist <= attack_range:
 		if Squad.request_fire(self):
 			_begin_attack()
@@ -205,10 +168,6 @@ func _step_hunt(delta: float) -> void:
 			_step_role(delta)
 		return
 
-	## genuinely out of sight, with a beam ready and a spot to light up: suppression. it takes a turn
-	## like any other shot, so the cap on how many beams are on you at once holds whatever the squad
-	## is doing; and it waits out a moment of lost sight, or a bird running to its flank would stop to
-	## light up cover you are standing in plain view beside.
 	if not _seen and _suppress_possible() and Squad.request_fire(self):
 		_begin_suppress()
 		return
@@ -216,7 +175,6 @@ func _step_hunt(delta: float) -> void:
 	_role_goal = Vector3.INF
 	var goal := _player.global_position if _seen else _last_seen
 	var arrived := _move_to(goal, hunt_speed, delta)
-	## the wish speed says nothing about a wall; what it actually moved last tick does.
 	var moved := get_position_delta().length() / maxf(delta, 0.0001) > 0.3
 	_stuck = 0.0 if moved or arrived else _stuck + delta
 	if _seen:
@@ -232,10 +190,6 @@ func _step_hunt(delta: float) -> void:
 			_end_hunt()
 
 
-## no turn to shoot: FLANK goes to cover on your far side, HOLD to cover on this side, and a bird
-## with nowhere authored to go takes a step to the side rather than standing in a row. a rattled
-## squad scatters the same way. arriving does not earn a turn; it puts the bird somewhere new, and
-## movement is the point.
 func _step_role(delta: float) -> void:
 	var job := Squad.role_for(self)
 	_role_timer -= delta
@@ -268,15 +222,12 @@ func _begin_attack() -> void:
 	_state = State.ATTACK
 	_attack = Attack.NONE
 	_suppressing = false
-	_attack_timer = 0.15
 	## a still head: the eyes are where the beam leaves, and the looking-about clips would swing them.
+	_attack_timer = 0.15
 	if not idle_clips.is_empty():
 		_play(idle_clips[0], 0.2)
 
 
-## a beam on the last place anyone saw you, not on you. it lights up the cover you are behind and
-## hurts if you step into it, on the existing ray with no new damage path. this is what stops the
-## player from sitting still behind a crate for the rest of the fight.
 func _suppress_possible() -> bool:
 	if Squad.role_for(self) != Squad.Role.SUPPRESS or _beam_ready > 0.0 or not Alarm.has_last_known:
 		return false
@@ -325,8 +276,6 @@ func _step_attack(delta: float, at: Vector3, dist: float) -> void:
 		Attack.CHARGE:
 			eyes.set_glow(1.0 - _attack_timer / charge_time)
 			_aim_during_charge(at)
-			## the charge is the tell. break the line and the beam never comes. a suppressing beam
-			## is aimed at a spot, not at you, so losing sight of you does not stop it.
 			if not _seen and not _suppressing:
 				eyes.charge_stop(true)
 				eyes.set_glow(0.0)
@@ -351,19 +300,13 @@ func _step_attack(delta: float, at: Vector3, dist: float) -> void:
 			if _attack_timer <= 0.0:
 				_attack = Attack.NONE
 				_suppressing = false
-				## the turn is handed back so another bird can take it. a beat before asking again
-				## is what lets them actually take turns rather than the same bird re-grabbing it.
 				Squad.release_fire(self)
 				_attack_timer = 0.25
 				if not _seen or dist > attack_range + 3.0:
 					_resume_hunt()
 
 
-## one weapon at a time. a beam never starts while bolts from a burst are still in the air (the
-## recovery after a burst outlasts a bolt's flight), and a burst never fires while a beam is charging
-## or on, so the player is never reading two attacks off one bird.
 func _choose_attack() -> void:
-	## the squad may be lining up a sync: hold a beat and let it start the charge for both
 	if Squad.sync_hold(self):
 		if _attack != Attack.CHARGE:
 			_attack = Attack.NONE
@@ -383,8 +326,6 @@ var _since_burst := 99.0
 var _hunt_call := 0.0
 
 
-## where the aim sits while the charge runs. the laser kiwi leaves it where it was when the charge
-## began; the sniper follows you until the last moment.
 func _aim_during_charge(_at: Vector3) -> void:
 	pass
 
@@ -393,17 +334,12 @@ func aim_point() -> Vector3:
 	return _aim
 
 
-## the charge is done: what comes out. for a laser kiwi it is the beam, opened on the aim locked when
-## the charge BEGAN (a beam that opened on your current position would make the charge a warning you
-## could do nothing with). the sniper overrides this with a single shot.
 func _fire_charged() -> void:
 	_net_beam.rpc(true)
 	_attack = Attack.BEAM
 	_attack_timer = beam_time
 
 
-## the light itself, on every machine. where it LANDS is worked out where the bird is thought about
-## and sent, because the ray is cast against the host's world and the answer is the same everywhere.
 @rpc("authority", "call_local", "reliable")
 func _net_beam(on: bool) -> void:
 	if on:
@@ -431,15 +367,11 @@ func _net_charge(seconds: float) -> void:
 	eyes.charge_start(seconds)
 
 
-## the squad told this bird and another to charge together. whatever it was doing is dropped and
-## the charge starts on this tick, so both pairs of eyes fill at once.
 func sync_charge() -> bool:
 	if _state != State.ATTACK or _player == null or not _seen:
 		return false
 	if _attack == Attack.CHARGE or _attack == Attack.BEAM:
 		return true
-	## a burst half fired is finished first; bolts in the air and a beam charging would read as two
-	## attacks at once
 	if _attack == Attack.BURST:
 		return false
 	eyes.beam_stop()
@@ -447,7 +379,6 @@ func sync_charge() -> bool:
 	return true
 
 
-## the leader went down. whatever this bird was doing stops, and it dives for a new spot.
 func rattle() -> void:
 	if not is_hunting():
 		return
@@ -477,25 +408,17 @@ func role() -> int:
 	return Squad.role_for(self)
 
 
-## one bolt from one eye, the eyes alternating, launched at where the player is right now with a
-## little scatter so a burst walks rather than stacks. it is a projectile: whether it lands is
-## decided when it arrives, by where the player is then.
 func _fire_pulse() -> void:
-	## never over a beam: the two do not share the eyes
 	if _attack == Attack.CHARGE or _attack == Attack.BEAM or eyes.is_beaming():
 		return
 	_since_burst = 0.0
 	var from := eyes.eye_position(_pulse_right)
 	_pulse_right = not _pulse_right
-	## a rattled squad shoots wide
 	var spread := pulse_spread * (2.0 if Squad.is_rattled() else 1.0)
 	var to := VisionCone.sight_point(_player) + Vector3(
 		randf_range(-spread, spread),
 		randf_range(-spread, spread),
 		randf_range(-spread, spread))
-	## the bolt is thought about here and DRAWN everywhere. a joined player who was being shot at by
-	## a bird whose fire they could not see would be taking damage from nothing at all, which is the
-	## one thing a game may never do. only the host's copy carries damage: the others are the light.
 	_net_bolt.rpc(from, to)
 
 
@@ -506,8 +429,6 @@ func _net_bolt(from: Vector3, to: Vector3) -> void:
 		pulse_damage if multiplayer.is_server() else 0.0, self, eyes)
 
 
-## the world and the player stop a laser, other kiwis do not. whatever it hits, the light ends there,
-## which is what lets a wall between you and it show you the wall being scorched instead of you.
 func _cast(from: Vector3, toward: Vector3) -> Dictionary:
 	var dir := toward - from
 	if dir.length_squared() < 0.0001:
@@ -515,8 +436,7 @@ func _cast(from: Vector3, toward: Vector3) -> Dictionary:
 	dir = dir.normalized()
 	var query := PhysicsRayQueryParameters3D.create(from, from + dir * laser_range, 3)
 	query.exclude = [get_rid()]
-	## a bird pressed against a wall has its eyes inside it. a ray that starts inside a body reports
-	## nothing by default and the beam came out the far side, into a player the wall was hiding.
+	## a bird pressed against a wall has its eyes inside it, and a ray that starts inside a body reports nothing; the beam came out the far side into a hidden player.
 	query.hit_from_inside = true
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if hit.is_empty():
@@ -533,7 +453,6 @@ func _resume_hunt() -> void:
 	_play(run_clip, 0.15)
 
 
-## the hunt is over: back to watching, still alarmed, and the hud drops the arc.
 func _end_hunt() -> void:
 	eyes.beam_stop()
 	eyes.charge_stop(false)
@@ -547,7 +466,6 @@ func _end_hunt() -> void:
 	_begin_idle()
 
 
-## a noise while it is searching for you sends it there. while it can see you it needs no help.
 func hear(at: Vector3, radius: float) -> void:
 	if _state == State.HUNT or _state == State.ATTACK:
 		if not _seen and _state != State.DOWN and global_position.distance_to(at) <= radius:
@@ -558,10 +476,6 @@ func hear(at: Vector3, radius: float) -> void:
 	super(at, radius)
 
 
-## a body hit is measured. too slow and it bounces, sparks, and tells the bird where you are; hard
-## enough and it costs a point of plate, and the last point puts the bird down. an unmeasured hit
-## (-1) is a scripted one, and a script that puts a bird down means it: it goes straight through,
-## so every probe and tool that clears a level by hand still can.
 func take_bb_hit(damage := 1.0, at := Vector3.INF, energy := -1.0) -> void:
 	if _state == State.DOWN:
 		return
@@ -590,8 +504,6 @@ func take_bb_hit(damage := 1.0, at := Vector3.INF, energy := -1.0) -> void:
 	super(damage, at, energy)
 
 
-## a bb on the eyes. one precise shot, at any range, with any kit: the skill line, and the reason the
-## armour is not simply a wall.
 func take_weak_hit(at: Vector3) -> void:
 	if _state == State.DOWN:
 		return
@@ -617,7 +529,6 @@ func _go_down() -> void:
 	super()
 
 
-## the compound calmed down: the hunt ends properly, effects and arc included, then it walks home.
 func stand_down() -> void:
 	if _state == State.DOWN:
 		return
@@ -642,14 +553,11 @@ func can_see_target() -> bool:
 	return _seen
 
 
-## for the probes: exactly one bolt at the target, nothing else changes.
 func demo_pulse(target: Node3D) -> void:
 	_player = target
 	_fire_pulse()
 
 
-## for the tools: put it straight into an attack so the effects can be photographed. a bird that is
-## shooting means a compound that is at least searching, or the calm would end the attack at once.
 func demo_attack(kind: String, target: Node3D) -> void:
 	_player = target
 	_last_seen = target.global_position

@@ -1,9 +1,6 @@
 class_name RangeTarget
 extends StaticBody3D
 
-## a plywood silhouette on the armory range. a bb knocks it flat, it stands back up a moment later, and
-## the board above it says how far away it is and how many hits it has taken. it is on the target layer
-## like a kiwi, so a shot that would hit a kiwi hits this.
 
 signal hit(count: int)
 
@@ -36,10 +33,6 @@ func _ready() -> void:
 	_board.material_override = mat
 	_board.position = Vector3(0.0, height * 0.5, 0.0)
 	add_child(_board)
-	## the silhouette: a darker disc for the head and a bar for the chest, so there is something to aim
-	## at. these are children of the BOARD, whose own origin is already half a height up, so they are
-	## placed about the board's centre. measuring them from the foot instead put the head above the
-	## plywood and outside the collision box, where a bb went straight through it.
 	var ink := StandardMaterial3D.new()
 	ink.albedo_color = Color(0.15, 0.12, 0.1)
 	_head = MeshInstance3D.new()
@@ -72,8 +65,6 @@ func _ready() -> void:
 	_label = Label3D.new()
 	_label.font_size = 40
 	_label.pixel_size = 0.004
-	## clear of the top edge, and forward of the plywood: billboarding spins the label about its own
-	## origin, so one sitting in the board's plane swings through it as the player walks around.
 	_label.position = Vector3(0.0, height + 0.34, 0.06)
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.outline_size = 8
@@ -81,8 +72,6 @@ func _ready() -> void:
 	_refresh_label()
 
 
-## where a part of the silhouette sits in the world. the probe fires at these to prove that aiming at
-## the black shape is aiming at the board, and not at a decoration hanging in front of it.
 func aim_point(part: String) -> Vector3:
 	match part:
 		"head":

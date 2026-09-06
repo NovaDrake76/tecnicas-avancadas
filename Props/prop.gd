@@ -2,15 +2,11 @@
 class_name Prop
 extends StaticBody3D
 
-## one node per placed object: drop a model in, position it, done. the mesh shows in the editor and
-## the collision box is built from the mesh bounds when the game runs. neither is ever saved into
-## the level file, which is what keeps a level of two hundred props a few kilobytes.
 
 const VIEW := "__view"
 const SHAPE := "__shape"
 
-## what a bb sounds like landing on it: metal, wood, concrete, dirt, gravel or grass. left empty it is
-## read off the model's file name, which is right for every prop in the pack so far.
+## what a bb sounds like landing on it: metal, wood, concrete, dirt, gravel or grass.
 @export var material_tag := &""
 
 @export var model: PackedScene:
@@ -39,7 +35,7 @@ func _rebuild() -> void:
 	if view == null:
 		return
 	view.name = VIEW
-	## no owner, on purpose. an owned child would be serialised into the level with every vertex.
+	## no owner, on purpose: an owned child would be serialised into the level with every vertex.
 	add_child(view)
 
 	if Engine.is_editor_hint():
@@ -56,7 +52,6 @@ func _rebuild() -> void:
 	add_child(shape)
 
 
-## the model's meshes, unioned, in this node's own space.
 func bounds(root: Node3D) -> AABB:
 	var box := AABB()
 	var first := true

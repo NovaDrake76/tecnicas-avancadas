@@ -1,8 +1,5 @@
 extends CanvasLayer
 
-## the curtain between scenes: a quick fade to black, "Loading..." bottom right with a kiwi running in
-## place, and a fade back once the next scene has settled. every swap goes through cover() and
-## uncover(), so a level never pops in half built. headless has no frames to fade, so there it is instant.
 
 signal covered
 signal uncovered
@@ -12,8 +9,6 @@ signal uncovered
 @export var min_black := 0.55
 
 const KIWI_SCENE := "res://Models/kiwi.glb"
-## the bird runs ABOVE the word, not across it. both boxes hang off the bottom right corner, and the
-## kiwi's floor sits clear of the label's ceiling so they can never share a pixel.
 const KIWI_BOX := Rect2(-340.0, -320.0, 260.0, 200.0)
 const LABEL_BOX := Rect2(-340.0, -104.0, 260.0, 52.0)
 
@@ -53,7 +48,6 @@ func _ready() -> void:
 	visible = false
 
 
-## a small viewport with the kiwi running on the spot, side on, no ai attached.
 func _build_kiwi() -> Control:
 	if not ResourceLoader.exists(KIWI_SCENE):
 		return null
@@ -77,7 +71,6 @@ func _build_kiwi() -> Control:
 	env.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.environment.ambient_light_color = Color(0.85, 0.85, 0.9)
 	env.environment.ambient_light_energy = 0.5
-	## without tonemapping the lit side clips straight to white and the vertex colours are lost again.
 	env.environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	vp.add_child(env)
 	var sun := DirectionalLight3D.new()
@@ -88,8 +81,6 @@ func _build_kiwi() -> Control:
 	vp.add_child(kiwi)
 	## the glb ships its colours as VERTEX data with the flag off, so raw it renders white.
 	Kiwi.enable_vertex_colors(kiwi)
-	## turned to run towards the word rather than away from it. the BIRD is turned, not the camera,
-	## so the sun keeps lighting the side we are looking at.
 	kiwi.rotation_degrees.y = 180.0
 	_kiwi = kiwi
 	var anim := kiwi.find_child("AnimationPlayer", true, false) as AnimationPlayer
@@ -101,8 +92,7 @@ func _build_kiwi() -> Control:
 				_clip = String(clip)
 				break
 	var cam := Camera3D.new()
-	## side on from +x. the angle is set outright rather than with look_at, which needs the node in the
-	## tree and this whole subtree is built before it is added.
+	## set outright rather than with look_at, which needs the node in the tree and this subtree is built before it is added.
 	cam.position = Vector3(1.7, 0.30, 0.0)
 	cam.rotation_degrees = Vector3(0.0, 90.0, 0.0)
 	cam.fov = 34.0
@@ -117,8 +107,6 @@ func _build_kiwi() -> Control:
 	return holder
 
 
-## anchors a box to the bottom right corner. the offsets are negative, so the box hangs inward from
-## the corner and the numbers read as "this far from the right, this far up".
 func _corner(node: Control, box: Rect2) -> void:
 	node.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	node.offset_left = box.position.x
@@ -127,7 +115,6 @@ func _corner(node: Control, box: Rect2) -> void:
 	node.offset_bottom = box.position.y + box.size.y
 
 
-## what the loading screen built, for the probe: the running clip and whether the bird is coloured.
 func kiwi_clip() -> String:
 	return _clip
 
@@ -154,9 +141,7 @@ func is_busy() -> bool:
 	return _busy
 
 
-## fade to black. returns once the screen is fully covered.
 func cover() -> void:
-	## the world goes quiet behind the curtain, the way it goes dark
 	Sfx.set_gain(&"SFX", &"curtain", -14.0)
 	Sfx.set_gain(&"Ambience", &"curtain", -14.0)
 	_busy = true
@@ -172,7 +157,6 @@ func cover() -> void:
 	covered.emit()
 
 
-## fade back in. waits out min_black first, so a fast load still shows the curtain for a beat.
 func uncover() -> void:
 	Sfx.set_gain(&"SFX", &"curtain", 0.0)
 	Sfx.set_gain(&"Ambience", &"curtain", 0.0)

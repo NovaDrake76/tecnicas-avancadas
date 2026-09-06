@@ -1,8 +1,6 @@
 class_name BurstFx
 extends Node3D
 
-## an omnidirectional puff of tumbling billboard bits, for a target coming apart.
-## mesh and per colour materials are cached statics so a burst allocates no render resources.
 
 static var _quad: QuadMesh
 static var _pms := {}
@@ -15,7 +13,6 @@ static func _pm(color: Color, speed: float) -> ParticleProcessMaterial:
 		pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
 		pm.emission_sphere_radius = 0.18
 		pm.direction = Vector3(0, 1, 0)
-		## a full hemisphere of spread is what makes it a puff rather than a spray.
 		pm.spread = 180.0
 		pm.initial_velocity_min = speed * 0.4
 		pm.initial_velocity_max = speed
@@ -29,7 +26,6 @@ static func _pm(color: Color, speed: float) -> ParticleProcessMaterial:
 		pm.angular_velocity_min = -220.0
 		pm.angular_velocity_max = 220.0
 
-		## the fade is a colour ramp on the process material, not a tween on a shared material.
 		var grad := Gradient.new()
 		grad.set_color(0, Color(color.r, color.g, color.b, 1.0))
 		grad.set_color(1, Color(color.r, color.g, color.b, 0.0))

@@ -42,14 +42,10 @@ var _flash_tween: Tween
 var _aim_tween: Tween
 var _spare_tween: Tween
 var _aiming := false
-## -1 until a level has said what the count is, so the first value is not a change.
 var _last_detections := -1
 var _status_tween: Tween
 var _pouch: MagazinePouch
 var _belt: UtilityBelt
-## what the belt looked like when the rows were last built, and the two controls in each row.
-## the rows are only rebuilt when the KINDS change, which is once a mission: throwing something
-## must not free and rebuild the label that is about to be pulsed.
 var _gear_shown: Array[String] = []
 var _gear_cells := {}
 var _bound := false
@@ -63,9 +59,6 @@ func _ready() -> void:
 	_style()
 	_clear_field_readout()
 	alert_ring.clear()
-	## the key is read off the input map instead of typed into the scene, so a rebind can
-	## never leave the hud telling the player to press a key that does nothing. the cap resolves
-	## its own letter; the scene says which ACTION it is showing and nothing more.
 	mode_hint.refresh()
 
 	Run.level_started.connect(_on_level_started)
@@ -82,28 +75,22 @@ func _ready() -> void:
 	Run.objective_working.connect(_on_objective_working)
 	Run.objective_abandoned.connect(_on_objective_abandoned)
 	Run.detections_changed.connect(_on_detections_changed)
-	## the ring says WHO is noticing you; this strip says HOW BAD it is for the whole compound, and
-	## how long until it gets worse. the two do not overlap.
 	Alarm.stage_changed.connect(_on_alarm_stage)
 	Alarm.reinforcements_changed.connect(_on_reinforcements)
 	_refresh_alarm()
-	## the bb that landed is the only thing that knows what it landed on, and it is gone a frame
-	## later. Run carries the word across because it is the one node both ends already know.
 	Run.shot_hit.connect(hit_marker.strike)
 
 	Net.local_player_ready.connect(func(_who: Node) -> void: _bind_weapon())
 	_bind_weapon.call_deferred()
 
 
-## every size and colour comes from HudStyle rather than from a theme override typed into the
-## scene, so the scale stays in one file and a new label cannot invent a fourteenth size.
 func _style() -> void:
 	HudStyle.tune(type_label, HudStyle.T_LABEL, HudStyle.DIM)
 	HudStyle.tune(ammo_label, HudStyle.T_HERO, HudStyle.BRIGHT)
 	HudStyle.tune(capacity_label, HudStyle.T_UNIT, HudStyle.DIM)
 	HudStyle.tune(spare_label, HudStyle.T_UNIT, HudStyle.DIM)
 	HudStyle.tune(mode_label, HudStyle.T_VALUE, HudStyle.HOT)
-	## the brief wants these two permanently on screen. they stay, quietly, and speak up on change.
+	## the brief wants these permanently on screen ("exiba permanentemente"); they stay quiet and speak up on change.
 	HudStyle.tune(mass_label, HudStyle.T_MICRO, HudStyle.FAINT)
 	HudStyle.tune(hopup_label, HudStyle.T_MICRO, HudStyle.FAINT)
 	HudStyle.tune(melee_label, HudStyle.T_MICRO, HudStyle.FAINT)
@@ -117,11 +104,6 @@ func _style() -> void:
 	HudStyle.tune(prompt_label, HudStyle.T_UNIT, HudStyle.BRIGHT)
 
 
-## everything on this screen that belongs to the operative this machine drives. it is called twice
-## on purpose: once a frame after the hud is built, which is when a solo player already exists, and
-## again the moment a player node arrives -- a joined machine gets its operative from the host a
-## beat after the hud has finished asking for one, and a hud that only ever asked once would spend
-## the whole mission blank. the flag is what stops the second call connecting everything twice.
 func _bind_weapon() -> void:
 	if _bound or Player.local(get_tree()) == null:
 		return
@@ -153,21 +135,12 @@ func _bind_weapon() -> void:
 		_pouch.added.connect(_on_spare_added)
 	_update_spare()
 
-	## the takedown only names itself when there is a bird to use it on. it used to sit in the block
-	## all mission, on the grounds that a verb nobody knows they have is not a verb -- but a line that
-	## is always there is one the eye stops reading by the second mission, and it was taking footer
-	## room from the things that DO change. Nathan's call, and it makes the row a prompt rather than a
-	## label: it appears exactly when it means something, which is what every other prompt here does.
-	## the controls page still lists it, which is where a player looks for a verb they have forgotten.
 	var hands := get_tree().get_first_node_in_group("takedown")
 	if hands != null:
 		hands.reach_changed.connect(_on_takedown_reach)
 		hands.started.connect(func(_t: Node3D) -> void: pulse(melee_label))
 	melee_row.visible = false
 
-	## a teammate on the floor. the ring is the same one a reload and a job use, and the prompt is
-	## the same row an interactable uses: the game has one shape for "something is running" and one
-	## for "there is something here", and a third of either would be a third thing to learn.
 	var hands_up := get_tree().get_first_node_in_group("revive")
 	if hands_up != null:
 		hands_up.working_changed.connect(func(active: bool) -> void:
@@ -179,10 +152,6 @@ func _bind_weapon() -> void:
 			else:
 				_on_focus_lost())
 
-	## the binoculars say nothing until they are up. then the footer carries the SECOND key -- the
-	## magnification -- because that is the one moment it can be pressed and the one moment it means
-	## anything, and it carries the tally of what has been marked, which is the only number the tool
-	## produces and the only reason to keep glassing.
 	var glass := get_tree().get_first_node_in_group("binoculars") as Binoculars
 	if glass != null:
 		glass_key.visible = false
@@ -195,15 +164,12 @@ func _bind_weapon() -> void:
 		glass.zoom_changed.connect(func() -> void: _update_glass(glass))
 	glass_row.visible = false
 
-	## the belt sits with the other quiet figures and speaks up when something is thrown
 	_belt = get_tree().get_first_node_in_group("utility") as UtilityBelt
 	if _belt != null:
 		_belt.changed.connect(_on_gear_changed)
 	_sync_gear(true)
 
 
-## the only readout in the block that answers to where the player is STANDING rather than to what
-## they are carrying, and now the only one that comes and goes with it.
 func _on_takedown_reach(within: bool) -> void:
 	melee_row.visible = within
 	if within:
@@ -214,9 +180,6 @@ func _on_takedown_reach(within: bool) -> void:
 		pulse(melee_label)
 
 
-## the zoom moved from a key to the WHEEL, and a wheel has no key cap: `KeyCap` resolves a letter
-## from the InputMap and the mouse wheel is not an action. The word carries it instead, which is
-## also the only thing here a player might not guess.
 func _update_glass(glass: Binoculars) -> void:
 	if glass == null or not is_instance_valid(glass):
 		return
@@ -228,11 +191,6 @@ func _on_gear_changed() -> void:
 	_sync_gear(false)
 
 
-## the belt, one row per kind: a key, the name and how many are left. the row for the thing in hand
-## is bright and wears the THROW key; the others are faint and wear the key that would bring them to
-## hand, which is the only sentence either of them needs. the order is the table's and never the
-## selection's, because a row that jumps as you cycle cannot be read at a glance -- and a kind stays
-## on screen at x0, since the count going to nothing is how the player learns they are out.
 func _sync_gear(force: bool) -> void:
 	if _belt == null or not is_instance_valid(_belt):
 		return
@@ -247,16 +205,11 @@ func _sync_gear(force: bool) -> void:
 			row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			row.add_theme_constant_override("separation", 5)
 			gear_rows.add_child(row)
-			## the number that puts this kind in hand, always shown, whether it is in hand or not:
-			## the key means the same thing every time it is pressed, which is the whole reason it
-			## is a number and not a cycle.
 			var pick := KeyCap.new()
 			pick.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			pick.text_size = 19
 			pick.action = UtilityBelt.key_for(id)
 			row.add_child(pick)
-			## and the throw key, on the row that is in hand and nowhere else, so the pair reads as
-			## one sentence: press this number, then press this to throw it.
 			var cap := KeyCap.new()
 			cap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			cap.text_size = 19
@@ -288,8 +241,6 @@ func _sync_gear(force: bool) -> void:
 			pulse(label)
 
 
-## the hud listens to exactly one weapon at a time. switching moves every connection over,
-## and the new one is asked to state itself so nothing shows stale.
 func _follow_weapon(gun: Gun) -> void:
 	if _weapon != null and is_instance_valid(_weapon):
 		for pair in _weapon_signals():
@@ -326,9 +277,6 @@ func _weapon_signals() -> Array:
 	]
 
 
-## no level title on the way in: the board already named the mission and showed its picture, so the
-## banner was telling the player something they had just read. the message line is cleared rather than
-## left alone, or the safe house hint could still be fading when the level starts.
 func _on_level_started(_index: int, _name: String) -> void:
 	report_card.hide_card()
 	_on_detections_changed(0)
@@ -336,8 +284,6 @@ func _on_level_started(_index: int, _name: String) -> void:
 	_clear_message()
 
 
-## nothing is announced here either. the safe house says what it is by what is in it: a bench, a board
-## and a range, each with its own prompt when you look at it.
 func _on_armory_entered(_next_index: int, _name: String) -> void:
 	report_card.hide_card()
 	_clear_field_readout()
@@ -346,10 +292,7 @@ func _on_armory_entered(_next_index: int, _name: String) -> void:
 	_clear_message()
 
 
-## the caption names the job and the count is the thing you glance at, so they are two labels at
-## two sizes rather than one sentence with numbers buried in it.
 func _on_targets_changed(_down: int, _total: int) -> void:
-	## upper case because it is a caption naming the job, not a sentence being said to the player.
 	objective_label.text = Run.objective_caption().to_upper()
 	targets_label.text = Run.objective_count()
 
@@ -358,10 +301,6 @@ func _on_time_changed(seconds: float) -> void:
 	timer_label.text = "%d:%02d" % [floori(seconds / 60.0), int(seconds) % 60]
 
 
-## one arc per bird that is noticing you, drawn at its bearing, so you can tell WHICH one and
-## turn the right way. a bar in the middle of the screen could never say that.
-## the mission moved on. the caption and the count are Run's own two pieces, the same way the
-## kiwi count always was; only the SIZES are the hud's business.
 func _on_objectives_changed() -> void:
 	if Run.state != Run.State.PLAYING:
 		return
@@ -369,17 +308,11 @@ func _on_objectives_changed() -> void:
 	targets_label.text = Run.objective_count()
 
 
-## a job on an objective is the same sentence as a reload -- something is running, wait for it -- so
-## it gets the same ring round the same crosshair. it says it with the RING and with nothing else:
-## words flashed in the middle of the screen were doing the ring's job twice, and the second time in
-## a place the player is trying to see the compound through.
 func _on_objective_working(which, active: bool) -> void:
 	reload_ring.watch_job(which if active else null)
 	_show_crosshair(not active and not _aiming)
 
 
-## the ring going out IS the message. it appeared when the job started and it leaves when the job
-## stops, which is the same fact either way round and needs no word for it.
 func _on_objective_abandoned(_which) -> void:
 	reload_ring.watch_job(null)
 	_show_crosshair(not _aiming)
@@ -389,25 +322,16 @@ func _on_watcher_changed(kiwi: Node3D, value: float) -> void:
 	alert_ring.set_watcher(kiwi, value)
 
 
-## the ring carries the tier and nothing is written on the screen about it. a bird on the radio is a
-## two second window and it still has to be READABLE, but the fast blinking arc says it better than
-## words did: it says the same thing AND says which direction to shoot in, which a line in the middle
-## of the screen never could.
 func _on_watcher_tier(kiwi: Node3D, tier: int) -> void:
 	alert_ring.set_tier(kiwi, tier)
 
 
-## being spotted is an EVENT, so it is announced and then it goes. a line that sits there saying
-## UNDETECTED for a whole mission is telling the player something they already know; the ring of
-## arcs is what carries the live state, one arc per bird, at its bearing.
 func _on_detections_changed(count: int) -> void:
 	if _last_detections >= 0 and count > _last_detections:
 		flash_status(Run.stealth_text(), HudStyle.ALERT)
 	_last_detections = count
 
 
-## hidden while the compound is calm. SEARCHING in the ring's amber, ALARM in its red, and the
-## seconds to the reinforcements next to the word once they are counting. signals only, no polling.
 func _on_alarm_stage(_stage: int) -> void:
 	_refresh_alarm()
 
@@ -450,7 +374,6 @@ func _on_level_cleared(_index: int, summary: Dictionary) -> void:
 	alert_ring.clear()
 
 
-## the same card, a different heading. the numbers still say what happened before the laser found you.
 func _on_level_failed(_index: int, summary: Dictionary) -> void:
 	_clear_field_readout()
 	report_card.play(summary, "MISSION FAILED")
@@ -463,8 +386,6 @@ func _on_run_finished(summary: Dictionary) -> void:
 	alert_ring.clear()
 
 
-## the card carries the objective, the clock and the stealth line itself, so the field readout that
-## was showing them stands down rather than competing with it.
 func _clear_field_readout() -> void:
 	objective_label.text = ""
 	targets_label.text = ""
@@ -489,20 +410,12 @@ func _on_focus_lost() -> void:
 	prompt_row.visible = false
 
 
-## the count is the hero and the figure after the slash hangs off it at a third of the size, which is
-## the whole of the trick in the reference sheet: one number to read, one to check.
-##
-## that second figure is the RESERVE, not the magazine's capacity. it used to be the capacity, so a
-## weapon with nothing in it and nothing to reload from read "0 / 30" -- and every shooter the player
-## has ever touched uses that slot for rounds in the bag, so "0 / 30" says "thirty left". it said the
-## exact opposite of the truth at the one moment the player most needs to know it.
 func _on_ammo_changed(count: int, _capacity: int) -> void:
 	ammo_label.text = "%d" % count
 	capacity_label.text = "/ %d" % _reserve()
 	_update_spare()
 
 
-## rounds in the pouch that this weapon could reload from. the pouch owns the number.
 func _reserve() -> int:
 	if _weapon == null or _pouch == null:
 		return 0
@@ -523,12 +436,9 @@ func _on_fire_mode_changed(mode: Gun.FireMode) -> void:
 	mode_label.text = "AUTO" if mode == Gun.FireMode.AUTO else "SEMI"
 	var can_auto := _weapon != null and _weapon.allow_auto
 	mode_icon.set_state(mode, can_auto)
-	## the key hint fades on a weapon that has no second mode, so nobody hunts for a broken key
 	mode_hint.modulate.a = 1.0 if can_auto else 0.35
 
 
-## every shot throws the aim about a little, and the reticle opens by exactly one shot's worth.
-## taken off the weapon's own signal, so it can never disagree with how many bbs left the barrel.
 func _on_weapon_fired(_speed: float, _mass_kg: float) -> void:
 	crosshair.bloom()
 
@@ -550,8 +460,6 @@ func _on_fire_failed(reason: Gun.FireBlock, message: String) -> void:
 			show_message(message)
 
 
-## the iron sights are the aiming device once you are looking down them, and the crosshair would
-## sit right on the front post. it goes out faster than the weapon comes up.
 func _on_aim_changed(aiming: bool) -> void:
 	_aiming = aiming
 	_show_crosshair(not aiming and not (reload_ring != null and reload_ring.is_showing()))
@@ -564,7 +472,6 @@ func _show_crosshair(on: bool) -> void:
 	_aim_tween.tween_property(crosshair, "modulate:a", 1.0 if on else 0.0, 0.07)
 
 
-## the ring takes the crosshair's place for the duration, then hands it back unless the player is aiming.
 func _on_reload_started(_duration: float) -> void:
 	_show_crosshair(false)
 
@@ -582,22 +489,17 @@ func _on_spare_added(mag: Magazine) -> void:
 	show_message("+1 %s magazine  %.2f g" % [mag.type_label(), mag.mass_grams()])
 
 
-## the count is already on screen and it says x0. pointing at it beats a sentence saying the same.
 func _on_reload_failed(_message: String) -> void:
 	blink_spare()
 	buzz()
 
 
-## a full pouch keeps its sentence: the limit is a number the player sees nowhere else.
 func _on_pouch_refused(message: String) -> void:
 	show_message(message)
 	blink_spare()
 	buzz()
 
 
-## a figure that lives at the bottom of the block in half tone, brightened for a moment when it
-## changes. that is how the hop-up can answer the wheel without shouting for the rest of the run,
-## and it stays on screen the whole time, which the brief requires and a fade out would break.
 func pulse(label: Label) -> void:
 	label.modulate = Color(1.7, 1.5, 0.95, 2.0)
 	create_tween().tween_property(label, "modulate", Color.WHITE, 0.8)
@@ -618,13 +520,10 @@ func buzz() -> void:
 	UiSfx.play("error")
 
 
-## how many spares the weapon in hand can still reload from. the pouch owns the number.
 func _update_spare() -> void:
 	if _weapon == null or _pouch == null:
 		spare_label.text = ""
 		return
-	## the reserve says how many ROUNDS are left; this says how many magazines they are spread over,
-	## which is a different fact and the one that decides whether a reload is worth taking now.
 	spare_label.text = _pouch.describe(_weapon.accepted_mag)
 	capacity_label.text = "/ %d" % _reserve()
 
@@ -641,7 +540,6 @@ func _on_magazine_rejected(_offered: Magazine, message: String) -> void:
 	show_message(message)
 
 
-## drops whatever is on the message line right now, mid fade included.
 func _clear_message() -> void:
 	if _message_tween != null and _message_tween.is_valid():
 		_message_tween.kill()

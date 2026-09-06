@@ -1,8 +1,6 @@
 class_name TracerFx
 extends Node3D
 
-## one shot emissive streak from muzzle to hit point that fades in about 0.08s.
-## mesh and materials are cached statics so a shot never allocates render resources.
 
 static var _mesh: BoxMesh
 static var _mats := {}
@@ -24,8 +22,6 @@ static func _tracer_mat(color: Color) -> StandardMaterial3D:
 	return _mats[key]
 
 
-## build the caches up front so the first shot does not create pipelines mid game.
-## keep the colour set closed, a continuous colour would grow the cache forever.
 static func warm() -> void:
 	if _mesh == null:
 		_mesh = BoxMesh.new()
@@ -54,7 +50,6 @@ static func spawn(world: Node, from: Vector3, to: Vector3, color := Color(1.0, 0
 	node.look_at(to, up)
 	node.scale = Vector3(0.03, 0.03, length)
 
-	## the fade tweens this instance's transparency, the shared material is never touched.
 	var tw := node.create_tween()
 	tw.tween_property(node, "transparency", 1.0, 0.08)
 	tw.tween_callback(node.queue_free)

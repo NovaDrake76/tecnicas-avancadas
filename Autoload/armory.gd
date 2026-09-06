@@ -1,8 +1,5 @@
 extends Node
 
-## the safe house's ledger: what the player owns, what is on each weapon, what the two carried
-## weapons are, and how many points are left. the run scores; this spends. nothing here fires a bb,
-## it only configures the weapons the player already has, through the fields they already expose.
 
 signal changed
 signal refused(message: String)
@@ -20,9 +17,6 @@ const MAG_PATHS := {
 	Ordnance.MagType.Marksman: "res://Guns/resources/mag_marksman.tres",
 }
 
-## the catalogue. prices are in run points; a clean level is worth roughly 600 to 1300.
-## springs are per weapon family because a pistol's gas system and a rifle's gearbox are not the same
-## spring; motors fit the aeg only, a pump or a gas slide has a cyclic rate and no motor to upgrade.
 const CATALOG := [
 	{"id": "spring_m100", "kind": Part.Kind.SPRING, "title": "M100 spring", "price": 0, "k": 300.0, "x": 0.1, "fits": ["KESTREL", "SHRIKE"]},
 	{"id": "spring_m110", "kind": Part.Kind.SPRING, "title": "M110 spring", "price": 300, "k": 350.0, "x": 0.1, "fits": ["KESTREL", "SHRIKE"]},
@@ -52,21 +46,15 @@ const CATALOG := [
 	{"id": "util_frag", "kind": Part.Kind.UTILITY, "title": "Frag grenade", "price": 250, "utility_id": "frag"},
 ]
 
-## the kit a fresh run starts with: two weapons, their stock parts, light bbs, two spares each.
 const STARTER_OWNED := ["spring_m100", "spring_p200", "spring_p180", "motor_std", "spring_m150", "bb_020", "weapon_kestrel", "weapon_harrier"]
 const STARTER_MAGAZINES := {Ordnance.MagType.Rifle: 2, Ordnance.MagType.PistolHeavy: 2}
 const STARTER_LOADOUT := ["KESTREL", "HARRIER"]
 
 var points := 0
 var owned := {}
-## model -> {"spring": id, "motor": id}
 var installed := {}
-## mag type -> bb lot id, the bbs every magazine of that type is filled with
 var bb_lot := {}
-## mag type -> spare magazines owned
 var magazines := {}
-## utility id -> how many are carried into a mission. the thrown magazine is not in here: it is
-## free and always full, and a distraction the player has to ration is one they never use.
 var utilities := {}
 var loadout: Array[String] = []
 
@@ -112,9 +100,6 @@ func reset() -> void:
 	for t in MAG_PATHS:
 		bb_lot[t] = "bb_020"
 	magazines = STARTER_MAGAZINES.duplicate()
-	## no grenades in the starter kit, on purpose. the frag is the one thing in the game that ends
-	## an infiltration, and a run that opens with one in the pouch invites the player to spend it
-	## before they have found out what being quiet is worth.
 	utilities.clear()
 	loadout.assign(STARTER_LOADOUT)
 	changed.emit()
@@ -150,8 +135,6 @@ func can_afford(id: String) -> bool:
 	return p != null and points >= p.price
 
 
-## buying is the only way points leave. a magazine buys one more spare, up to what the pouch holds;
-## everything else is owned once and installed wherever it fits.
 func buy(id: String) -> bool:
 	var p := part(id)
 	if p == null:
@@ -162,7 +145,6 @@ func buy(id: String) -> bool:
 			refused.emit("The pouch holds %d %s magazines" % [pouch_cap, Ordnance.type_name(p.mag_type)])
 			return false
 	elif p.kind == Part.Kind.UTILITY:
-		## the belt says how many fit, not the ledger: one place decides what an operative can carry.
 		var belt_cap := int(UtilityBelt.row(p.utility_id).get("max", 0))
 		if int(utilities.get(p.utility_id, 0)) >= belt_cap:
 			refused.emit("The belt holds %d %s" % [belt_cap, p.title.to_lower() + "s"])
@@ -215,7 +197,6 @@ func choose_bb(mag_type: Ordnance.MagType, id: String) -> bool:
 	return true
 
 
-## the two carried weapons. a slot never repeats the other slot's weapon.
 func set_slot(slot: int, model: String) -> bool:
 	if slot < 0 or slot >= SLOTS or not model in owned_weapons():
 		refused.emit("You do not own the %s" % model)
@@ -241,7 +222,6 @@ func bb_for(mag_type: Ordnance.MagType) -> Part:
 	return part(String(bb_lot.get(mag_type, "bb_020")))
 
 
-## a fresh magazine of that type, filled with the chosen bbs. what the pouch and the weapon get.
 func make_magazine(mag_type: Ordnance.MagType) -> Magazine:
 	var base := load(MAG_PATHS[mag_type]) as Magazine
 	if base == null:
@@ -254,8 +234,6 @@ func make_magazine(mag_type: Ordnance.MagType) -> Magazine:
 	return mag
 
 
-## dresses the player: the two carried weapons, their parts, full magazines with the chosen bbs, and
-## the spares in the pouch. called on entering the armory, on every change while there, and on deploy.
 func apply_to_player(player: Node) -> void:
 	if player == null:
 		return
@@ -287,8 +265,6 @@ func apply_to_player(player: Node) -> void:
 				pouch.add(make_magazine(g.accepted_mag))
 	for g in rack.weapons():
 		g.emit_state()
-	## the belt is kit too: filled here and nowhere else, so nothing on it can be farmed mid-mission.
-	## the free kinds come back full and the bought ones come back at what was paid for.
 	var belt := _find(player, "utility")
 	if belt != null and belt.has_method("refill"):
 		belt.refill(utilities)
@@ -300,7 +276,6 @@ func deploy() -> void:
 
 
 func _on_level_cleared(_index: int, summary: Dictionary) -> void:
-	## the wallet earns the improvement over the mission's previous best, see Run.record_result
 	points += int(summary.get("gained", summary.get("level_score", 0)))
 	changed.emit()
 

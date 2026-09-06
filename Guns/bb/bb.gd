@@ -9,11 +9,7 @@ const BB_RADIUS := 0.003
 @export_range(0.0, 0.01, 0.00001, "or_greater") var BackspinDrag: float = 0.0002
 @export var lifetime: float = 5.0
 @export var despawn_on_impact := true
-## how far a bb landing on the world is heard. a bb makes no noise where it was FIRED, only where
-## it lands, so a miss betrays what you were shooting at and never where you were shooting from:
-## Wildlands' explosive rule, and the one that makes missing at range survivable. it is shorter
-## than a walking footstep (14 m) on purpose, and like every other noise in this game it turns
-## birds and raises nothing. the alarm still has exactly two sources.
+## how far a bb landing on the world is heard.
 @export var impact_hearing := 8.0
 @export var mark_surface := true
 
@@ -22,16 +18,11 @@ const BB_RADIUS := 0.003
 @export var trail_fade_time: float = 0.0
 @export var trail_every: int = 1
 
-## whether this bb is the real one or another machine's copy of it. the copy flies the same physics
-## from the same starting conditions -- it is the same drag and the same hop-up -- so what it draws
-## is honest; it simply does not get to decide anything when it lands.
 var mine := true
 var _area: float = PI * BB_RADIUS * BB_RADIUS
 var _frame := 0
 var _impacted := false
-## the velocity going INTO the step that lands. by the time _integrate_forces reports the contact
-## the solver has already taken the impact out of the body, and the energy read there was a tenth
-## of what arrived: every shot bounced off the plate, seen in the probe before this existed.
+## the velocity going INTO the landing step: by the time _integrate_forces reports the contact the solver has taken the impact out, and it read a tenth.
 var _incoming := Vector3.ZERO
 var _crumb_mesh: SphereMesh
 var _crumb_mat: StandardMaterial3D
@@ -48,7 +39,6 @@ func _ready() -> void:
 	get_tree().create_timer(lifetime).timeout.connect(queue_free)
 
 
-## the first contact is the shot landing, everything after it is a bounce we do not care about.
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	if _impacted or state.get_contact_count() == 0:
 		return
@@ -56,12 +46,9 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	var hit_body := state.get_contact_collider_object(0)
 	var point := state.get_contact_collider_position(0)
 	var normal := state.get_contact_local_normal(0)
-	## force the normal to oppose the incoming velocity, the engine's sign varies by body pair.
+	## the normal is forced to oppose the incoming velocity; the engine's sign varies by body pair.
 	if normal.dot(state.linear_velocity) > 0.0:
 		normal = -normal
-	## the energy the bb actually arrives with, after every metre of drag it flew through. this is
-	## the number that decides whether a shot beats armour, and it is the same number the bench
-	## draws as impact at range, so what the bench promises is what the plate feels.
 	var arriving := _incoming if _incoming.length_squared() > 0.0 else state.linear_velocity
 	var energy := 0.5 * bb_mass * arriving.length_squared()
 	_on_impact.call_deferred(point, normal, hit_body, energy)
@@ -72,27 +59,18 @@ func _on_impact(point: Vector3, normal: Vector3, hit_body: Object, energy: float
 	ImpactFx.spawn(world, point, normal)
 
 	var target := hit_body != null and is_instance_valid(hit_body) and hit_body.has_method("take_bb_hit")
-	## a bb belongs to the machine that fired it. every other machine flies a COPY of it so the shot
-	## can be seen and heard, and that copy hits nothing: two machines each applying the same hit
-	## would take a bird down twice, and the shooter's own screen is the one the shot has to be
-	## honest on. what the copy is for is the tracer, the crack and the hole in the wall.
 	if target and mine:
 		hit_body.take_bb_hit(1.0, point, energy)
-		## asked AFTER the hit, so a kiwi that this bb just put down answers yes and the marker
-		## comes up red. a range target has no such answer and gets the plain one.
 		Run.report_hit(hit_body.has_method("is_down") and hit_body.is_down())
 
-	## what it landed on says what it sounds like; the birds and the targets answer for themselves
 	if not target:
 		Sfx.play("bb_" + String(Sfx.surface_of(hit_body)), point)
-		## and the birds walk over to the hole. that is a decision about the world, so it belongs to
-		## the host: a miss heard on two machines would send the same patrol to the same hole twice.
 		if mine and multiplayer.is_server():
 			_heard_at(point)
 		elif mine:
 			_tell_host_miss.rpc_id(1, point, impact_hearing)
 
-	## decals belong on static world surfaces only, a hole stamped on a kiwi hangs in the air once it moves.
+	## decals belong on static world surfaces only; a hole stamped on a kiwi hangs in the air once it moves.
 	if mark_surface and not target:
 		BulletHoles.mark(point, normal)
 	if despawn_on_impact:
@@ -110,8 +88,6 @@ func _tell_host_miss(point: Vector3, radius: float) -> void:
 			bird.investigate(point)
 
 
-## the birds walk over to the hole, the way they do for a thrown magazine. they are told about the
-## IMPACT and nothing else: no bird learns anything about the shooter from a shot going past it.
 func _heard_at(point: Vector3) -> void:
 	if impact_hearing <= 0.0:
 		return
@@ -148,10 +124,6 @@ func _physics_process(_delta: float) -> void:
 		apply_central_force(lift_dir * lift_mag)
 
 
-## the same flight, on paper: drag, backspin lift and gravity integrated in the vertical plane, with the
-## constants and the lift formula this node uses in _physics_process. the bench asks this so the bars it
-## shows are the game's own physics and not a second opinion of it. returns metres, seconds and joules.
-## reach is how far the bb flies before it has dropped half a metre below the line of fire.
 static func flight(speed: float, mass_kg: float, backspin: float, at_distance := 30.0) -> Dictionary:
 	var area := PI * BB_RADIUS * BB_RADIUS
 	var dt := 1.0 / 240.0

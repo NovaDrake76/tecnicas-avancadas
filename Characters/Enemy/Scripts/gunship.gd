@@ -1,18 +1,6 @@
 class_name Gunship
 extends CharacterBody3D
 
-## the reinforcements. a scout helicopter with a searchlight and a door gun, the Wildlands shape: it
-## orbits the last place the compound knew you were, sweeping the ground, and a player held in the
-## light for mark_time is MARKED: every hunter on the ground learns where you are without seeing you.
-## hold the mark long enough and the door gun opens up. it is cheaper than a ground unit, not dearer:
-## no navigation, no cover points, a scripted orbit and a raycast. and it attacks cover from the one
-## angle cover does not cover, which makes OVERHEAD cover a new question rather than a harder version
-## of an old one: get under something, or leave.
-##
-## neither attack is a sure hit. the gun is a WALKING impact line that starts lead_in short of you
-## and comes at you at walk_speed, so you see where it is about to be, on the ground, before it is
-## there: the same honesty as the beam's charge and the bolt's travel time. a bb cannot bring it
-## down, and the game says so: the fuselage sparks, pings, and paints you.
 
 enum Phase { ARRIVE, SCOUT, LEAVE, GONE }
 
@@ -63,7 +51,6 @@ var _strike := Vector3.ZERO
 var _strike_dir := Vector3.FORWARD
 var _hits := 0.0
 var _forced_light := Vector3.INF
-## seconds the light stays locked on the player regardless of the sweep: a bb on the fuselage buys this
 var _lock := 0.0
 var _rotor: Node3D
 var _tail_rotor: Node3D
@@ -85,8 +72,6 @@ func _ready() -> void:
 	light = Searchlight.new()
 	light.position = Vector3(0.0, -0.6, -1.4)
 	add_child(light)
-	## two rotor loops crossfaded by distance: far off it is a dull thud with no whine, and the crack
-	## and the turbine arrive as it closes. a plain fade reads as someone turning a knob.
 	_rotor_sfx = Sfx.attach(&"heli_rotor_near", self)
 	_rotor_sfx.play()
 	_rotor_far = Sfx.attach(&"heli_rotor_far", self)
@@ -96,7 +81,6 @@ func _ready() -> void:
 	Alarm.stage_changed.connect(_on_stage)
 
 
-## sent for by the alarm: it comes in from `from` towards where the compound last knew you were.
 func dispatch(from: Vector3, toward: Vector3) -> void:
 	global_position = from
 	_centre = toward
@@ -152,7 +136,6 @@ func _ring_point(angle: float) -> Vector3:
 
 func _step_scout(delta: float) -> void:
 	_loiter += delta
-	## the orbit follows what the compound knows, smoothly, so a marked player drags it along
 	if Alarm.has_last_known:
 		_centre = _centre.lerp(Alarm.last_known, clampf(delta * 0.8, 0.0, 1.0))
 	_angle += orbit_speed * delta
@@ -169,8 +152,6 @@ func _step_scout(delta: float) -> void:
 		_leave()
 
 
-## the light sweeps the ground around the centre until it has you, then it stays on you. a player
-## held in it for mark_time is marked, and every tick of a mark tells the compound where you are.
 func _step_light(delta: float) -> void:
 	_lock = maxf(0.0, _lock - delta)
 	var target := Vector3.INF
@@ -191,9 +172,6 @@ func _step_light(delta: float) -> void:
 		_mark = minf(_mark + delta, mark_time + 0.01)
 	else:
 		_mark = maxf(0.0, _mark - delta * 2.0)
-	## on at mark_time, off only once half of it has drained: a post flicking through the ray does
-	## not throw away four seconds of the gun's build-up, and a real dive under cover still breaks it
-	## within half a second.
 	var was := _marked
 	if _mark >= mark_time:
 		_marked = true
@@ -205,8 +183,6 @@ func _step_light(delta: float) -> void:
 		_stop_gun()
 
 
-## after gun_delay of unbroken mark the door gun fires a walking line at you: a burst, a gap, again.
-## losing the mark stops it at once.
 func _step_gun(delta: float) -> void:
 	if not _marked:
 		_gun = 0.0
@@ -270,7 +246,6 @@ func _face(dir: Vector3) -> void:
 		return
 	var yaw := atan2(-flat.x, -flat.z)
 	rotation.y = lerp_angle(rotation.y, yaw, 0.08)
-	## a little bank into the turn, which is most of what makes it read as flying
 	rotation.z = lerp_angle(rotation.z, -0.18 if phase == Phase.SCOUT else 0.0, 0.05)
 
 
@@ -287,14 +262,11 @@ func _leave() -> void:
 	phase = Phase.LEAVE
 
 
-## the compound calmed down: nothing to look for, it goes home. it comes back on the next expiry.
 func _on_stage(stage: int) -> void:
 	if stage == Alarm.Stage.CALM:
 		_leave()
 
 
-## a bb on the fuselage. a 0.20 g plastic sphere is not going to trouble a helicopter: a spark, a
-## ping, and it knows exactly where that came from.
 func take_bb_hit(_damage := 1.0, at := Vector3.INF, _energy := -1.0) -> void:
 	var world := get_tree().current_scene
 	var where := at if at.is_finite() else global_position
@@ -327,7 +299,6 @@ func damage_dealt() -> float:
 	return _hits
 
 
-## for probes and tools: the light is held on a point instead of sweeping.
 func force_light(at: Vector3) -> void:
 	_forced_light = at
 
@@ -336,10 +307,6 @@ func release_light() -> void:
 	_forced_light = Vector3.INF
 
 
-## -------------------------------------------------------------------------------- the model
-## no helicopter in any pack we own, so it is built from primitives, PSX flat: a body, a boom, skids,
-## and the rotor as a thin translucent disc with two blade boxes on it, spinning. that is exactly how
-## PSX era games drew a rotor and it reads right at any frame rate.
 func _build() -> void:
 	var dark := StandardMaterial3D.new()
 	dark.albedo_color = Color(0.17, 0.19, 0.2)
@@ -428,7 +395,6 @@ func _build() -> void:
 	beacon.position = Vector3(0.0, 0.3, 5.9)
 	add_child(beacon)
 
-	## the door gun, out of the right door, pointing down and forward
 	_gun_muzzle = Node3D.new()
 	var barrel := _cyl(0.05, 0.05, 1.1, Vector3(0.95, -0.25, -0.2), dark)
 	barrel.rotation_degrees = Vector3(60.0, 0.0, 0.0)
@@ -492,8 +458,6 @@ func _cyl(top: float, bottom: float, h: float, at: Vector3, mat: Material) -> Me
 	return mi
 
 
-## the near loop fades out past 50 m and the far one is full from 130 m, so what changes with
-## distance is the SOUND of the thing and not only its level.
 func _rotor_mix() -> void:
 	if _rotor_sfx == null or _rotor_far == null:
 		return

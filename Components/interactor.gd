@@ -1,15 +1,12 @@
 class_name Interactor
 extends Node
 
-## sits on the player, casts a short ray out of the live camera each tick.
-## emits focus on edges only so the hud is driven by events instead of polling.
 
 signal focus_changed(text: String, action: StringName, target: Node)
 signal focus_lost
 
 @export var reach := 3.0
 
-## world plus interactable, the world half is what makes walls occlude the ray.
 const INTERACT_MASK := 0b10000001
 
 var _player: CollisionObject3D
@@ -23,8 +20,6 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	## a focused thing can free itself under the crosshair, and a freed reference compares equal to null.
-	## _last_sig is the honest record of "we believe something is focused", so it separates the two cases.
 	if not _last_sig.is_empty() and not is_instance_valid(_current):
 		_current = null
 		_last_sig = ""
@@ -54,8 +49,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 
-## what is under the crosshair right now, in words. the hud is driven by the signal; this is for
-## a probe that wants to ask rather than wait.
 func focus_text() -> String:
 	return _last_sig
 
@@ -64,7 +57,6 @@ func _emit_focus() -> void:
 	focus_changed.emit(_current.prompt_text(), _current.prompt_action(), _current.get_parent())
 
 
-## suppressed while the cursor is free, which covers every menu at once.
 func _focus_candidate() -> Interactable:
 	if DisplayServer.has_feature(DisplayServer.FEATURE_MOUSE) \
 			and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
@@ -88,7 +80,6 @@ func _focus_candidate() -> Interactable:
 	return found if found != null and found.enabled() else null
 
 
-## climb a few ancestors from the hit body and return the first Interactable child found.
 func _find_interactable(hit_node: Node) -> Interactable:
 	var current := hit_node
 	for _i in 3:

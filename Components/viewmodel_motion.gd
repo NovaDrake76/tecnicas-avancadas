@@ -2,8 +2,6 @@
 class_name ViewmodelMotion
 extends Node3D
 
-## every procedural weapon motion composes into this node's transform, the gun keeps its rest pose beneath.
-## nothing else may write position or rotation here or it gets overwritten in the same frame.
 
 @export_group("Idle sway")
 ## breathing pace, not walking pace.
@@ -53,17 +51,14 @@ extends Node3D
 @export var air_pose_damping := 10.0
 
 @export_group("Reload pose")
-## there is no reload animation. the weapon drops out of frame, turned in and muzzle down, and comes
-## back loaded. the springs make it a movement rather than a cut.
+## there is no reload animation.
 @export var reload_pose_offset := Vector3(0.02, -0.36, 0.10)
 @export var reload_pose_tilt_deg := Vector3(-38.0, 30.0, 12.0)
 @export var reload_pose_stiffness := 42.0
 @export var reload_pose_damping := 9.5
 
 @export_group("Aim down sights")
-## drag these two in the editor to say where the weapon sits. the gun's own transform is
-## overwritten every frame, so these markers are the only thing that decides the pose.
-## leave them empty and children named HipPose and AimPose are used instead.
+## drag these two in the editor to say where the weapon sits.
 @export var hip_pose: Node3D
 @export var aim_pose: Node3D
 ## used only when no marker is assigned, so an unwired weapon still aims somewhere sane.
@@ -72,13 +67,11 @@ extends Node3D
 
 ## how much aiming damps sway and bob, a braced gun does not breathe like a hip held one.
 @export_range(0.0, 1.0) var ads_steadiness := 0.8
-## how much of the recoil TRAVEL survives while aimed. a shouldered rifle rises, it does not
-## slide back into your eye, and at this eye relief the full travel would clip the rear sight.
+## how much of the recoil TRAVEL survives while aimed.
 @export_range(0.0, 1.0) var ads_recoil_travel := 0.25
 
 @export_group("Editor preview")
-## editor only. puts the viewport into the aimed view: the camera drops to the aiming fov and the
-## weapon jumps to AimPose. move the weapon until the sights look right, then tick save_to_aim_pose.
+## editor only.
 @export var aim_preview := false:
 	set(value):
 		aim_preview = value
@@ -94,10 +87,9 @@ extends Node3D
 		if value:
 			capture_into(hip_node())
 		save_to_hip_pose = false
-## the fov to put back when the preview goes off. captured the first time you switch it on.
+## the fov to put back when the preview goes off.
 @export var resting_fov := 0.0
 
-## the preview crosshair, made on the fly and torn down again. never part of the saved scene.
 const CROSSHAIR := "__AimPreviewCrosshair"
 
 @export_group("Wall avoidance")
@@ -164,7 +156,6 @@ func _ready() -> void:
 	_bind.call_deferred()
 
 
-## the whole editor preview: swap the camera fov and park the weapon on one of the two markers.
 func _apply_preview() -> void:
 	if not is_inside_tree():
 		return
@@ -175,8 +166,6 @@ func _apply_preview() -> void:
 		if resting_fov <= 0.0:
 			resting_fov = cam.fov
 		cam.fov = _aiming_fov(cam.fov)
-		## this node's own transform is rewritten every frame by the sway, so anything dragged onto
-		## it is both meaningless and a lie in the preview. the weapon is what you move.
 		transform = Transform3D.IDENTITY
 		_park_on(aim_node())
 	else:
@@ -186,8 +175,6 @@ func _apply_preview() -> void:
 	_show_crosshair(cam, aim_preview)
 
 
-## built here and never given an owner, so it cannot be serialised into Player.tscn. that is the
-## same rule the generated terrain follows, and for the same reason.
 func _show_crosshair(cam: Camera3D, on: bool) -> void:
 	var old := cam.get_node_or_null(NodePath(CROSSHAIR)) as Node
 	if old != null:
@@ -206,7 +193,6 @@ func _show_crosshair(cam: Camera3D, on: bool) -> void:
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.albedo_color = Color(0.35, 1.0, 0.3)
-	## the whole point is to sit on top of the weapon rather than inside it.
 	mat.no_depth_test = true
 	mat.disable_fog = true
 	mat.render_priority = 10
@@ -237,8 +223,6 @@ func _park_on(pose: Node3D) -> void:
 		gun.transform = pose.transform
 
 
-## whichever of the two you dragged, what you SAW is this node's transform times the weapon's.
-## fold them together, so moving the viewmodel and moving the gun both save the pose on screen.
 func capture_into(pose: Node3D) -> void:
 	var gun := weapon()
 	if gun == null or pose == null:
@@ -250,7 +234,6 @@ func capture_into(pose: Node3D) -> void:
 		rad_to_deg(pose.rotation.x)])
 
 
-## in the editor there is no bound gun yet, so take the child that is not one of the markers.
 func weapon() -> Node3D:
 	if _gun != null and is_instance_valid(_gun):
 		return _gun
@@ -266,7 +249,6 @@ func _bind() -> void:
 	_player = Player.local(get_tree())
 	if _player != null:
 		_head = _player.get_node_or_null("Head")
-	## the node this moves is the rack. every weapon on it kicks this node when it fires.
 	var rack := get_tree().get_first_node_in_group("weapon_rack") as WeaponRack
 	if rack != null:
 		_gun = rack
@@ -289,7 +271,6 @@ func set_reloading(on: bool) -> void:
 	_reloading = on
 
 
-## driven by AimScope, 0 at the hip and 1 fully aimed.
 func set_ads(t: float) -> void:
 	_ads = clampf(t, 0.0, 1.0)
 
@@ -298,7 +279,6 @@ func _on_fired(_speed: float, _mass_kg: float) -> void:
 	apply_recoil()
 
 
-## one shot's worth of kick fed in as velocity, the springs pull it back to zero on their own.
 func apply_recoil(amount := 1.0) -> void:
 	_recoil_pos_vel += Vector3(0.0, 0.0, recoil_kick_back * amount) * 12.0
 	_recoil_rot_vel += Vector3(
@@ -307,16 +287,13 @@ func apply_recoil(amount := 1.0) -> void:
 		deg_to_rad(randf_range(-recoil_random_deg, recoil_random_deg))) * 12.0
 
 
-## a jab, for the takedown. it borrows the RECOIL spring rather than owning one: the shape is the
-## same, a shove that settles, and the only difference is the sign. forward and slightly down, which
-## is a hand going out rather than a weapon coming back.
 func apply_punch(amount := 1.0) -> void:
 	_recoil_pos_vel += Vector3(0.02, -0.05, -0.16) * amount * 12.0
 	_recoil_rot_vel += Vector3(deg_to_rad(-7.0), deg_to_rad(5.0), deg_to_rad(9.0)) * amount * 12.0
 
 
 func _process(delta: float) -> void:
-	## a frame hitch must not destabilise the springs, the damping term flips negative past about 1/6 s.
+	## a frame hitch must not destabilise the springs; the damping term flips negative past about 1/6 s.
 	delta = minf(delta, 1.0 / 30.0)
 
 	var idle_target := Vector2.ZERO
@@ -354,8 +331,7 @@ func _process(delta: float) -> void:
 			_idle_time = 0.0
 		_was_idle = is_idle
 
-		## sourced from pure mouse look, never from the camera node.
-		## reading the camera would feed headbob and kicks back into the sway.
+		## sourced from pure mouse look, never from the camera node, or headbob and kicks feed back into the sway.
 		if _head != null:
 			var look_now := Vector2(_head.rotation.x, _player.rotation.y)
 			if _look_primed:
@@ -391,7 +367,6 @@ func _process(delta: float) -> void:
 			var sf := clampf(hspeed / bob_max_speed, 0.0, 1.0)
 			bob_target = Vector2(sin(angle) * bob_amplitude.x * sf, sin(angle * 2.0) * bob_amplitude.y * sf)
 
-		## retract toward the camera when geometry is close so the barrel never pokes through a wall.
 		if cam != null:
 			var from := cam.global_position
 			var to := from - cam.global_transform.basis.z * wall_probe_dist
@@ -437,17 +412,12 @@ func _process(delta: float) -> void:
 	_wall_pos = wp[0]
 	_wall_pos_vel = wp[1]
 
-	## aiming damps the whole procedural layer as a scale on the sum. the recoil ROTATION is
-	## deliberately left at full strength: a gun that kicked less because you were looking down it
-	## would be a free accuracy buff. only the travel is damped, and that moves no shot anywhere.
 	var steady := 1.0 - _ads * ads_steadiness
 	var travel := lerpf(1.0, ads_recoil_travel, _ads)
 	var sway := Vector3(_idle_x.x + _look_x.x + _bob_x.x, _idle_y.x + _look_y.x + _bob_y.x, 0.0)
-	## the reload pose is outside the aiming damp on purpose: a reload takes the weapon down even aimed.
 	position = (sway + _run_pos + _air_pos + _wall_pos) * steady + _recoil_pos * travel + _reload_pos
 	rotation = (Vector3(_rot_pitch.x, _rot_yaw.x, _rot_roll.x) + _run_rot) * steady + _recoil_rot + _reload_rot
 
-	## the raise itself is on the gun, this node keeps carrying the procedural offsets on top.
 	if _gun != null:
 		var from := hip_transform()
 		var to := aim_transform()
@@ -456,8 +426,6 @@ func _process(delta: float) -> void:
 			to.basis.get_rotation_quaternion(), _ads)
 
 
-## where the weapon sits at the hip and fully aimed. a marker if one is assigned, otherwise the
-## numbers below it, so the probes and the game always read the same single answer.
 func hip_transform() -> Transform3D:
 	var pose := hip_node()
 	if pose != null:
@@ -472,9 +440,6 @@ func aim_transform() -> Transform3D:
 	return Transform3D(Basis(Vector3.RIGHT, deg_to_rad(sights_pitch_deg)), sights_position)
 
 
-## an assigned marker wins. otherwise fall back to a child of that name, because a node reference
-## written into a .tscn by hand resolves to null: godot applies the property while building this
-## node, before its own children exist.
 func hip_node() -> Node3D:
 	return _marker(hip_pose, "HipPose")
 
@@ -483,8 +448,6 @@ func aim_node() -> Node3D:
 	return _marker(aim_pose, "AimPose")
 
 
-## each weapon carries its own markers, because each has its own sights. a weapon without them
-## uses the shared pair on this node, and an explicitly assigned marker still wins over both.
 func _marker(assigned: Node3D, fallback: String) -> Node3D:
 	if assigned != null and is_instance_valid(assigned):
 		return assigned

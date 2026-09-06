@@ -1,11 +1,5 @@
 extends CanvasLayer
 
-## the bench screen. two pages: LOADOUT (the two carried weapons, the arsenal, the magazines) and one
-## per weapon (its parts, with a line from each part to where it sits on the gun). the weapon is drawn
-## live in the middle; the numbers on the right come from the weapon node itself. every button writes to
-## the Armory ledger and the page redraws from it, so the screen owns nothing.
-## the player is frozen underneath rather than the tree paused, so the range keeps living and the pause
-## menu keeps its own escape.
 
 signal closed
 
@@ -16,7 +10,6 @@ const BG := Color(0.04, 0.042, 0.04)
 const KIND_NAMES := {
 	"spring": "SPRING", "motor": "MOTOR", "bbs": "BBs", "magazines": "MAGAZINES",
 }
-## which anchor on the gun each part points at
 const KIND_ANCHOR := {"spring": "Spring", "motor": "Motor", "bbs": "Magazine", "magazines": "Magazine"}
 
 enum Page { LOADOUT, WEAPON }
@@ -39,7 +32,6 @@ var _part := "spring"
 var _part_cards := {}
 var _player: Node
 var _bars: Control
-## true while a purchase installs itself, so the till rings once and the install click stays quiet
 var _hush_install := false
 
 
@@ -66,7 +58,6 @@ func _ready() -> void:
 	page.add_theme_constant_override("separation", 18)
 	margin.add_child(page)
 
-	## header: title and breadcrumbs left, wallet and next mission right
 	var head := HBoxContainer.new()
 	page.add_child(head)
 	var title_col := VBoxContainer.new()
@@ -89,13 +80,10 @@ func _ready() -> void:
 	_message = _text(wallet, "", 15, MenuStyle.ACCENT)
 	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
-	## body: left column, the gun, right column
 	var body := HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 36)
 	page.add_child(body)
-	## three shares of the width: 30 / 40 / 30. the columns scroll vertically and never push the gun
-	## aside, which a scroller with horizontal scrolling disabled would do by growing to its content.
 	var left_scroll := _scroller(body, 0.32)
 	_left = _scroll_column(left_scroll)
 
@@ -118,10 +106,8 @@ func _ready() -> void:
 	var right_scroll := _scroller(body, 0.32)
 	_right = _scroll_column(right_scroll)
 
-	## footer
 	var foot := HBoxContainer.new()
 	page.add_child(foot)
-	## these two play their own sound, so the generic click stays off them
 	_solid(foot, "BACK TO THE RANGE", close).set_meta(UiSfx.QUIET, true)
 	var foot_fill := Control.new()
 	foot_fill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -160,12 +146,10 @@ func open() -> void:
 	_player = Player.local(get_tree())
 	if _player != null:
 		_player.process_mode = Node.PROCESS_MODE_DISABLED
-	## the hud is the field's readout; behind the bench it is only clutter
 	var hud := get_tree().get_first_node_in_group("hud")
 	if hud != null:
 		hud.visible = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	## the cursor is this screen's until it closes; the player will not take it back on a focus-in
 	add_to_group("holds_mouse")
 	visible = true
 	_page = Page.LOADOUT
@@ -191,13 +175,10 @@ func close(silent := false) -> void:
 	closed.emit()
 
 
-## which page is up, for the probe: "loadout" or the weapon model on the bench.
 func showing() -> String:
 	return "loadout" if _page == Page.LOADOUT else _selected_model()
 
 
-## where a part's callout lands on the picture, in the picture's pixels; (-1, -1) when there is no
-## anchor for it on this weapon. the probe asks this to know the line points at the gun, not at air.
 func callout_point(part: String) -> Vector2:
 	return _view.anchor_point(String(KIND_ANCHOR.get(part, "")))
 
@@ -206,7 +187,6 @@ func picture_size() -> Vector2:
 	return _view.size
 
 
-## the page for a weapon slot, for the probe and the shot tool.
 func show_weapon(slot: int, part := "") -> void:
 	if part != "":
 		_part = part
@@ -224,8 +204,6 @@ func _say(text: String) -> void:
 	_message_tween.tween_property(_message, "modulate:a", 0.0, 0.6)
 
 
-## no sound of its own: every way in here is a card or a button, and both already click. a weapon
-## card and a part card are the same act and now make the same noise.
 func _go(page: Page, slot := -1) -> void:
 	_page = page
 	if slot >= 0:
@@ -238,8 +216,6 @@ func _selected_model() -> String:
 		return Armory.loadout[_slot]
 	return ""
 
-
-## ---------------------------------------------------------------- the whole screen, from the ledger
 
 func _refresh() -> void:
 	if not visible:
@@ -293,8 +269,6 @@ func _crumb(text: String, on: bool, cb: Callable) -> void:
 	under.color = MenuStyle.ACCENT if on else Color(0, 0, 0, 0)
 	col.add_child(under)
 
-
-## ---------------------------------------------------------------- loadout page
 
 func _build_loadout_left() -> void:
 	_section(_left, "WEAPONS")
@@ -360,8 +334,6 @@ func _build_loadout_left() -> void:
 			var b := _small(row, "Buy one more for $%s" % _thousands(mag_part.price), _buy.bind(mag_part.id), Armory.can_afford(mag_part.id))
 			b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
-	## what the operative throws. the free kinds are not listed: the thrown magazine is always full
-	## and costs nothing, so a card offering to sell one would be a card that does nothing.
 	var for_belt: Array[Part] = []
 	for p in Armory.parts_of(Part.Kind.UTILITY):
 		if not bool(UtilityBelt.row(p.utility_id).get("free", false)):
@@ -382,13 +354,7 @@ func _build_loadout_left() -> void:
 			var belt_cap := int(UtilityBelt.row(p.utility_id).get("max", 0))
 			_text(col, UtilityBelt.title_of(p.utility_id), 13, MenuStyle.DIM, true)
 			_text(col, "%d of %d on the belt" % [n, belt_cap], 22, MenuStyle.BRIGHT, true)
-			## what it does, before it is paid for. a grenade is the one thing in the kit that ends
-			## an infiltration, and a player who found that out by throwing one has been ambushed by
-			## their own equipment.
 			_text(col, UtilityBelt.note_of(p.utility_id), 15, MenuStyle.DIM, true)
-			## it is a slot on the belt rather than a round of ammunition: bought once and filled
-			## again every deployment, the same way a spare magazine is. buying grenades before every
-			## mission would be a chore standing in for a decision.
 			var b := _small(row, "Carry one more for $%s" % _thousands(p.price), _buy.bind(p.id), Armory.can_afford(p.id))
 			b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
@@ -417,8 +383,6 @@ func _build_platform_right(model: String) -> void:
 	var edit := _small(_right, "CONFIGURE", func() -> void: _go(Page.WEAPON))
 	edit.size_flags_horizontal = Control.SIZE_SHRINK_END
 
-
-## ---------------------------------------------------------------- weapon page
 
 func _build_parts_left(model: String) -> void:
 	var back := Button.new()
@@ -526,8 +490,6 @@ func _bb_option(t: Ordnance.MagType, p: Part, detail: String, loaded: bool) -> v
 		_small(row, "$%s" % _thousands(p.price), _buy.bind(p.id), Armory.can_afford(p.id)).size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
 
-## the lines from the part cards to the part on the gun. the selected part is drawn hot, the others as
-## hairlines, and a part with no anchor on this weapon draws nothing rather than pointing at air.
 func _draw_callouts() -> void:
 	if _page != Page.WEAPON:
 		return
@@ -536,7 +498,6 @@ func _draw_callouts() -> void:
 		var card := _part_cards[key] as Control
 		if card == null or not is_instance_valid(card):
 			continue
-		## a card scrolled out of its column has no line; it would point from off screen
 		var column := card.get_parent()
 		while column != null and not column is ScrollContainer:
 			column = column.get_parent()
@@ -563,8 +524,6 @@ func _draw_callouts() -> void:
 			_callouts.draw_arc(target, 11.0, 0.0, TAU, 32, colour, 1.5, true)
 
 
-## ---------------------------------------------------------------- actions
-
 func _pick_part(key: String) -> void:
 	_part = key
 	_refresh()
@@ -584,9 +543,6 @@ func _cycle_slot(slot: int) -> void:
 	_say("Nothing else to carry. Buy a weapon in the arsenal.")
 
 
-## a bought part goes straight onto the weapon on the bench, a bought lot straight into its magazines,
-## a bought weapon straight into the slot being looked at. the tester bought a spring and then hunted
-## for it, which is what an INSTALL step is for and why it is gone.
 func _buy(id: String) -> void:
 	var p := Armory.part(id)
 	if p == null or not Armory.buy(id):
@@ -606,16 +562,10 @@ func _buy(id: String) -> void:
 	_hush_install = false
 
 
-## the same as clicking the price on a card, for the probe.
 func buy_here(id: String) -> void:
 	_buy(id)
 
 
-## ---------------------------------------------------------------- what a weapon does, as numbers
-
-## the weapon's figures with some of its parts swapped on paper: k and x for a spring, rpm for a motor,
-## mass for a bb lot. energy and velocity are the gun's own formulas; reach, impact and flight time are
-## the bb's own flight, so nothing here can say what the range would not.
 func _stats_for(gun: Gun, over: Dictionary) -> Dictionary:
 	var k := float(over.get("k", gun.spring_constant))
 	var x := float(over.get("x", gun.spring_compression))
@@ -655,7 +605,6 @@ func _hover_part(on: bool, model: String, p: Part) -> void:
 	_bars.set_preview(_stats_with_part(gun, p))
 
 
-## the probe's hand on the mouse: previews a part by id on the weapon on the bench, "" to stop.
 func preview_part(id: String) -> void:
 	var p := Armory.part(id)
 	_hover_part(p != null, _selected_model(), p)
@@ -676,8 +625,6 @@ func _install(model: String, id: String) -> void:
 func _choose_bb(t: Ordnance.MagType, id: String) -> void:
 	Armory.choose_bb(t, id)
 
-
-## ---------------------------------------------------------------- lookups
 
 func _part_keys(model: String) -> Array:
 	var keys := ["spring"]
@@ -730,11 +677,6 @@ func _kind_of(model: String) -> String:
 	var gun := _gun_named(model)
 	if gun == null:
 		return ""
-	## the kind is read off the AMMUNITION, not off the action. the action says how the weapon
-	## cycles, and two different weapons can cycle the same way: one shell or one round per stroke
-	## is the same mechanism, so a page that named the class after it called the marksman rifle a
-	## pump shotgun. the magazine is what actually tells a kit apart, and it is the thing the
-	## player has to match to a pickup anyway.
 	match gun.accepted_mag:
 		Ordnance.MagType.Rifle:
 			return "ASSAULT RIFLE"
@@ -764,9 +706,6 @@ func _gun_named(model: String) -> Gun:
 	return null
 
 
-## ---------------------------------------------------------------- widgets
-
-## a vertical scroller that takes its share of the row and no more. the bar is a thin dark line.
 func _scroller(parent: Control, share: float) -> ScrollContainer:
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -787,7 +726,6 @@ func _scroller(parent: Control, share: float) -> ScrollContainer:
 	return scroll
 
 
-## a column inside a scroller, with room on the right so the scrollbar never sits on the text.
 func _scroll_column(scroll: ScrollContainer) -> VBoxContainer:
 	var pad := MarginContainer.new()
 	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -800,9 +738,6 @@ func _scroll_column(scroll: ScrollContainer) -> VBoxContainer:
 	return col
 
 
-## a label. wrap is for the long lines inside a column: a wrapped label has no minimum width, so it
-## can never widen its column and push the right edge of every row out of view. never wrap a label
-## whose container has no width of its own (the wallet in the header), it would collapse to a word a line.
 func _text(parent: Control, text: String, size: int, colour: Color, wrapped := false) -> Label:
 	var l := Label.new()
 	l.text = text
@@ -816,7 +751,6 @@ func _text(parent: Control, text: String, size: int, colour: Color, wrapped := f
 	return l
 
 
-## a small heading with a hairline under it, the way the reference sheet splits its blocks.
 func _section(parent: Control, text: String) -> void:
 	_gap(parent, 2)
 	_text(parent, text, 13, MenuStyle.DIM)
@@ -835,8 +769,6 @@ func _gap(parent: Control, h: float) -> void:
 	parent.add_child(c)
 
 
-## key on the left in dim caps, value on the right, a hairline under. accent_value paints the value
-## like the reference's part kinds.
 func _kv(parent: Control, key: String, value: String, accent_value := false) -> void:
 	var row := HBoxContainer.new()
 	parent.add_child(row)
@@ -853,7 +785,6 @@ func _kv(parent: Control, key: String, value: String, accent_value := false) -> 
 	parent.add_child(line)
 
 
-## a dark card. clickable when given a callable, and marked with an accent bar when selected.
 func _card(parent: Control, selected: bool, on_click: Callable) -> VBoxContainer:
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
@@ -882,7 +813,6 @@ func _card(parent: Control, selected: bool, on_click: Callable) -> VBoxContainer
 	return col
 
 
-## on_hover, when given, is called with true as the mouse arrives and false as it leaves.
 func _row(parent: Control, on_hover := Callable()) -> HBoxContainer:
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
@@ -906,9 +836,6 @@ func _row(parent: Control, on_hover := Callable()) -> HBoxContainer:
 			on_hover.call(false)
 		panel.mouse_entered.connect(enter)
 		panel.mouse_exited.connect(leave)
-		## godot hands the hover to the topmost control under the mouse, so a BUTTON in the row takes it
-		## away from the row and the preview vanished exactly where the player was about to click. the
-		## buttons that land in the row report their hover too; leaving a button into the row re-enters it.
 		row.child_entered_tree.connect(func(c: Node) -> void:
 			if c is BaseButton:
 				c.mouse_entered.connect(enter)
@@ -916,7 +843,6 @@ func _row(parent: Control, on_hover := Callable()) -> HBoxContainer:
 	return row
 
 
-## the weapon's picture on a card: its own small side view.
 func _thumb(parent: Control, model: String) -> Control:
 	var view := WEAPON_VIEW.new()
 	view.custom_minimum_size = Vector2(160, 84)
@@ -930,7 +856,6 @@ func _thumb(parent: Control, model: String) -> Control:
 	return view
 
 
-## a filled button, the reference's shape: dark plate, light caps. the accent one is the primary action.
 func _solid(parent: Control, text: String, cb: Callable, accent := false) -> Button:
 	var b := Button.new()
 	b.text = text
@@ -956,7 +881,6 @@ func _solid(parent: Control, text: String, cb: Callable, accent := false) -> But
 	return b
 
 
-## the small action on a row: BUY, INSTALL, LOAD, SWAP. dim when it cannot be afforded.
 func _small(parent: Control, text: String, cb: Callable, enabled := true) -> Button:
 	var b := Button.new()
 	b.text = text

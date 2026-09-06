@@ -1,11 +1,6 @@
 class_name Searchlight
 extends Node3D
 
-## a light that looks DOWN. the vision cone drops pitch on purpose, because a bird dipping its beak
-## would go blind and the player could not read that; a gunship looking down is nothing but pitch,
-## so this is its own cone test, in full 3D, plus a clear ray on the world layer. the SpotLight3D
-## that draws it uses the same half angle, so what the player sees on the ground and what the code
-## tests are the same cone. it decides nothing about marking; the gunship does that.
 
 @export var half_angle_deg := 11.0
 @export var reach := 80.0
@@ -28,8 +23,7 @@ func _ready() -> void:
 	_spot.spot_attenuation = 0.6
 	add_child(_spot)
 
-	## the visible shaft: an additive cone from the lamp to the ground. a tube reads as a beam; a quad
-	## would read as a rectangle.
+	## an additive cone reads as a beam; an additive quad would read as a rectangle.
 	_cone = MeshInstance3D.new()
 	var mesh := CylinderMesh.new()
 	mesh.top_radius = 0.25
@@ -54,7 +48,6 @@ func _ready() -> void:
 	_cone.visible = false
 
 
-## point the lamp at a spot on the ground. the shaft is stretched from the lamp to it.
 func aim_at(point: Vector3) -> void:
 	_aim = point
 	_has_aim = true
@@ -65,7 +58,6 @@ func aim_at(point: Vector3) -> void:
 	var length := d.length()
 	var radius := tan(deg_to_rad(half_angle_deg)) * length
 	_cone.visible = true
-	## the unit cone is drawn point up along +y, so it is stretched from the aim point back to the lamp
 	_stretch(_cone, point, global_position, radius)
 
 
@@ -73,7 +65,6 @@ func aim_point() -> Vector3:
 	return _aim
 
 
-## is this point inside the cone, and is nothing of the world in the way. full 3D angle on purpose.
 func sees(point: Vector3) -> bool:
 	if not _has_aim:
 		return false
@@ -92,7 +83,6 @@ func set_lit(on: bool) -> void:
 	_cone.visible = on and _has_aim
 
 
-## a cylinder whose narrow end is at `to` and wide end at `from`: y runs from bottom (wide) to top.
 static func _stretch(mi: MeshInstance3D, wide_at: Vector3, narrow_at: Vector3, radius: float) -> void:
 	var d := narrow_at - wide_at
 	var length := d.length()

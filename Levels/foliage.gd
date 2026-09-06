@@ -2,12 +2,9 @@
 class_name Foliage
 extends Node3D
 
-## scatters the nature props over the hills and the range, seeded so the layout is reproducible.
-## everything is drawn through MultiMesh, so ten thousand blades of grass cost a handful of draw calls.
 
 const NATURE := "res://Models/Nature/%s.glb"
 
-## the source models are z up with the height running down -Z, so every mesh is stood upright once here.
 const UPRIGHT := Vector3(PI * 0.5, 0.0, 0.0)
 
 
@@ -20,7 +17,6 @@ class Band:
 	var scale_max: float
 	var slope_max: float
 	var sink: float
-	## multiplies the model's own albedo. white leaves it alone.
 	var tint: Color
 
 	func _init(s: Array[String], c: int, i: float, o: float, smin: float, smax: float,
@@ -40,7 +36,7 @@ class Band:
 @export var scatter_seed := 1312
 ## nothing is planted inside this radius, it is the firing lane and it stays clear.
 @export var clear_radius := 22.0
-## multiplies every band's radii and the clear zone. the menu backdrop is the same field shrunk to a garden.
+## multiplies every band's radii and the clear zone.
 @export var ring_scale := 1.0
 @export var tree_count := 430
 ## sparse over the firing range so the grid stays readable, dense past its edge.
@@ -51,13 +47,12 @@ class Band:
 @export var debris_count := 70
 
 @export_group("Tint")
-## the psx grass textures are dry straw. this multiplies them toward a living green, so values
-## above 1 on the green channel are deliberate.
+## the psx grass textures are dry straw.
 @export var grass_tint := Color(0.62, 1.35, 0.5)
 @export_range(0.0, 0.5) var tint_variation := 0.18
 
 @export_group("Collision")
-## trunks block movement. one body carrying many shapes, not many bodies.
+## trunks block movement.
 @export var tree_collision := true
 @export var trunk_radius := 0.45
 ## boulders block movement too, and a stealth map wants things to hide behind.
@@ -91,14 +86,10 @@ func build() -> void:
 	_rng.seed = scatter_seed
 
 	var bands: Array[Band] = [
-		## trees start where the flat range ends so they never block a firing lane.
-		## trees start where the flat range ends so they never stand in a firing lane.
 		Band.new(["tree_pine_a", "tree_pine_b", "tree_a", "tree_b", "tree_c"],
 			tree_count, 98.0, 210.0, 0.9, 1.8, 0.55, 0.35),
-		## short sparse tufts on the range itself. the grid is the ruler, it has to stay legible.
 		Band.new(["grass_a", "grass_b", "grass_c", "grass_d"],
 			range_grass_count, clear_radius, 98.0, 0.7, 1.2, 1.0, 0.02, grass_tint),
-		## and proper meadow past the edge, where nothing is being measured.
 		Band.new(["grass_a", "grass_b", "grass_c", "grass_d"],
 			grass_count, 96.0, 210.0, 1.2, 2.5, 1.0, 0.02, grass_tint),
 		Band.new(["fern_a", "fern_b"], fern_count, 92.0, 210.0, 1.0, 2.0, 0.9, 0.04),
@@ -122,7 +113,6 @@ func build() -> void:
 				for t in placements:
 					trunks.append(t.origin)
 					trunk_scales.append(t.basis.get_scale().y)
-			## sized from the model the player can see, not from a number typed in here.
 			if is_rock and rock_collision and box.size != Vector3.ZERO:
 				var half := maxf(box.size.x, box.size.z) * 0.5 * rock_radius_scale
 				for t in placements:
@@ -151,19 +141,16 @@ func _find_hills() -> HillRing:
 	return null
 
 
-## the MESH surface height, not the smooth function, or props float over every bulge.
 func _ground(x: float, z: float) -> float:
 	return _hills.surface_height_at(x, z) if _hills != null else 0.0
 
 
-## rejects a point that is too close to the middle, or on a slope too steep to stand a tree on.
 func _place(band: Band, wanted: int) -> Array[Transform3D]:
 	var out: Array[Transform3D] = []
 	var attempts := wanted * 6
 	while out.size() < wanted and attempts > 0:
 		attempts -= 1
 		var angle := _rng.randf() * TAU
-		## sqrt keeps the density even across the ring instead of crowding the inner edge.
 		var t := sqrt(_rng.randf())
 		var radius: float = lerpf(band.inner, band.outer, t) * ring_scale
 		if radius < clear_radius * ring_scale:
@@ -182,7 +169,6 @@ func _place(band: Band, wanted: int) -> Array[Transform3D]:
 	return out
 
 
-## how far from level the ground is here, 0 is flat and 1 is vertical.
 func _slope(x: float, z: float) -> float:
 	if _hills == null:
 		return 0.0
@@ -192,8 +178,6 @@ func _slope(x: float, z: float) -> float:
 	return Vector2(dy_x, dy_z).length() / (2.0 * d)
 
 
-## one MultiMeshInstance3D per surface of the source model, all sharing the same instance transforms.
-## returns the model's own bounds, which is what any collision built from it has to be sized by.
 func _emit(source: String, placements: Array[Transform3D], tint := Color.WHITE) -> AABB:
 	if placements.is_empty():
 		return AABB()
@@ -211,7 +195,6 @@ func _emit(source: String, placements: Array[Transform3D], tint := Color.WHITE) 
 		var part: Array = parts[index]
 		var mesh: Mesh = part[0]
 		var local: Transform3D = part[1]
-		## a tint only works on a single surface model, where one material override cannot lose a texture.
 		var tinted := tint != Color.WHITE and mesh.get_surface_count() == 1
 
 		var mm := MultiMesh.new()
@@ -228,8 +211,7 @@ func _emit(source: String, placements: Array[Transform3D], tint := Color.WHITE) 
 		var node := MultiMeshInstance3D.new()
 		node.name = "%s_%d" % [source, index]
 		node.multimesh = mm
-		## a multimesh assembled in code reports an EMPTY aabb, so godot culls every instance and
-		## nothing draws at all. the real bounds have to be handed over explicitly.
+		## a multimesh assembled in code reports an EMPTY aabb and godot culls every instance; the bounds are handed over explicitly.
 		node.custom_aabb = _bounds_of(mesh, local, placements)
 		if tinted:
 			node.material_override = _tinting_material(mesh)
@@ -242,8 +224,6 @@ func _emit(source: String, placements: Array[Transform3D], tint := Color.WHITE) 
 	return bounds
 
 
-## the exporter left every model on a blender layout grid, so the file origin is metres away from the
-## model. the transforms are rebased here against the combined bounds instead of trusting the file.
 func _collect_meshes(root: Node3D) -> Array:
 	var found: Array = []
 	var bounds := AABB()
@@ -265,8 +245,6 @@ func _collect_meshes(root: Node3D) -> Array:
 	if found.is_empty():
 		return found
 
-	## after standing the model up, -Z becomes +Y, so the model grows along its own -Z and its BASE
-	## is the MAXIMUM z. rebasing to the minimum instead hangs every tree upside down under the ground.
 	var centre := bounds.get_center()
 	var rebase := Transform3D(Basis.IDENTITY, Vector3(-centre.x, -centre.y, -bounds.end.z))
 	for part in found:
@@ -274,8 +252,6 @@ func _collect_meshes(root: Node3D) -> Array:
 	return found
 
 
-## the model's own material, copied and told to multiply by the instance colour.
-## overriding with a fresh material instead would throw the grass texture away.
 func _tinting_material(mesh: Mesh) -> Material:
 	var source := mesh.surface_get_material(0) as StandardMaterial3D
 	var mat: StandardMaterial3D = source.duplicate() if source != null else StandardMaterial3D.new()
@@ -297,8 +273,6 @@ func _bounds_of(mesh: Mesh, local: Transform3D, placements: Array[Transform3D]) 
 	return bounds
 
 
-## the probe scene is never added to the tree, so global_transform is invalid on it.
-## the chain of local transforms up to the root is the same thing and works detached.
 func _relative_transform(root: Node3D, node: Node3D) -> Transform3D:
 	var out := Transform3D.IDENTITY
 	var current := node
@@ -308,8 +282,6 @@ func _relative_transform(root: Node3D, node: Node3D) -> Transform3D:
 	return out
 
 
-## one body carrying a ball per boulder, same as the trunks. never given an owner, so none of this
-## is ever serialised into the level file.
 func _build_rock_bodies(points: PackedVector3Array, radii: PackedFloat32Array) -> void:
 	var body := StaticBody3D.new()
 	body.name = "RockCollision"

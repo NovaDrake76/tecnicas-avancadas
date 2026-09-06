@@ -1,8 +1,5 @@
 extends StaticBody3D
 
-## the board on the armory wall: a dark plate with the mission pictures pinned to it, built at runtime
-## from Run.LEVELS so a new mission shows up here without touching the scene. nothing is owned, so the
-## level file stays small. interacting opens the mission screen.
 
 @export var width := 1.8
 @export var height := 1.1
@@ -54,7 +51,6 @@ func _build() -> void:
 		quad.material_override = pm
 		quad.position = Vector3(-width * 0.5 + gap + photo_width * 0.5 + i * (photo_width + gap), 0.08, 0.025)
 		add_child(quad)
-		## a pin
 		var pin := MeshInstance3D.new()
 		var s := SphereMesh.new()
 		s.radius = 0.012

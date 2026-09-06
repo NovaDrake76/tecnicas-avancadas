@@ -1,14 +1,12 @@
 class_name MagazinePouch
 extends Node
 
-## the spare magazines the player carries, any type, each with its own bb mass. the pouch owns the
-## count; the weapon asks for one at the end of a reload and the hud shows how many are left.
 
 signal changed
 signal added(mag: Magazine)
 signal refused(message: String)
 
-## per type. a pouch that never fills makes the boxes in the world worth nothing.
+## per type.
 @export var max_per_type := 4
 
 var _mags: Array[Magazine] = []
@@ -30,9 +28,6 @@ func total() -> int:
 	return _mags.size()
 
 
-## rounds, not magazines: what every shooter puts after the slash. the pouch owns the number because
-## the pouch owns the magazines, and a hud that added it up itself would be a second place to get it
-## wrong when a half empty spare goes in.
 func rounds(mag_type: Ordnance.MagType) -> int:
 	var n := 0
 	for m in _mags:
@@ -41,7 +36,6 @@ func rounds(mag_type: Ordnance.MagType) -> int:
 	return n
 
 
-## a copy goes in, never the pickup's own resource, or two pickups sharing a .tres share a count.
 func add(mag: Magazine) -> bool:
 	if mag == null:
 		return false
@@ -55,7 +49,6 @@ func add(mag: Magazine) -> bool:
 	return true
 
 
-## the fullest spare of that type, removed from the pouch. null when there is none.
 func take(mag_type: Ordnance.MagType) -> Magazine:
 	var best: Magazine = null
 	for m in _mags:
@@ -67,7 +60,6 @@ func take(mag_type: Ordnance.MagType) -> Magazine:
 	return best
 
 
-## the armory refills everything from scratch. the field never calls this.
 func clear() -> void:
 	_mags.clear()
 	changed.emit()

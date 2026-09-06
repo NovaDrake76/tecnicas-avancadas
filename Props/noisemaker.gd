@@ -1,11 +1,6 @@
 class_name Noisemaker
 extends Throwable
 
-## a spent magazine thrown to make a noise somewhere else. it is the one deliberate sound the player
-## can make, and it does something a footstep never does: the birds that hear it WALK OVER to look.
-## a footstep turns a head; a clatter in the bushes is an event. "a missed bb is silent" is untouched,
-## because a bb still calls neither. the model is the m4's own magazine, split out of its mesh for
-## the pickups, so it is in the fiction and reads at once as something small that was thrown.
 
 signal landed(at: Vector3)
 
@@ -40,11 +35,8 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	_on_landed.call_deferred(state.get_contact_collider_position(0))
 
 
-## the clatter: a sound for the player, and a walk-over for every calm bird in earshot. it raises
-## nothing and touches no alarm stage, ever.
 func _on_landed(at: Vector3) -> void:
 	Sfx.play(&"clank", at)
-	## the clatter is heard on every machine that has a copy of this thing, and answered on one.
 	if multiplayer.is_server():
 		_walk_over(at)
 	elif mine:

@@ -1,13 +1,6 @@
 class_name HitMarker
 extends Control
 
-## the four diagonal strokes that snap onto the crosshair when a bb lands on something, white for a
-## hit and red for one that put the target down. it is its OWN node rather than part of the
-## crosshair, because the crosshair fades out while you are aiming and the confirmation you most
-## want is the one for the shot you took down the sights.
-##
-## it is SILENT on purpose: the mark is the whole of the feedback. a game whose promise is that a
-## missed bb makes no noise has no business making one for a hit.
 
 @export var inner := 5.0
 @export var outer := 14.0
@@ -62,8 +55,6 @@ func _draw() -> void:
 		return
 	var u := _left / _span
 	var mid := size * 0.5
-	## the pop is on u squared so it is nearly gone by the time the fade is halfway: a snap, then a
-	## steady mark that fades, rather than a shape that shrinks all the way out.
 	var grow := lerpf(1.0, pop, u * u) * (kill_scale if _lethal else 1.0)
 	var colour := kill_colour if _lethal else hit_colour
 	colour.a *= u

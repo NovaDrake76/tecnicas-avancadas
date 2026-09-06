@@ -1,8 +1,5 @@
 extends CanvasLayer
 
-## the tactical board: every mission as a card with its picture, the one selected shown large with its
-## brief, par and best score, and DEPLOY. locked missions say how many clears they still need. the
-## rule lives in Run; this screen only draws it. the player is frozen underneath like at the bench.
 
 signal deploy_pressed
 signal closed
@@ -91,13 +88,6 @@ func selected() -> int:
 	return _selected
 
 
-## how much TALLER the detail column is than the space it has. positive means the panel is
-## overflowing, which is what slid the last INTEL row under the DEPLOY footer and cut it in half.
-## the scroller would carry it, but a sheet whose bottom line is sliced through reads as broken
-## rather than as scrollable, so the gate treats any overflow at 1080 as a fault.
-## how far the DEPLOY button's bottom edge sits above the bottom of the canvas. it is the number
-## that decides whether the sheet survives losing a strip of the window, which is the one thing that
-## has actually happened to it.
 func footer_clearance() -> float:
 	if _root == null or _deploy_btn == null:
 		return 0.0
@@ -105,10 +95,6 @@ func footer_clearance() -> float:
 
 
 func detail_overflow() -> float:
-	## the column sits inside a MarginContainer inside the scroller, so the scroller is found by
-	## WALKING UP rather than by assuming it is the parent. assuming it was is why the first version
-	## of this returned 0.0 on every run, including one where the sheet visibly ran under the footer:
-	## it took the early exit every single time and could not fail.
 	var scroll: ScrollContainer = null
 	var node: Node = _right
 	while node != null and scroll == null:
@@ -116,10 +102,6 @@ func detail_overflow() -> float:
 		scroll = node as ScrollContainer
 	if scroll == null:
 		return 0.0
-	## the SCROLLBAR'S own range, the direct answer to "does this need to scroll". size.y reads back
-	## as exactly the space available, because a ScrollContainer stretches its child to fill it, and
-	## get_combined_minimum_size under reports because an autowrapped label's minimum is one line and
-	## the brief is four.
 	var bar := scroll.get_v_scroll_bar()
 	if bar == null:
 		return 0.0
@@ -136,11 +118,8 @@ func open() -> void:
 	if hud != null:
 		hud.visible = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	## the cursor is this screen's until it closes; the player will not take it back on a focus-in
 	add_to_group("holds_mouse")
 	visible = true
-	## the mission after the furthest one cleared, if it is open: the one you are most likely here to
-	## play. a fresh run lands on the first.
 	_selected = Run.suggested_level()
 	_refresh()
 
@@ -171,11 +150,7 @@ func select(index: int) -> void:
 	_refresh()
 
 
-## deploys into the selected mission. a locked one is refused with what it still needs.
 func deploy() -> bool:
-	## the mission is one mission, so choosing it is one machine's job. a client may read the whole
-	## board -- the briefs are how you know what you are walking into -- and the host is the one who
-	## says go. told plainly, because a button that did nothing would read as a broken button.
 	if not Net.is_host():
 		_say("The host chooses the mission.")
 		return false
@@ -239,9 +214,6 @@ func _refresh() -> void:
 	MenuStyle.sheet_text(_right, "MISSION %d   %s" % [_selected + 1, "OPEN" if selected_open else "LOCKED"], 13, MenuStyle.ACCENT)
 	MenuStyle.sheet_text(_right, String(sel["name"]), 44, MenuStyle.BRIGHT, true)
 	MenuStyle.sheet_gap(_right, 6)
-	## 380 tall pushed the last INTEL row under the DEPLOY footer at 1080, and a panel whose bottom
-	## line is sliced in half reads as broken rather than as scrollable. the picture is the one
-	## thing here that can give up height without losing anything.
 	var big := _picture(_right, String(sel.get("image", "")), Vector2(0, 300))
 	big.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if not selected_open:
@@ -270,7 +242,6 @@ func _picture(parent: Control, path: String, size: Vector2) -> TextureRect:
 	if path != "" and ResourceLoader.exists(path):
 		r.texture = load(path)
 	else:
-		## no picture yet: a dark plate so the layout holds
 		var plate := PlaceholderTexture2D.new()
 		plate.size = Vector2(16, 9)
 		r.texture = plate

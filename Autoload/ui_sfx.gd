@@ -1,9 +1,5 @@
 extends Node
 
-## every sound the interface makes, from one place. buttons are hooked as they enter the tree, so a
-## new menu gets hover and click for free; the few sounds that mean something (bought, installed,
-## deploy, refused) are asked for by name by the screen that knows what happened.
-## non positional on purpose: the interface is not in the world.
 
 const BANKS := {
 	"hover": ["res://Sounds/ui/hover_1.ogg"],
@@ -21,21 +17,12 @@ const BANKS := {
 	"bench_open": ["res://Sounds/ui/bench_open_1.ogg"],
 	"bench_close": ["res://Sounds/ui/bench_close_1.ogg"],
 	"page": ["res://Sounds/ui/page_1.ogg"],
-	## deliberately EMPTY, after Nathan listened: leaving the pause menu says nothing, the game coming
-	## back is what says it. its own name rather than "back", so the bench and the board keep theirs.
 	"pause_close": [],
 }
-## the clips are normalised to a quiet body level already (the build script does that), so these are
-## small offsets between them. the hover tick is the one sound that plays a hundred times, so it
-## sits far under the rest.
 const GAIN_DB := {"hover": -12.0, "click": -4.0, "confirm": -4.0, "deploy": 0.0, "switch": -6.0,
 	"back": -4.0, "buy": -2.0, "install": -4.0, "error": -4.0, "tick": -6.0, "stamp": -4.0, "objective": -6.0,
 	"bench_open": -6.0, "bench_close": -6.0, "page": -6.0}
-## buttons with this meta stay silent, for the ones that play their own sound.
 const QUIET := &"ui_quiet"
-## banks that are empty ON PURPOSE. the name stays so the call site stays and a clip can go back in;
-## the smoke probe asserts these are empty and every other bank is not, so a missing file is still
-## a failure and a cut is not.
 const SILENT := ["pause_close"]
 
 var _streams := {}
@@ -67,7 +54,6 @@ func has(sound: String) -> bool:
 	return _streams.has(sound) and not (_streams[sound] as Array).is_empty()
 
 
-## how many times a sound has played, for the probe.
 func count(sound: String) -> int:
 	return int(_played.get(sound, 0))
 
@@ -103,7 +89,6 @@ func _on_node_added(node: Node) -> void:
 			b.pressed.connect(func() -> void: play("click"))
 
 
-## a row of buttons swept by the mouse fires one tick, not a burst.
 func _on_hover() -> void:
 	var now := Time.get_ticks_msec() / 1000.0
 	if now - _hover_at < 0.05:

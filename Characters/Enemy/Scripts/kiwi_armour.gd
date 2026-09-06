@@ -1,16 +1,6 @@
 class_name KiwiArmour
 extends Node3D
 
-## what an armoured kiwi wears, and the weak point it frames. plate you can SEE: a visor band across
-## the brow with the eyes in the slot under it, a chest plate and a back plate with the laser green
-## trim, so the player is told at a glance both that this bird will shrug off a plinked bb and where
-## the one shot that will not be shrugged off has to land. built from primitives in _ready like the
-## range target and the horn, PSX flat like everything else.
-##
-## the head pieces follow the head BONE. the rig's axes are the rigger's business, so nothing here
-## assumes one: at the first frame the head's pose is compared with the body's facing and that one
-## comparison fixes a calibration for good, the same trick the vision cone uses. it draws and reports
-## hits; every decision about damage is the kiwi's.
 
 const METAL := Color(0.14, 0.15, 0.16)
 const METAL_LIGHT := Color(0.24, 0.25, 0.27)
@@ -19,8 +9,7 @@ const LEADER_TRIM := Color(0.75, 1.0, 0.55)
 
 ## the weak point box: the eyes are 77 mm apart, so this covers both with a little to spare.
 @export var weak_size := Vector3(0.15, 0.09, 0.09)
-## how far forward of the eye midpoint the weak point sits, so it is the first thing a bb from the
-## front meets rather than the body capsule behind it.
+## how far forward of the eye midpoint the weak point sits, so it is the first thing a bb from the front meets rather th...
 @export var weak_forward := 0.015
 
 var _kiwi: CharacterBody3D
@@ -99,7 +88,6 @@ func _plate(parent: Node3D, size: Vector3, at: Vector3, trim_y: float) -> MeshIn
 	return mi
 
 
-## the chest and back plates ride the body, so they are plain children of the kiwi.
 func _build_body_plates() -> void:
 	_plate(self, Vector3(0.24, 0.17, 0.05), Vector3(0.0, 0.3, -0.16), 0.02)
 	var back := _plate(self, Vector3(0.22, 0.15, 0.05), Vector3(0.0, 0.32, 0.15), 0.0)
@@ -114,7 +102,6 @@ func _build_body_plates() -> void:
 	back.add_child(_chevron)
 
 
-## the visor band sits over the eyes on the head rig, framing the slot the weak point fills.
 func _build_visor() -> void:
 	_build_materials()
 	var band := MeshInstance3D.new()
@@ -144,9 +131,6 @@ func _build_visor() -> void:
 		_plates.append(cheek)
 
 
-## the head rig is placed at the head bone every frame, with the calibration that makes its axes
-## the body's at rest. then the weak point and the visor are plain offsets in a frame that means
-## "forward is where the bird looks".
 func _process(delta: float) -> void:
 	if _flash > 0.0:
 		_flash = maxf(0.0, _flash - delta * 6.0)
@@ -174,7 +158,6 @@ func _head_transform() -> Transform3D:
 	return _kiwi.global_transform.translated_local(Vector3(0.0, 0.45, -0.2))
 
 
-## a qualifying hit: the plate flashes white and throws grey sparks.
 func dent(at: Vector3) -> void:
 	_flash = 1.0
 	var world := get_tree().current_scene
@@ -184,7 +167,6 @@ func dent(at: Vector3) -> void:
 	Sfx.play(&"bb_dent", where)
 
 
-## a bb that arrived too slow to matter: a white spark and a ping, nothing else.
 func bounce(at: Vector3) -> void:
 	_flash = 0.35
 	var world := get_tree().current_scene
@@ -194,7 +176,6 @@ func bounce(at: Vector3) -> void:
 	Sfx.play(&"bb_plate", where)
 
 
-## the plates come off before the bird does, which is the clearest possible "that one worked".
 func shed() -> void:
 	if _shed:
 		return
@@ -214,8 +195,6 @@ func is_shed() -> bool:
 	return _shed
 
 
-## the leader's trim is brighter and it wears a chevron on the back plate, so the priority target
-## is legible from behind, which is where a stalking player usually is.
 func set_leader(leader: bool) -> void:
 	_leader = leader
 	_build_materials()

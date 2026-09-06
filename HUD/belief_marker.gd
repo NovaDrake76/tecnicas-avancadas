@@ -1,44 +1,15 @@
 class_name BeliefMarker
 extends Control
 
-## where the COMPOUND thinks you are, drawn on the screen.
-##
-## the game already worked all of this out and kept it to itself. `Alarm.last_known` is the spot the
-## garrison is working from, `knowledge_age()` is how old that belief is, and `search_point(seed)`
-## fans each bird onto a ring that widens as it goes stale. the mortar shells that spot, hunters
-## search it, a suppressing beam lights it -- and the player, who is the one person the whole thing
-## is about, was never shown any of it. so being seen was a punishment and nothing else.
-##
-## this is Splinter Cell Conviction's last known position, which is the clearest thing the genre has
-## ever done about this: the silhouette stays where the enemy last saw you, they commit to it, and
-## you get to watch them do it. reviewers called it stealth training wheels and vital in the same
-## paragraph, and it is the reason being spotted there is a play rather than a failure. ours is a
-## marker rather than a ghost of the player, because ours also has to say how WIDE the search has
-## got, which a silhouette cannot.
-##
-## it appears only once they have lost you (`REVEAL`). while a bird has eyes on you the compound's
-## belief IS your position, and a diamond drawn on your own feet is noise on the screen at the exact
-## moment the screen is busiest.
 
-## CUT, at Nathan's call, and cut the way this project cuts things: the node stays wired, the rule
-## below stays exactly as it was, and the drawing is switched off. Putting it back on screen is this
-## one flag -- the same bargain a sound Nathan did not want keeps when it loses its clips and keeps
-## its call site. What the compound believes is not the player's business to be shown; the birds
-## still work from it, the mortar still shells it, and a player who wants to know where the search
-## went has to read the birds instead of a diagram.
+## CUT, at Nathan's call, and cut the way this project cuts things: the node stays wired, the rule below stays exactly a...
 @export var shown := false
 
-## seconds of nobody seeing you before the belief is worth drawing.
 const REVEAL := 0.6
-## how far inside the frame the marker may sit once it clamps to an edge.
 const MARGIN := Vector2(90.0, 90.0)
 const SIZE := 13.0
-## up from the ground, so the diamond sits at chest height on the spot rather than at its ankles.
 const LIFT := 1.0
-## points around the search ring. it is drawn on the ground, so it reads as an area rather than
-## as a halo around the marker.
 const RING_STEPS := 40
-## SEARCHING and ALARM, the same two colours the alert ring uses for the same two facts.
 const WARM := Color(0.98, 0.74, 0.24)
 const HOT := Color(1.0, 0.42, 0.32)
 const INK := Color(0.0, 0.0, 0.0, 0.75)
@@ -58,8 +29,6 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 
 
-## worked out here rather than in _draw, the rule the extraction marker and the tags both follow:
-## a headless probe can read a position and cannot read a drawing.
 func _process(_delta: float) -> void:
 	var was := _shown
 	_shown = _believable()
@@ -71,8 +40,6 @@ func _process(_delta: float) -> void:
 		queue_redraw()
 
 
-## is there a belief worth drawing: the compound is looking for somebody, it has a spot to look at,
-## and nobody can see the player right now.
 func _believable() -> bool:
 	if not shown:
 		return false
@@ -96,9 +63,6 @@ func _track() -> void:
 
 	var rect := Rect2(MARGIN, size - MARGIN * 2.0)
 	var middle := size * 0.5
-	## behind the camera `unproject_position` mirrors the point through the centre, so a marker
-	## placed with it swings to the wrong side and sends the player away from the thing it names.
-	## the camera's own space answers it: the sign of z is in front or behind.
 	var local := cam.to_local(at)
 	var point := Vector2.ZERO
 	if local.z < 0.0:
@@ -115,11 +79,6 @@ func _track() -> void:
 	_ring = _ring_points(cam, ground)
 
 
-## the search ring, drawn flat on the ground at the spot. it is the honest half of the marker: the
-## diamond says where they think you were, the ring says how much of that they still believe, and
-## it is the difference between walking away and having to leave the area. drawn only when the
-## WHOLE circle is in front of the camera -- a ring with points behind the eye comes back as a
-## shape turned inside out, which reads as a bug rather than as a search.
 func _ring_points(cam: Camera3D, ground: Vector3) -> PackedVector2Array:
 	var out := PackedVector2Array()
 	if _radius <= 0.5:
@@ -133,9 +92,6 @@ func _ring_points(cam: Camera3D, ground: Vector3) -> PackedVector2Array:
 	return out
 
 
-## the point where the line from the middle of the screen out to the marker leaves the frame,
-## taken as a ratio along that line: clamping x and y on their own moves the point off the line
-## and the arrow then points at nothing.
 func _clamp_to(rect: Rect2, middle: Vector2, point: Vector2) -> Vector2:
 	var ray := point - middle
 	if ray.length_squared() < 0.0001:
@@ -151,7 +107,6 @@ func _clamp_to(rect: Rect2, middle: Vector2, point: Vector2) -> Vector2:
 	return middle + ray * reach
 
 
-## for the probe.
 func is_shown() -> bool:
 	return _shown
 
@@ -164,7 +119,6 @@ func at_edge() -> bool:
 	return _at_edge
 
 
-## the search radius in METRES, which is what the ring is drawn at.
 func ring_radius() -> float:
 	return _radius
 
@@ -187,9 +141,6 @@ func _draw() -> void:
 	_caption(_where, tint)
 
 
-## hollow, and the same diamond the tags use, because it is the same claim: a thing is at this
-## point. it is not the mark's solid colour, and it does not wear a name, so a marked bird and a
-## place the garrison is searching can never be read as the same object.
 func _diamond(at: Vector2, tint: Color) -> void:
 	var points := PackedVector2Array([
 		at + Vector2(0.0, -SIZE), at + Vector2(SIZE * 0.78, 0.0),
@@ -209,8 +160,6 @@ func _arrow(at: Vector2, dir: Vector2, tint: Color) -> void:
 	draw_colored_polygon(points, tint)
 
 
-## two facts and no more: they are looking, and they are looking THERE. the distance is what
-## decides whether the player walks away or has to move now.
 func _caption(at: Vector2, tint: Color) -> void:
 	var text := "LAST SEEN  %d m" % roundi(_distance)
 	var font := HudStyle.FACE

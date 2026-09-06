@@ -2,13 +2,11 @@
 class_name HillRing
 extends Node3D
 
-## hills that begin where the flat range ends, so the world has an edge you cannot see over.
-## the middle stays perfectly flat on purpose, the gridded floor is the ruler the ballistics demo reads.
 
 @export_group("Shape")
 ## the floor is a 200 m square, so the falloff follows a square too or the corners poke through.
 @export var square_falloff := true
-## everything inside this stays flat. it must match the floor's half extent.
+## everything inside this stays flat.
 @export var inner := 100.0
 ## the hills reach full height by here.
 @export var outer := 190.0
@@ -56,13 +54,11 @@ func _configure_noise() -> void:
 	_ready_noise = true
 
 
-## 0 on the flat range, 1 out where the hills are full height.
 func falloff(x: float, z: float) -> float:
 	var d := maxf(absf(x), absf(z)) if square_falloff else Vector2(x, z).length()
 	return smoothstep(inner, outer, d)
 
 
-## the ground height at a world point. the foliage scatter calls this so plants sit on the ground.
 func height_at(x: float, z: float) -> float:
 	if not _ready_noise:
 		_configure_noise()
@@ -122,8 +118,6 @@ func build() -> void:
 	_attach(body)
 
 
-## the geometry is GENERATED, never stored. setting owner here is what told godot to serialise
-## every vertex and every instance transform into level_01.tscn, and took it to 38 MB.
 func _attach(node: Node) -> void:
 	add_child(node)
 
@@ -139,9 +133,6 @@ func _make_material() -> ShaderMaterial:
 	return mat
 
 
-## the height of the MESH surface, which is not the same as height_at on a curved slope.
-## the mesh is flat triangles between grid corners, so a prop placed with the smooth function
-## floats above the ground wherever the surface bulges, and sinks where it dips.
 func surface_height_at(x: float, z: float) -> float:
 	var step := extent / float(resolution)
 	var half := extent * 0.5
@@ -162,7 +153,6 @@ func surface_height_at(x: float, z: float) -> float:
 	var hc := height_at(x1, z1)
 	var hd := height_at(x0, z1)
 
-	## the quad is split a-b-c and a-c-d, so which triangle a point lands in decides the plane.
 	if u >= v:
 		return ha + (hb - ha) * u + (hc - hb) * v
 	return ha + (hc - hd) * u + (hd - ha) * v

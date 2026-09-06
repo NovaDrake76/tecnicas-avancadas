@@ -1,9 +1,6 @@
 class_name AlertRing
 extends Control
 
-## one arc per kiwi that is currently noticing you, sitting on a ring around the crosshair at the
-## bearing of that bird. a single bar in the middle says how close you are to being seen but never
-## says by whom, which is the one thing you need in order to do something about it.
 
 @export var radius := 92.0
 @export var thickness := 8.0
@@ -21,13 +18,9 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
-## the state arrives by signal. only the BEARING is recomputed per frame, because the player
-## turning is what moves the arc, and that is drawing rather than asking the world anything.
 func set_watcher(who: Node3D, value: float) -> void:
 	if who == null:
 		return
-	## the same threshold the bird itself acts on, so an arc on the ring means a bird that has
-	## stopped and squared up to you, never a bird still wandering about.
 	if value <= VisionCone.NOTICING:
 		_watchers.erase(who)
 	else:
@@ -35,10 +28,6 @@ func set_watcher(who: Node3D, value: float) -> void:
 	queue_redraw()
 
 
-## how much that bird KNOWS, which the awareness bar stops answering the moment it is full: a bird
-## that has already seen you has no bar left to fill, and a bird that was merely shouted at never
-## had one. from HUNTING up the arc is pinned on whatever the bar says, so an arc on the ring means
-## the same thing at every tier: that bird is a problem, and it is in that direction.
 func set_tier(who: Node3D, tier: int) -> void:
 	if who == null:
 		return
@@ -61,7 +50,6 @@ func watcher_count() -> int:
 	return _watchers.size()
 
 
-## 0 straight ahead, positive to the right, +-PI behind you.
 static func bearing_to(cam: Camera3D, point: Vector3) -> float:
 	var local := cam.global_transform.affine_inverse() * point
 	return atan2(local.x, -local.z)
@@ -91,14 +79,11 @@ func _draw() -> void:
 		var value: float = clampf(float(_watchers[who]), 0.0, 1.0)
 		var shade := calm.lerp(alarmed, value)
 		if tier == Kiwi.Alert.CALLING:
-			## the two seconds the player has to stop the word getting out, and the only thing on the
-			## screen that blinks. a window nobody can see is not a window.
 			shade = alarmed if fmod(_blink, 0.24) < 0.12 else backing.lerp(alarmed, 0.35)
 		elif tier == Kiwi.Alert.ENGAGED:
 			shade = alarmed
 		elif tier == Kiwi.Alert.HUNTING:
 			shade = calm
-		## screen angles run from +X and clockwise, so straight ahead is a quarter turn up.
 		var mid := bearing_to(cam, (who as Node3D).global_position) - PI * 0.5
 		draw_arc(centre, radius, mid - span * 0.5, mid + span * 0.5, 20,
 			backing, thickness + 5.0, true)

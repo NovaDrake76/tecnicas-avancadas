@@ -1,8 +1,6 @@
 class_name CameraEffects
 extends Camera3D
 
-## every view effect lands here, on the camera, as an offset on top of the head's aim.
-## the head carries mouse pitch and crouch height, this node only ever adds to it.
 
 @export_group("Toggles")
 @export var enable_tilt := true
@@ -121,8 +119,6 @@ func calculate_view_offset(delta: float) -> void:
 		angles.z += ratio * _damage_roll
 
 	if enable_weapon_kick:
-		## "am i firing" is answered by when the last kick arrived, not by a flag someone must clear.
-		## so a swap, a death or an empty magazine mid burst all end the slow recentre for free.
 		_since_kick += delta
 		var rate: float = weapon_recentre_firing if _since_kick < weapon_firing_grace else weapon_recentre_rest
 		_weapon_kick_angles = _weapon_kick_angles.lerp(Vector3.ZERO, clampf(rate * delta, 0.0, 1.0))
@@ -134,13 +130,10 @@ func calculate_view_offset(delta: float) -> void:
 		angles.z += bob_sin * deg_to_rad(bob_roll) * speed
 		offset.y += bob_sin * bob_up * speed
 
-	## one multiply turns the whole layer down, so no contributor has to know the setting exists.
 	position = offset * motion_scale
 	rotation = angles * motion_scale
 
 
-## the step phase 0..1, the single source of truth for foot rhythm.
-## the weapon bob reads this so the gun's figure eight stays in step with the head.
 func get_bob_phase() -> float:
 	return _step_timer
 
@@ -157,8 +150,6 @@ func add_damage_kick(pitch: float, roll: float, source: Vector3) -> void:
 	_damage_timer = damage_time
 
 
-## pitch is signed upward, yaw and roll are random inside plus or minus the value given.
-## cap bounds the accumulated climb so a long burst plateaus instead of walking into the sky.
 func add_weapon_kick(pitch: float, yaw: float, roll: float, cap := 0.0, sustained := true) -> void:
 	_weapon_kick_angles.x += deg_to_rad(pitch)
 	_weapon_kick_angles.y += deg_to_rad(randf_range(-yaw, yaw))
@@ -168,7 +159,6 @@ func add_weapon_kick(pitch: float, yaw: float, roll: float, cap := 0.0, sustaine
 	_since_kick = 0.0 if sustained else 999.0
 
 
-## a weaker request must not stomp a bigger shake still playing.
 func add_screen_shake(amount: float, seconds: float) -> void:
 	if not enable_screen_shake:
 		return
@@ -189,7 +179,6 @@ func update_screen_shake(alpha: float) -> void:
 	v_offset = randf_range(-amt, amt)
 
 
-## a brief time freeze on impact, one at a time so a low time_scale is never stranded.
 func hitstop(seconds := 0.07, freeze_scale := 0.05) -> void:
 	if _hitstop_active:
 		return

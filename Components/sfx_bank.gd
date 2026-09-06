@@ -1,8 +1,6 @@
 class_name SfxBank
 extends AudioStreamPlayer3D
 
-## several takes of the same sound, played at random and at a slightly different pitch each time.
-## one clip on repeat is what makes footsteps sound like a machine rather than a person.
 
 @export var clips: Array[AudioStream] = []
 ## filled from these once godot has imported them, so a missing file leaves it silent, not broken.
@@ -20,7 +18,6 @@ func _ready() -> void:
 				clips.append(load(path) as AudioStream)
 
 
-## never the same take twice running, which is the difference between variety and a stutter.
 func play_one(extra_db := 0.0) -> void:
 	if clips.is_empty():
 		return

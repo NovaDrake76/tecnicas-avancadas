@@ -1,16 +1,12 @@
 class_name Footsteps
 extends SfxBank
 
-## steps are spaced by DISTANCE, not by a timer, so they keep pace with the player at any speed
-## and stay tied to the ground rather than to the framerate.
 
 @export var stride := 2.2
-## a shorter, quieter step. crouching already halves how far a kiwi can see you, this is the half
-## of that the player can hear.
+## a shorter, quieter step.
 @export var crouch_stride := 1.5
 @export var crouch_db := -9.0
-## a crawl. shorter than a crouched step and quieter still, which is the price of it: prone is the
-## slowest way across a compound and the only one nobody hears.
+## a crawl.
 @export var crawl_stride := 1.0
 @export var crawl_db := -15.0
 @export var run_db := 2.0
@@ -18,7 +14,7 @@ extends SfxBank
 @export var min_speed := 0.8
 
 @export_group("How far it carries")
-## a kiwi that hears this turns to face it. sneaking is the quiet option, sprinting announces you.
+## a kiwi that hears this turns to face it.
 @export var crawl_noise := 3.0
 @export var crouch_noise := 5.0
 @export var walk_noise := 14.0
@@ -36,8 +32,6 @@ func _ready() -> void:
 	_body = get_parent() as CharacterBody3D
 
 
-## the sound goes through the table, by the surface underfoot: grass, dirt, concrete, metal, wood or
-## gravel, read off whatever the ray under the boots lands on. the noise the birds hear is unchanged.
 func play_one(extra_db := 0.0) -> void:
 	Sfx.play_2d("step_" + String(surface()), extra_db)
 
@@ -54,7 +48,6 @@ func surface() -> StringName:
 	return Sfx.surface_of(hit["collider"])
 
 
-## the whole rule, kept out of _physics_process so it can be driven and measured directly.
 func advance(distance: float, crouched: bool, prone := false) -> bool:
 	_travelled += distance
 	var step := stride
@@ -68,11 +61,6 @@ func advance(distance: float, crouched: bool, prone := false) -> bool:
 	return true
 
 
-## broadcast rather than aimed at anything, so the player never has to know kiwis exist.
-##
-## the SOUND is played wherever the boots are, on the machine wearing them. what the birds do about
-## it is a decision, and every decision about a bird belongs to the host: two machines each turning
-## the same patrol towards the same footstep would be one player's steps heard twice.
 func carry(radius: float) -> void:
 	if multiplayer.is_server():
 		_heard(global_position, radius)
@@ -98,7 +86,6 @@ func _physics_process(delta: float) -> void:
 		_airborne = true
 		return
 
-	## the landing is a step in its own right, and the stride restarts from the touchdown.
 	if _airborne:
 		_airborne = false
 		_travelled = 0.0

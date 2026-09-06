@@ -1,18 +1,12 @@
 class_name LaserEyes
 extends Node3D
 
-## everything the laser looks and sounds like, and nothing it decides. the kiwi says "glow this much",
-## "beam on, beam at, beam off", and the bolts borrow the same meshes and materials; this node reads
-## the eye bones every frame and draws. keeping the drawing off the physics tick is what makes a beam
-## smooth at any frame rate, and keeping every decision out of here is what keeps an effect from ever
-## damaging anything.
 
 const CORE := Color(0.88, 1.0, 0.86)
 const GLOW := Color(0.25, 1.0, 0.3)
 const EYE := Color(0.35, 1.0, 0.4)
 
-## how bright the eyes sit when nothing is happening. that faint green is how you tell a laser kiwi
-## from a plain one at a distance, since they share a model.
+## how bright the eyes sit when nothing is happening.
 @export var idle_glow := 0.35
 @export var beam_core_radius := 0.028
 @export var beam_glow_radius := 0.085
@@ -71,14 +65,11 @@ func _ready() -> void:
 	_charge_parts = _make_charge()
 	add_child(_charge_parts)
 
-	## one player for the sounds that have to be stopped, the charge and the beam; the one-shots go
-	## through the table. it is tracked so a beam from behind a wall sounds like it is behind a wall.
 	_hum = Sfx.attach(&"laser_beam", self)
 	Sfx.track(_hum)
 	set_glow(0.0)
 
 
-## the rig has real eye bones, so the beams leave the eyes wherever the head clip has put them.
 func bind(skeleton: Skeleton3D) -> void:
 	_skeleton = skeleton
 	if _skeleton == null:
@@ -101,7 +92,6 @@ func eye_position(right: bool) -> Vector3:
 	var bone := _eye_r if right else _eye_l
 	if _skeleton != null and bone >= 0:
 		return (_skeleton.global_transform * _skeleton.get_bone_global_pose(bone)).origin
-	## no rig: a pair of points where a kiwi's eyes are, either side of its beak
 	var owner_node := get_parent() as Node3D
 	var base := owner_node.global_transform if owner_node != null else global_transform
 	return base * Vector3(0.04 if right else -0.04, 0.45, -0.25)
@@ -111,19 +101,14 @@ func between_eyes() -> Vector3:
 	return (eye_position(false) + eye_position(true)) * 0.5
 
 
-## 0 is the resting ember, 1 is a charge about to fire.
 func set_glow(level: float) -> void:
 	_glow = clampf(level, 0.0, 1.0)
 
 
-## the crack of one bolt leaving. the bolt itself is a LaserBolt, the kiwi launches it.
 func zap() -> void:
 	Sfx.play(&"laser_bolt", between_eyes())
 
 
-## where a bolt or the beam lands: sparks off the world, and a flash of the same green on whatever it
-## hit. a hit on the player throws no sparks: they would burst in the camera as pale squares, and
-## the player already has the rim, the kick and the sound to say they were hit.
 func impact(at: Vector3, on_player: bool) -> void:
 	if not on_player:
 		Sfx.play(&"laser_hit", at)
@@ -141,8 +126,6 @@ func impact(at: Vector3, on_player: bool) -> void:
 
 func charge_start(duration: float) -> void:
 	_charge_parts.emitting = true
-	## the clip is built for the stock charge and pitched to fit any other, so it still ends exactly
-	## as the beam comes whatever the charge time is tuned to
 	var event := &"laser_charge_110" if duration <= 1.5 else &"laser_charge_200"
 	_hum.stream = Sfx.stream(event)
 	_hum.volume_db = Sfx.level_of(event)
@@ -153,7 +136,6 @@ func charge_start(duration: float) -> void:
 	_hum.play()
 
 
-## a charge that is cut short fizzles, so the ear knows the beam is not coming.
 func charge_stop(fizzle: bool) -> void:
 	_charge_parts.emitting = false
 	_hum.stop()
@@ -190,8 +172,6 @@ func is_beaming() -> bool:
 	return _beam_on
 
 
-## the bird is down: no beam, no charge, no ember. a corpse with glowing eyes would keep the threat
-## on screen after the threat is gone.
 func shut_down() -> void:
 	beam_stop()
 	charge_stop(false)
@@ -225,8 +205,6 @@ func _process(delta: float) -> void:
 		_sparks.global_position = _beam_to
 
 
-## a unit cylinder stretched between two points: y is the run, x and z the radius. the basis is not
-## orthonormal and does not need to be, it only draws.
 static func stretch(mi: MeshInstance3D, from: Vector3, to: Vector3, radius: float) -> void:
 	var d := to - from
 	var length := d.length()
@@ -243,8 +221,6 @@ static func stretch(mi: MeshInstance3D, from: Vector3, to: Vector3, radius: floa
 	mi.global_transform = Transform3D(Basis(x * radius, y * length, z * radius), from + d * 0.5)
 
 
-## a core and a halo for a bolt, on the shared meshes and materials, so a burst allocates no render
-## resources of its own.
 static func dart_parts() -> Array[MeshInstance3D]:
 	_warm()
 	var out: Array[MeshInstance3D] = []
@@ -280,8 +256,7 @@ static func _warm() -> void:
 	_core_mat.emission_energy_multiplier = 3.0
 	_core_mat.disable_receive_shadows = true
 
-	## additive on a tube is a glowing tube, which is what a beam's halo is. the trap is an additive
-	## QUAD, that one reads as a glowing rectangle.
+	## additive on a TUBE is a glowing tube; additive on a quad reads as a glowing rectangle.
 	_glow_mat = StandardMaterial3D.new()
 	_glow_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_glow_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -310,7 +285,6 @@ static func make_light(colour: Color, range_m: float) -> OmniLight3D:
 	return l
 
 
-## sparks thrown off the point where the beam lands, for as long as it lands.
 func _make_sparks() -> GPUParticles3D:
 	BurstFx.warm()
 	var parts := GPUParticles3D.new()
@@ -334,7 +308,6 @@ func _make_sparks() -> GPUParticles3D:
 	return parts
 
 
-## motes drawn INTO the eyes while the beam charges: emitted on a shell and pulled to the centre.
 func _make_charge() -> GPUParticles3D:
 	BurstFx.warm()
 	var parts := GPUParticles3D.new()

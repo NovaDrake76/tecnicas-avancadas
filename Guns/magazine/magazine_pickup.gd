@@ -1,14 +1,9 @@
 class_name MagazinePickup
 extends Area3D
 
-## a magazine lying in the world, or a box of several, taken with the interact key. it goes to the
-## pouch, or straight into a weapon in hand that has no magazine at all. an incompatible one, or a
-## full pouch, is refused with the reason.
 
 signal contents_changed(mag: Magazine)
 
-## what lies on the ground, per type: one magazine, or the carton several came in. the rifle's is the
-## m4's own magazine split out of its mesh; the rest are from the psx pack, real centimetres.
 const LOOKS := {
 	Ordnance.MagType.Shotgun: {
 		"single": "res://Models/Ammo/shotgun_ammo_1.glb", "box": "res://Models/Ammo/shotgun_ammo_2.glb"},
@@ -18,18 +13,16 @@ const LOOKS := {
 		"single": "res://Models/Ammo/pistol_mp_1_mag_loaded.glb", "box": "res://Models/Ammo/ammo_box_mp_1.glb"},
 	Ordnance.MagType.PistolMachine: {
 		"single": "res://Models/Ammo/pistol_mp_1_mag_extended_loaded.glb", "box": "res://Models/Ammo/ammo_box_mp_2.glb"},
-	## the pack has no bolt-rifle magazine, so the marksman borrows the rifle's own and a carton.
 	Ordnance.MagType.Marksman: {
 		"single": "res://Models/Ammo/rifle_mag.obj", "box": "res://Models/Ammo/ammo_box_mp_5.glb"},
 }
 
 @export var magazine: Magazine
-## how many magazines this pickup holds. a box is the same node with more than one.
+## how many magazines this pickup holds.
 @export var quantity := 1
 @export var spin_speed: float = 1.2
 @export var bob_height: float = 0.06
-## a magazine is twelve centimetres. at true size it vanishes at ten metres; the ring says where, this
-## says what.
+## a magazine is twelve centimetres.
 @export var model_scale := 1.5
 
 @onready var model: Node3D = $Model
@@ -71,7 +64,7 @@ func take(gun: Gun) -> bool:
 		gun.magazine_rejected.emit(magazine, message)
 		return false
 
-	## a weapon in hand with nothing in it loads straight from the ground, the brief's "no magazine" case.
+	## a weapon in hand with nothing in it loads straight from the ground: the brief's "sem carregador" case.
 	if taker == gun and gun.magazine == null:
 		if not gun.equip_magazine(magazine):
 			return false
@@ -89,7 +82,6 @@ func take(gun: Gun) -> bool:
 	return true
 
 
-## which file this pickup shows right now. a box that is down to its last one is a magazine again.
 func look_path() -> String:
 	if magazine == null or not LOOKS.has(magazine.mag_type):
 		return ""
@@ -110,9 +102,6 @@ func _refresh() -> void:
 		"  (%d left)" % quantity if quantity > 1 else ""]
 
 
-
-## swap the model only when the file changes, and sit whatever comes in on its own centre: the pack's
-## pistol magazines have their origin halfway up, the cartons have it at the base. measured, not assumed.
 func _show(path: String) -> void:
 	if path == _shown:
 		return
@@ -137,7 +126,6 @@ func _show(path: String) -> void:
 	node.scale = Vector3.ONE * model_scale
 
 
-## the merged bounds of every mesh under a node, in that node's space.
 static func mesh_bounds(node: Node3D) -> AABB:
 	var out := AABB()
 	var first := true

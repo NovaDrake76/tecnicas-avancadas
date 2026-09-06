@@ -1,8 +1,6 @@
 class_name MuzzleFlashFx
 extends Node3D
 
-## layered muzzle effect, crossed additive cards plus a brief point light plus a forward spray.
-## GAS is the airsoft-correct default, FLASH is the arcade fireball if you want it instead.
 
 enum Style { GAS, FLASH }
 
@@ -16,7 +14,6 @@ static var _spark_pms := {}
 static var _textures := {}
 
 
-## a soft radial blob for gas, a hot core with six spikes for a fireball.
 static func _tex(style: int) -> ImageTexture:
 	if _textures.has(style):
 		return _textures[style]
@@ -49,7 +46,7 @@ static func _card_mat(color: Color, intensity: float, style: int) -> StandardMat
 		m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 		m.cull_mode = BaseMaterial3D.CULL_DISABLED
 		m.albedo_color = Color(color.r, color.g, color.b, 0.9 * intensity)
-		## an untextured additive quad renders as a glowing square, the texture is what gives it a shape.
+		## an untextured additive quad renders as a glowing square; the texture is what gives it a shape.
 		m.albedo_texture = _tex(style)
 		m.emission_enabled = true
 		m.emission = color
@@ -75,7 +72,6 @@ static func _spark_pm(color: Color, style: int) -> ParticleProcessMaterial:
 			pm.scale_min = 0.3
 			pm.scale_max = 0.6
 		else:
-			## venting gas, slower and wider than sparks, and buoyant rather than falling.
 			pm.spread = 34.0
 			pm.initial_velocity_min = 1.2
 			pm.initial_velocity_max = 2.8
@@ -89,7 +85,6 @@ static func _spark_pm(color: Color, style: int) -> ParticleProcessMaterial:
 	return _spark_pms[key]
 
 
-## build the caches at load so the first shot does not compile pipelines mid game.
 static func warm() -> void:
 	if _card_quad == null:
 		_card_quad = QuadMesh.new()
@@ -126,7 +121,6 @@ static func spawn(world: Node, at: Vector3, dir: Vector3, color := GAS_COLOR,
 
 	var cards := Node3D.new()
 	root.add_child(cards)
-	## a random roll per shot so rapid fire never looks stamped from the same frame.
 	cards.rotation.z = randf() * TAU
 	for i in 2:
 		var card := MeshInstance3D.new()
@@ -156,7 +150,6 @@ static func spawn(world: Node, at: Vector3, dir: Vector3, color := GAS_COLOR,
 	var fade := 0.16 if style == Style.GAS else 0.06
 	var grow := 2.2 if style == Style.GAS else 1.5
 
-	## fades tween node properties only, the materials are shared between every shot.
 	var tw := root.create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(light, "light_energy", 0.0, fade * 0.5).set_ease(Tween.EASE_OUT)
@@ -164,7 +157,6 @@ static func spawn(world: Node, at: Vector3, dir: Vector3, color := GAS_COLOR,
 	for card in cards.get_children():
 		tw.tween_property(card, "transparency", 1.0, fade)
 	tw.set_parallel(false)
-	## a dead light must not sit in the cluster for the rest of the node's life.
 	tw.tween_callback(func() -> void: light.visible = false)
 
 	root.get_tree().create_timer(puff.lifetime + 0.25).timeout.connect(root.queue_free)

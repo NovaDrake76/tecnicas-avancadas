@@ -1,8 +1,5 @@
 extends Node3D
 
-## the safe house: a bench that opens the armory panel, a range with targets at marked distances, and
-## the controls painted on the wall. the run comes here before the first level and between levels.
-## main hosts it in the level holder like any level; Run just never counts anything while it is up.
 
 const PANEL := preload("res://UI/armory_panel.gd")
 const BOARD := preload("res://UI/mission_board.gd")
@@ -19,7 +16,6 @@ func _ready() -> void:
 	board_interactable.interacted.connect(func(_by: Node) -> void: _board.open())
 	_panel = PANEL.new()
 	add_child(_panel)
-	## the board is the only way out: it picks the mission, then the armory deploys into it
 	_board = BOARD.new()
 	add_child(_board)
 	_board.deploy_pressed.connect(func() -> void: Armory.deploy())

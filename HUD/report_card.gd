@@ -1,25 +1,14 @@
 class_name ReportCard
 extends Control
 
-## the results screen. one panel: the mission, a ring that fills to the grade with the letter CLIMBING
-## through the table as it goes, a bar per term so the player can see where the letter was won or lost,
-## and the numbers under it. it is handed the summary and plays; it never asks Run for anything except
-## the letter for a ratio, which is the one piece of the rule it has to draw.
 
-## the card grows to whatever it holds, so this is a MINIMUM rather than a size. it has to leave room
-## under it at 1080: the objective list pushed the card off the bottom of the screen the moment a
-## mission had more than a couple of lines, and a scoreboard that runs past the edge is worse than one
-## that says less.
 const PANEL_SIZE := Vector2(1240, 660)
-## the objectives go in two columns for the same reason: seven lines in one column is 180 px of card.
 const JOB_COLUMNS := 2
 const RING_BOX := 300.0
 const RING_RADIUS := 118.0
 const RING_THICKNESS := 18.0
 const TERMS := [["STEALTH", "grade_stealth"], ["ACCURACY", "grade_accuracy"], ["TIME", "grade_time"]]
 
-## the ring fills over this, the bars follow one after another, and the numbers arrive last. the whole
-## thing is under two seconds so Run.CLEAR_PAUSE still leaves time to read it.
 const FADE_IN := 0.22
 const RING_DELAY := 0.30
 const RING_TIME := 1.15
@@ -27,7 +16,6 @@ const BAR_DELAY := 0.55
 const BAR_STEP := 0.16
 const BAR_TIME := 0.55
 const FOOTER_DELAY := 1.5
-## the card takes input only once it has finished playing, so the last shot's click cannot skip it
 const ARM_AFTER := 2.1
 
 signal dismissed
@@ -60,7 +48,6 @@ var _armed := false
 var _tweens: Array[Tween] = []
 
 
-## one term: name, a bar that fills, and the letter that bar has earned so far.
 class TermRow extends HBoxContainer:
 	var _bar: Control
 	var _tag: Label
@@ -116,26 +103,19 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	visible = false
 
-	## the world keeps playing behind the card, so it is dimmed rather than covered.
 	var scrim := ColorRect.new()
 	scrim.color = Color(0.0, 0.0, 0.0, 0.55)
 	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(scrim)
 
-	## a CENTER CONTAINER holds the card, rather than the card anchoring itself to the middle with
-	## fixed offsets. those offsets pin the TOP edge at centre minus half of PANEL_SIZE, and a
-	## PanelContainer grows to whatever its content needs by pushing its BOTTOM edge down: the moment
-	## the objective list made the card taller than PANEL_SIZE it stopped being centred and started
-	## hanging off the bottom of the screen, which is exactly what it looked like. a CenterContainer
-	## measures the child's real minimum and centres THAT, on both axes, whatever it ends up holding.
 	var centre := CenterContainer.new()
 	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
 	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(centre)
 
 	_panel = PanelContainer.new()
-	## a floor, not a size: a short card still reads as a card rather than as a label in a box.
+	## a floor, not a size: the CenterContainer measures the real minimum and centres that.
 	_panel.custom_minimum_size = PANEL_SIZE
 	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style := StyleBoxFlat.new()
@@ -185,9 +165,6 @@ func _ready() -> void:
 	for caption in ["TARGETS", "SHOTS", "ACCURACY", "TIME", "STEALTH"]:
 		_stats.append(_stat(stats, caption))
 	_gap(_footer, 14)
-	## what the mission asked for and what the player did about it, under the numbers. objectives
-	## are ticked or crossed rather than scored: the letter already says how the run went, and
-	## this says what it was FOR, which no number on the row above answers.
 	_jobs = GridContainer.new()
 	_jobs.columns = JOB_COLUMNS
 	_jobs.add_theme_constant_override("v_separation", 2)
@@ -239,20 +216,15 @@ func _draw_ring() -> void:
 	_ring.draw_arc(centre, RING_RADIUS, 0.0, TAU, 96, Color(1.0, 1.0, 1.0, 0.07), RING_THICKNESS, true)
 	if ring_ratio <= 0.001:
 		return
-	## from twelve o'clock, clockwise, the way every dial the player has seen fills.
 	var from := -PI * 0.5
 	_ring.draw_arc(centre, RING_RADIUS, from, from + TAU * ring_ratio, 96,
 		MenuStyle.grade_color(Run.grade_letter(ring_ratio)), RING_THICKNESS, true)
 
 
-## the letter on the ring right now. it climbs while the ring fills, so the probe reads it at the end.
 func letter() -> String:
 	return _letter.text if _letter != null else ""
 
 
-## the required objectives first, then the optional ones, each with a tick or a cross. an optional
-## one that was NOT done is still listed: half the value of an optional objective is finding out
-## it existed, which is how a second run becomes a different run.
 func _fill_jobs(s: Dictionary) -> void:
 	if _jobs == null:
 		return
@@ -282,8 +254,6 @@ func term_letters() -> Array:
 	return out
 
 
-## where the card actually ends up. it GROWS to whatever it holds, so adding a line to it can push
-## it off the bottom of the screen, which is exactly what the objective list did.
 func panel_rect() -> Rect2:
 	return _panel.get_global_rect() if _panel != null else Rect2()
 
@@ -302,7 +272,6 @@ func is_armed() -> bool:
 	return _armed
 
 
-## enter, space or the interact key once the card has played. the same path the probe takes.
 func try_dismiss() -> bool:
 	if not visible or not _armed:
 		return false
@@ -324,7 +293,6 @@ func heading() -> String:
 	return _title.text
 
 
-## fills the card in from the summary, then plays it.
 func play(s: Dictionary, title: String) -> void:
 	_kill()
 	_title.text = title
@@ -335,9 +303,6 @@ func play(s: Dictionary, title: String) -> void:
 	_fill_jobs(s)
 	_stats[2].text = "%d%%" % int(round(float(s.get("accuracy", 0.0)) * 100.0))
 	_stats[3].text = "%s  (par %s)" % [_clock(float(s.get("time", 0.0))), _clock(float(s.get("par", 0.0)))]
-	## what the stealth term measures is time hot, so that is the number shown. a run that never woke
-	## the compound says so in one word, seen or not; a bird that spotted you but never told anyone
-	## is exactly the kind of trouble that costs nothing here.
 	var hot := float(s.get("alarm_time", 0.0))
 	var ghost := bool(s.get("ghost", hot <= 0.0))
 	if ghost:
@@ -383,7 +348,6 @@ func play(s: Dictionary, title: String) -> void:
 	tail.tween_property(_footer, "modulate:a", 1.0, 0.4)
 	_tweens.append(tail)
 
-	## the hint arrives last and breathes, so the eye lands on it after the numbers
 	var arm := create_tween()
 	arm.tween_interval(ARM_AFTER)
 	arm.tween_callback(func() -> void: _armed = true)
@@ -394,7 +358,6 @@ func play(s: Dictionary, title: String) -> void:
 	_tweens.append(arm)
 
 
-## the same card without the animation, for a probe that cannot wait two seconds of tweens.
 func show_now(s: Dictionary, title: String) -> void:
 	play(s, title)
 	_kill()
@@ -424,7 +387,6 @@ func _text(parent: Control, text: String, points: int, colour: Color) -> Label:
 	return l
 
 
-## a caption over its value, the shape every number on the card takes.
 func _stat(parent: Control, caption: String) -> Label:
 	var col := VBoxContainer.new()
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL

@@ -1,8 +1,6 @@
 class_name StateMachine
 extends Node
 
-## reusable node based finite state machine, each child extending State is a state keyed by node name.
-## host driven, the owner calls setup once then physics_tick from its own _physics_process.
 
 signal transitioned(to: StringName)
 
@@ -41,8 +39,6 @@ func change_to(state_name: StringName, msg: Dictionary = {}) -> void:
 	transitioned.emit(state_name)
 
 
-## re-enters a state even when it is already current, for an event that must supersede what is running.
-## change_to refuses a self transition, which is right for the ordinary case and wrong for this one.
 func restart_to(state_name: StringName, msg: Dictionary = {}) -> void:
 	if not _states.has(state_name):
 		return

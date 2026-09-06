@@ -1,19 +1,5 @@
 extends Node
 
-## every sound the world makes, from one table. a caller names an EVENT and a place; this picks the
-## takes, the pitch, the bus, the distance model and the voice, so no scene carries a number that
-## belongs to the mix. the design rules it enforces:
-## - one event is several LAYERS played together (a click, a pop, a tail), each from its own pool of
-##   takes, so two shots in a row are two different combinations rather than one clip on repeat.
-## - every clip on disk is normalised to the same body loudness; the ONLY place a sound gets louder
-##   or quieter than another is the "db" in this table.
-## - a voice cap per event: three bb impacts at once, never thirty. the oldest is stolen.
-## - a far version of the loud things, so a mortar shell across the map is a thud and not a bang.
-## - occlusion: a wall between you and the source turns the highs down and the level a little, so
-##   a siren behind a container is behind a container.
-## - hdr: the biggest events (a blast at your feet) push everything else down for a moment and let
-##   it back in, which is what makes them big without making them loud.
-## nothing here is heard by a kiwi. audio is player feedback only; the AI's one sense is the cone.
 
 const POOL_3D := 32
 const POOL_2D := 12
@@ -23,14 +9,7 @@ const OCCLUDED_CUTOFF := 700.0
 const OCCLUDED_DB := -7.0
 const OCCLUDE_EVERY := 0.15
 
-## clips: "folder/name" and n takes numbered _1.._n under res://Sounds/. db, pitch, unit (the
-## distance at which the sound is at its level), max (where it is gone), bus, voices, cooldown,
-## 2d (in the head, no position), far {from, layers} (what plays instead beyond that distance).
-## "silent": an event kept on purpose with NOTHING in it. the call site stays, so the moment a clip
-## belongs there it is one line to put back, and the probe asserts the silence is deliberate rather
-## than a clip that went missing. sounds Nathan listened to and cut live here.
 const EVENTS := {
-	# ---- the player's weapons: in the head, on the Weapons bus, the loudness anchor
 	&"kestrel_fire": {"2d": true, "bus": &"Weapons", "db": -4.0, "voices": 6, "layers": [
 		{"clips": "weapons/kestrel_mech", "n": 3, "db": 0.0, "pitch": [0.95, 1.05]},
 		{"clips": "weapons/kestrel_pop", "n": 4, "db": -1.0, "pitch": [0.96, 1.04], "delay": 0.008}]},
@@ -62,31 +41,16 @@ const EVENTS := {
 	&"weapon_draw": {"2d": true, "bus": &"Weapons", "db": -10.0, "clips": "weapons/draw", "n": 2},
 	&"fire_select": {"2d": true, "bus": &"Weapons", "db": -8.0, "clips": "weapons/select", "n": 2},
 	&"fire_refused": {"2d": true, "bus": &"Weapons", "db": -10.0, "clips": "weapons/refused", "n": 1},
-	## cut after the first listening pass: raising and lowering the sights happens constantly and the
-	## camera already says it. the hook stays for a cloth rustle if one is ever wanted.
 	&"ads": {"2d": true, "bus": &"Weapons", "silent": true},
 
-	# ---- the player's own body
 	&"player_hurt": {"2d": true, "bus": &"Player", "db": -6.0, "voices": 2, "cooldown": 0.12, "clips": "player/hurt", "n": 4, "pitch": [0.94, 1.06]},
 	&"player_down": {"2d": true, "bus": &"Player", "db": -2.0, "clips": "player/down", "n": 1},
 	&"jump": {"2d": true, "bus": &"Player", "db": -14.0, "clips": "player/jump", "n": 2},
-	## cut: going up and down was a rustle on every crouch, which is most of what the player does
-	## in a stealth game. the clips stay on disk and the call site stays in Player; it is one word
-	## to put back.
 	&"crouch": {"2d": true, "bus": &"Player", "silent": true},
 	&"land_hard": {"2d": true, "bus": &"Player", "db": -6.0, "clips": "player/land_hard", "n": 1},
 	&"throw": {"2d": true, "bus": &"Player", "db": -10.0, "clips": "player/throw", "n": 1},
-	## the takedown is two sounds because the wind-up is a real part of it: the swing says it started
-	## and the tap says it landed. positional, unlike the rest of the player's kit, since it happens
-	## at the bird rather than in the player's own hands.
 	&"takedown_swing": {"2d": true, "bus": &"Player", "db": -14.0, "clips": "player/takedown_swing", "n": 1},
 	&"takedown": {"bus": &"Player", "db": -9.0, "unit": 3.0, "max": 24.0, "clips": "player/takedown", "n": 3, "pitch": [0.96, 1.04]},
-	## hauling a body. the grab is the player's own hands, so it is in the head; the drop is out in
-	## the world where the body lands, and it is the cloth thump of the bb impact taken well down in
-	## pitch, which is a body settling rather than a pellet landing.
-	## the binoculars. cloth and gear rather than a machine: the crouch clips are the only thing on
-	## disk that is a person moving their own kit about, and they are the same body the takedown and
-	## the body carry use. up is pitched above down because a thing being raised sounds like it.
 	&"binocs_up": {"2d": true, "bus": &"Player", "db": -15.0, "clips": "player/crouch", "n": 3, "pitch": [1.12, 1.2]},
 	&"binocs_down": {"2d": true, "bus": &"Player", "db": -17.0, "clips": "player/crouch", "n": 3, "pitch": [0.92, 1.0]},
 	&"body_grab": {"2d": true, "bus": &"Player", "db": -16.0, "clips": "player/crouch", "n": 3, "pitch": [0.82, 0.9]},
@@ -98,7 +62,6 @@ const EVENTS := {
 	&"step_wood": {"2d": true, "bus": &"Player", "db": -24.0, "voices": 2, "clips": "player/step_wood", "n": 8, "pitch": [0.94, 1.08]},
 	&"step_gravel": {"2d": true, "bus": &"Player", "db": -25.0, "voices": 2, "clips": "player/step_gravel", "n": 5, "pitch": [0.92, 1.1]},
 
-	# ---- bbs landing on things: tiny, near, by material. the World bus
 	&"bb_metal": {"bus": &"World", "db": -12.0, "unit": 4.0, "max": 30.0, "voices": 3, "cooldown": 0.02, "clips": "impacts/bb_metal", "n": 4, "pitch": [0.95, 1.08]},
 	&"bb_wood": {"bus": &"World", "db": -12.0, "unit": 4.0, "max": 30.0, "voices": 3, "cooldown": 0.02, "clips": "impacts/bb_wood", "n": 4, "pitch": [0.95, 1.08]},
 	&"bb_concrete": {"bus": &"World", "db": -13.0, "unit": 4.0, "max": 30.0, "voices": 3, "cooldown": 0.02, "clips": "impacts/bb_concrete", "n": 3, "pitch": [0.95, 1.08]},
@@ -113,19 +76,14 @@ const EVENTS := {
 	&"target_rise": {"bus": &"World", "db": -10.0, "unit": 8.0, "max": 90.0, "voices": 2, "clips": "impacts/target_rise", "n": 1},
 	&"clank": {"bus": &"World", "db": -4.0, "unit": 10.0, "max": 60.0, "voices": 2, "clips": "impacts/clank", "n": 3, "pitch": [0.94, 1.08]},
 	&"pickup": {"bus": &"World", "db": -8.0, "unit": 3.0, "max": 20.0, "clips": "ui/pickup", "n": 1},
-	## the mission itself: starting a job, finishing one, and a charge going onto something. the
-	## first two are in the head because they are the player's own hands; the charge is out in the
-	## world because a bird standing next to it should be able to hear it go on.
 	&"objective_start": {"2d": true, "bus": &"Player", "db": -14.0, "clips": "ui/tick", "n": 1},
 	&"objective_done": {"2d": true, "bus": &"UI", "db": -8.0, "clips": "ui/objective", "n": 1},
 	&"charge_set": {"bus": &"World", "db": -8.0, "unit": 6.0, "max": 40.0, "clips": "ui/install", "n": 1},
 
-	# ---- the kiwis: the information bus, never ducked by the hdr moment
 	&"kiwi_step": {"bus": &"Kiwis", "db": -18.0, "unit": 3.0, "max": 24.0, "voices": 6, "cooldown": 0.03, "clips": "kiwi/step", "n": 8, "pitch": [0.95, 1.1]},
 	&"kiwi_poof": {"bus": &"Kiwis", "db": -6.0, "unit": 8.0, "max": 50.0, "voices": 3, "clips": "kiwi/poof", "n": 3, "pitch": [0.95, 1.08]},
 	&"kiwi_radio": {"bus": &"Kiwis", "db": -4.0, "unit": 10.0, "max": 60.0, "voices": 2, "clips": "kiwi/radio", "n": 2},
 
-	# ---- what hurts you: the Threat bus, which is what ducks the music and the bed
 	&"laser_bolt": {"bus": &"Threat", "db": -2.0, "unit": 10.0, "max": 80.0, "voices": 6, "clips": "laser/bolt", "n": 4, "pitch": [0.94, 1.06]},
 	&"laser_fizzle": {"bus": &"Threat", "db": -4.0, "unit": 10.0, "max": 70.0, "voices": 3, "clips": "laser/fizzle", "n": 1, "pitch": [0.95, 1.05]},
 	&"laser_charge_110": {"bus": &"Threat", "db": -3.0, "unit": 12.0, "max": 80.0, "clips": "laser/charge_110", "n": 0},
@@ -137,11 +95,6 @@ const EVENTS := {
 	&"mortar_fire": {"bus": &"Threat", "db": -2.0, "unit": 18.0, "max": 200.0, "voices": 3, "clips": "mortar/fire", "n": 4, "pitch": [0.95, 1.05]},
 	&"mortar_blast": {"bus": &"Threat", "db": 2.0, "unit": 26.0, "max": 240.0, "voices": 3, "clips": "mortar/blast", "n": 5, "pitch": [0.95, 1.05],
 		"far": {"from": 45.0, "layers": [{"clips": "mortar/blast_far", "n": 4, "db": -2.0, "pitch": [0.95, 1.05]}]}},
-	## the player's own explosion. it sits on the Threat bus with the shells and the beams rather
-	## than on World, because what that bus does is push the music and the bed down for a beat, and
-	## whether the bang was yours or theirs makes no difference to that. quieter and shorter of reach
-	## than the mortar (unit 20 against 26, no boost against +2): a hand grenade is a smaller charge,
-	## and the mortar keeps being the biggest thing in the game.
 	&"frag_pin": {"2d": true, "bus": &"Player", "db": -10.0, "clips": "grenade/pin", "n": 2, "pitch": [0.97, 1.05]},
 	&"frag_bounce": {"bus": &"World", "db": -10.0, "unit": 8.0, "max": 45.0, "voices": 3, "cooldown": 0.05, "clips": "grenade/bounce", "n": 3, "pitch": [0.9, 1.1]},
 	&"frag_blast": {"bus": &"Threat", "db": 0.0, "unit": 20.0, "max": 200.0, "voices": 3, "clips": "grenade/blast", "n": 4, "pitch": [0.96, 1.05],
@@ -152,12 +105,10 @@ const EVENTS := {
 	&"heli_ping": {"bus": &"Threat", "db": -4.0, "unit": 14.0, "max": 120.0, "voices": 3, "clips": "gunship/ping", "n": 2, "pitch": [0.94, 1.06]},
 	&"mark_tone": {"2d": true, "bus": &"UI", "db": -16.0, "clips": "gunship/mark_tone_loop", "n": 0},
 
-	# ---- the compound's own noises
 	&"siren": {"bus": &"World", "db": -3.0, "unit": 14.0, "max": 140.0, "clips": "alarm/siren_loop", "n": 0},
 	&"horn_lever": {"bus": &"World", "db": -6.0, "unit": 8.0, "max": 40.0, "clips": "alarm/horn_lever", "n": 1},
 	&"horn_cut": {"bus": &"World", "db": -6.0, "unit": 8.0, "max": 40.0, "clips": "alarm/horn_cut", "n": 1},
 
-	# ---- stingers: music, in the head
 	&"sting_notice": {"2d": true, "bus": &"Music", "db": 0.0, "voices": 1, "clips": "music/sting_notice", "n": 1},
 	&"sting_alarm": {"2d": true, "bus": &"Music", "db": 0.0, "voices": 1, "clips": "music/sting_alarm", "n": 1},
 	&"sting_clear": {"2d": true, "bus": &"Music", "db": 0.0, "voices": 1, "clips": "music/sting_clear", "n": 1},
@@ -216,33 +167,26 @@ func _process(delta: float) -> void:
 		_update_tracked()
 
 
-# ---------------------------------------------------------------- the table
-
 func has(event: StringName) -> bool:
 	return EVENTS.has(event)
 
 
-## an event that is deliberately empty: it exists, it is called, and it plays nothing.
 func is_silent(event: StringName) -> bool:
 	return bool((EVENTS.get(event, {}) as Dictionary).get("silent", false))
 
 
-## how many times an event has been asked for, for the probes.
 func count(event: StringName) -> int:
 	return int(_played.get(event, 0))
 
 
-## the pitch the last voice was started at, for the probes.
 func last_pitch() -> float:
 	return _last_pitch
 
 
-## the clips the last play call started, for the probes.
 func last_started() -> PackedStringArray:
 	return _last_started
 
 
-## voices playing this event right now.
 func active(event: StringName) -> int:
 	var n := 0
 	for p in _pool3d:
@@ -254,7 +198,6 @@ func active(event: StringName) -> int:
 	return n
 
 
-## clips the table names that are not on disk. empty is the healthy answer.
 func missing() -> Array[String]:
 	return _missing.duplicate()
 
@@ -281,13 +224,6 @@ func clip_paths(layer: Dictionary) -> PackedStringArray:
 	return out
 
 
-# ---------------------------------------------------------------- one-shots
-
-## a sound at a place in the world.
-## `in_world` overrides the table's "2d": the weapons, the body and the interface are in the
-## player's head because they are THEIRS, and the moment a second operative is carrying the same
-## rifle its report has to come from where they are standing instead. the sound is the same, the
-## placement is not, and that is a property of who fired it rather than of the event.
 func play(event: StringName, at: Vector3, extra_db := 0.0, pitch_mul := 1.0, in_world := false) -> bool:
 	var evt: Dictionary = EVENTS.get(event, {})
 	if evt.is_empty() or evt.get("silent", false):
@@ -324,7 +260,6 @@ func play(event: StringName, at: Vector3, extra_db := 0.0, pitch_mul := 1.0, in_
 	return started
 
 
-## a sound in the head: the player's own weapon, body and music.
 func play_2d(event: StringName, extra_db := 0.0, pitch_mul := 1.0) -> bool:
 	var evt: Dictionary = EVENTS.get(event, {})
 	if evt.is_empty() or evt.get("silent", false) or _cooling(event, evt):
@@ -349,7 +284,6 @@ func play_2d(event: StringName, extra_db := 0.0, pitch_mul := 1.0) -> bool:
 	return started
 
 
-## a take of an event's first layer, for a node that runs its own player (a loop it has to stop).
 func stream(event: StringName) -> AudioStream:
 	var layers := layers_of(event)
 	if layers.is_empty():
@@ -357,8 +291,6 @@ func stream(event: StringName) -> AudioStream:
 	return _pick(layers[0])
 
 
-## a player set up the way the table says, parented to a node so it follows it, NOT started. the
-## owner plays and stops it: the beam hum, the rotor, the siren, the charge. a loop clip loops.
 func attach(event: StringName, parent: Node3D, offset := Vector3.ZERO) -> AudioStreamPlayer3D:
 	var evt: Dictionary = EVENTS.get(event, {})
 	var p := AudioStreamPlayer3D.new()
@@ -384,15 +316,10 @@ func attach_2d(event: StringName, parent: Node) -> AudioStreamPlayer:
 	return p
 
 
-## the table's level for an event, so an owner that fades its own player knows where "full" is.
 func level_of(event: StringName) -> float:
 	return float((EVENTS.get(event, {}) as Dictionary).get("db", 0.0))
 
 
-# ---------------------------------------------------------------- occlusion
-
-## a wall between the listener and the point. layer 1 is the world; a kiwi or the player in the
-## way does not count, a body is not a wall.
 func occluded_from(at: Vector3) -> bool:
 	var cam := get_viewport().get_camera_3d() if get_viewport() != null else null
 	if cam == null or cam.get_world_3d() == null:
@@ -406,8 +333,6 @@ func occluded_from(at: Vector3) -> bool:
 	return not hit.is_empty() and hit["position"].distance_to(at) > 0.6
 
 
-## a looping player that wants the wall test kept up while it plays. its table level is remembered
-## so the occlusion offset never compounds.
 func track(p: AudioStreamPlayer3D) -> void:
 	if not _tracked.has(p):
 		_tracked.append(p)
@@ -420,8 +345,6 @@ func untrack(p: AudioStreamPlayer3D) -> void:
 
 func _update_tracked() -> void:
 	for i in range(_tracked.size() - 1, -1, -1):
-		## untyped on purpose: assigning a freed instance to a typed variable is itself an error, and
-		## the players tracked here die with the birds that own them
 		var entry = _tracked[i]
 		if entry == null or not is_instance_valid(entry) or not (entry as Node).is_inside_tree():
 			_tracked.remove_at(i)
@@ -442,10 +365,6 @@ func listener() -> Vector3:
 	return cam.global_position if cam != null else Vector3.ZERO
 
 
-# ---------------------------------------------------------------- the mix
-
-## the hdr moment: the beds, the world and the birds drop for a beat while the big thing lands, then
-## come back. depth falls off with distance so a shell across the map moves nothing.
 func hdr(at: Vector3, depth_db := 10.0, radius := 30.0, hold := 0.3, release := 1.2) -> void:
 	var d := at.distance_to(listener())
 	var depth := depth_db * clampf(1.0 - d / maxf(radius, 0.01), 0.0, 1.0)
@@ -469,7 +388,6 @@ func _set_duck(value: float) -> void:
 		_apply(bus)
 
 
-## one voice of the mix, by who is asking: the settings sliders, the curtain, a probe. they add.
 func set_gain(bus: StringName, source: StringName, gain_db: float) -> void:
 	if not _gains.has(bus):
 		_gains[bus] = {}
@@ -494,10 +412,6 @@ func _apply(bus: StringName) -> void:
 	AudioServer.set_bus_volume_db(idx, total)
 
 
-# ---------------------------------------------------------------- materials
-
-## what a bb landing on this body should sound like. a Prop says so itself; anything else is read
-## off its name, and the ground is grass.
 func surface_of(body: Object) -> StringName:
 	if body == null or not is_instance_valid(body):
 		return &"dirt"
@@ -526,8 +440,6 @@ func surface_from_name(hint: String) -> StringName:
 	return &"grass"
 
 
-# ---------------------------------------------------------------- internals
-
 func _load(path: String) -> AudioStream:
 	if _clips.has(path):
 		return _clips[path]
@@ -535,8 +447,6 @@ func _load(path: String) -> AudioStream:
 		_missing.append(path)
 		return null
 	var s := load(path) as AudioStream
-	## a loop clip is named so, and the flag is set on the stream rather than in the import, which
-	## keeps the build script the one place a clip's nature is decided
 	if s != null and path.ends_with("_loop.ogg"):
 		if s is AudioStreamOggVorbis:
 			(s as AudioStreamOggVorbis).loop = true
@@ -546,7 +456,6 @@ func _load(path: String) -> AudioStream:
 	return s
 
 
-## a take that is never the one played last from the same pool.
 func _pick(layer: Dictionary) -> AudioStream:
 	var paths := clip_paths(layer)
 	var takes: Array[AudioStream] = []
@@ -594,7 +503,6 @@ func _on_finished(p: Node) -> void:
 	_tag.erase(p.get_instance_id())
 
 
-## a free voice, else the oldest of this event once it is at its cap, else the oldest of all.
 func _voice_3d(event: StringName, evt: Dictionary) -> AudioStreamPlayer3D:
 	return _voice(_pool3d, event, evt) as AudioStreamPlayer3D
 

@@ -1,10 +1,6 @@
 class_name Vitals
 extends Control
 
-## the player's health, drawn only while it matters: a bar bottom left that comes in when you are hurt
-## and goes once you have healed, and a red rim on the screen that flashes on each hit and lingers in
-## proportion to what is missing. a bar sitting at full for a whole mission is furniture, and the rim
-## is what tells you that you are being hit while you are looking at something else.
 
 const BAR_POS := Vector2(80.0, 1004.0)
 const BAR_SIZE := Vector2(360.0, 10.0)
@@ -14,8 +10,6 @@ const LOW := Color(1.0, 0.35, 0.3)
 
 var _health: Health
 var _ratio := 1.0
-## where regeneration stops, drawn as a tick so the player can see where it will stop rather than
-## wondering why it did. 1.0 means no cap.
 var _cap := 1.0
 var _show := 0.0
 var _flash := 0.0
@@ -45,7 +39,6 @@ func _ready() -> void:
 	add_child(_rim)
 
 
-## follows a Health node. the bar owns nothing, it draws what the component says.
 func watch(player: Node) -> void:
 	var h := player.get_node_or_null("Health") as Health if player != null else null
 	if h == null:
@@ -66,14 +59,12 @@ func _on_health(current: float, max_health: float) -> void:
 	queue_redraw()
 
 
-## the rim flashes in proportion to the hit. a beam arrives as many small hits per second, and a
-## full flash on each would paint the whole screen red for as long as it lasts.
 func _on_damaged(amount: float, _current: float) -> void:
 	_flash = maxf(_flash, clampf(amount / 10.0, 0.22, 1.0))
 
 
 func _process(delta: float) -> void:
-	## the same trap the reticle had: a player that was freed leaves this watching a dead Health.
+	## a player that was freed leaves this watching a dead Health; re-found like the reticle.
 	if _health != null and not is_instance_valid(_health):
 		_health = null
 		watch(Player.local(get_tree()))

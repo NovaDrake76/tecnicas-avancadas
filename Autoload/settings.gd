@@ -1,7 +1,5 @@
 extends Node
 
-## the settings, loaded at boot, pushed into the real engine systems, saved on every change.
-## the options panel is only a view onto this. nothing else needs to know a config file exists.
 
 signal changed
 
@@ -10,7 +8,6 @@ enum WindowMode { WINDOWED, FULLSCREEN, BORDERLESS }
 const VSYNC_MODES := [DisplayServer.VSYNC_DISABLED, DisplayServer.VSYNC_ENABLED, DisplayServer.VSYNC_ADAPTIVE]
 const FPS_CAPS := [0, 60, 120, 144, 240]
 
-## a var rather than a const, so a probe can point it at a throwaway file and never touch yours.
 var path := "user://settings.cfg"
 
 var window_mode := WindowMode.WINDOWED
@@ -19,8 +16,6 @@ var max_fps := 0
 var master_volume := 0.8
 var music_volume := 0.8
 var sfx_volume := 1.0
-## a multiplier over the player's tuned base, never the raw number. storing the raw value would mean
-## a player who nudged it once could never get the default back, and it would compound per spawn.
 var look_scale := 1.0
 var invert_look := false
 
@@ -42,13 +37,11 @@ func commit() -> void:
 	save()
 
 
-## headless has no window, and every window call there is an error rather than a no op.
 func _apply_video() -> void:
 	Engine.max_fps = max_fps
 	if DisplayServer.get_name() == "headless":
 		return
-	## a game launched minimized stays minimized. forcing the saved fullscreen on it would drag a
-	## window nobody asked to see over whatever is on the screen.
+	## a game launched minimized stays minimized; forcing the saved fullscreen on it drags a window over whatever is on screen.
 	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_MINIMIZED:
 		DisplayServer.window_set_vsync_mode(VSYNC_MODES[clampi(vsync, 0, 2)])
 		return
@@ -66,8 +59,6 @@ func _apply_audio() -> void:
 	var master := AudioServer.get_bus_index(&"Master")
 	if master >= 0:
 		AudioServer.set_bus_volume_db(master, linear_to_db(clampf(master_volume, 0.0001, 1.0)))
-	## the music and effects sliders are one voice each in the mix, on top of the layout's own levels,
-	## so they never compound and never fight the ducking
 	Sfx.set_gain(&"Music", &"settings", linear_to_db(clampf(music_volume, 0.0001, 1.0)))
 	Sfx.set_gain(&"SFX", &"settings", linear_to_db(clampf(sfx_volume, 0.0001, 1.0)))
 

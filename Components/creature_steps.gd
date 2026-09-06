@@ -1,10 +1,6 @@
 class_name CreatureSteps
 extends Node3D
 
-## footsteps for anything that walks and is not the player: spaced by ground covered, so they keep
-## pace at any speed, and played through the event table so the mix owns their level. a patrol you
-## cannot see yet is one you can hear coming, which is the promise a stealth game makes with its
-## ears. nothing here feeds the AI.
 
 @export var event := &"kiwi_step"
 @export var stride := 0.55

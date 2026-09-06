@@ -1,12 +1,8 @@
 extends CanvasLayer
 
-## the pause menu, as an autoload: every level gets it for free and there is exactly one of it.
-## escape freezes the whole tree, so this node must keep processing or it would freeze itself shut.
 
 const MENU_SCENE := "res://UI/main_menu.tscn"
 
-## the second press. a mission thrown away by a click that landed on the wrong line is the one
-## mistake this menu can make that the player cannot undo, so the button asks once.
 const RESTART := "RESTART MISSION"
 const RESTART_ARMED := "PRESS AGAIN TO RESTART"
 
@@ -37,10 +33,7 @@ func _ready() -> void:
 	_menu = MenuStyle.column(_root)
 	MenuStyle.title(_menu, "PAUSED", MenuStyle.T_HEADING)
 	MenuStyle.spacer(_menu, 40)
-	## the click too: coming back to the game is the whole of the feedback
 	MenuStyle.button(_menu, "CONTINUE", close).set_meta(UiSfx.QUIET, true)
-	## between continuing and the options rather than down by QUIT: it belongs with the mission,
-	## and the two irreversible lines should not sit next to each other.
 	_restart = MenuStyle.button(_menu, RESTART, _on_restart)
 	MenuStyle.button(_menu, "OPTIONS", func() -> void: _show(_options))
 	MenuStyle.button(_menu, "QUIT TO MENU", quit_to_menu)
@@ -61,8 +54,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 
-## only a level can be paused. the main menu has no player, and escape there must do nothing rather
-## than freeze one menu behind another.
 func can_pause() -> bool:
 	return Player.local(get_tree()) != null
 
@@ -76,8 +67,6 @@ func open() -> void:
 		return
 	_options.reset_view()
 	_disarm()
-	## there is nothing to restart in the safe house, and once the report card is up the mission is
-	## already scored: a letter that could be taken back and tried again would rate nothing.
 	_restart.visible = Run.state == Run.State.PLAYING
 	_show(_menu)
 	visible = true
@@ -93,15 +82,11 @@ func close() -> void:
 	_disarm()
 	UiSfx.play("pause_close")
 	get_tree().paused = false
-	## the cursor goes back only if there is a game to give it to.
 	if can_pause() and DisplayServer.window_is_focused():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
-## the run is abandoned, not saved. main.tscn starts a fresh one the next time play is pressed.
 func quit_to_menu() -> void:
-	## leaving takes this machine out of the session as well. a host that walked out and left the
-	## port open would have a client standing in a compound nobody is thinking about any more.
 	Net.leave()
 	visible = false
 	get_tree().paused = false
@@ -110,8 +95,6 @@ func quit_to_menu() -> void:
 	get_tree().change_scene_to_file(MENU_SCENE)
 
 
-## the same mission from the top. the first press only arms the button; the second one is the
-## decision, and anything else the player does takes it back.
 func _on_restart() -> void:
 	if not _armed:
 		_armed = true
@@ -130,7 +113,6 @@ func _disarm() -> void:
 	_restart.add_theme_color_override("font_color", MenuStyle.DIM)
 
 
-## for the probe: whether the button is waiting for its second press.
 func restart_armed() -> bool:
 	return _armed
 

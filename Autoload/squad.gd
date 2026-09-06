@@ -1,29 +1,13 @@
 extends Node
 
-## the hunters' coordination. it is a property of the group, not of any bird, and every hunter has
-## to see the same answer, so it lives in one place. three ideas, in order of how much they matter:
-##
-## ATTACK TOKENS. only a token holder may open an attack; everyone else moves. that is the trick
-## behind why F.E.A.R. and Halo feel intelligent: enemies take turns, so the player is never
-## flattened by simultaneous fire and there is always visible movement to read.
-##
-## ROLES for the birds without a token: FLANK runs to cover on the player's far side, SUPPRESS puts
-## a beam on the last place anyone saw you so leaving cover is punished, HOLD takes cover and waits.
-## there has to be a state that means "wait" or the squad thrashes.
-##
-## A LEADER. the first hunter in. when it goes down every token is released and the squad is
-## rattled for a moment: nobody shoots, everybody dives for cover. that gives the player a priority
-## target, which is what turns a firefight into a puzzle instead of an aim test.
 
 enum Role { HOLD, ATTACK, FLANK, SUPPRESS }
 
 signal leader_changed(kiwi: Node3D)
 signal rattled
 
-## how often roles are reconsidered. faster and the birds dither; slower and they stand about.
 const ROLE_INTERVAL := 1.5
 const COVER_SEARCH := 18.0
-## the tangent step a flanker takes when the level has no cover points authored.
 const FLANK_STEP := 7.0
 const RATTLE_TIME := 2.5
 const SYNC_CHANCE := 0.35
@@ -43,7 +27,8 @@ var _sync_waiting := {}
 const SYNC_WAIT := 1.5
 
 
-func _process(delta: float) -> void:
+## physics, not process: the birds this coordinates move on the physics clock, and under load the two clocks decouple and roles rotate faster than a bird can reach its spot.
+func _physics_process(delta: float) -> void:
 	_sweep()
 	_rattle = maxf(0.0, _rattle - delta)
 	_sync_cooldown = maxf(0.0, _sync_cooldown - delta)
@@ -73,7 +58,6 @@ func reset() -> void:
 	_sync_waiting.clear()
 
 
-## a hunter is in the fight. the first one in leads.
 func join(kiwi: Node3D) -> void:
 	if kiwi == null or kiwi in _members:
 		return
@@ -84,8 +68,6 @@ func join(kiwi: Node3D) -> void:
 	_role_timer = 0.0
 
 
-## out of the fight, for any reason. a token held by a corpse would freeze every fight silently,
-## so this is where they always come back.
 func leave(kiwi: Node3D, went_down := false) -> void:
 	if kiwi == null:
 		return
@@ -109,8 +91,6 @@ func hunter_count() -> int:
 	return _members.size()
 
 
-## how many may shoot at once. one for a small group, one more for every three birds, never more
-## than three however big the fight gets.
 func max_firing() -> int:
 	return clampi(1 + floori(_members.size() / 3.0), 1, 3)
 
@@ -123,7 +103,6 @@ func holds_token(kiwi: Node3D) -> bool:
 	return kiwi != null and _tokens.has(kiwi.get_instance_id())
 
 
-## may this bird open an attack right now. a bird that already holds a token keeps it.
 func request_fire(kiwi: Node3D) -> bool:
 	if kiwi == null or _rattle > 0.0:
 		return false
@@ -165,15 +144,9 @@ func is_rattled() -> bool:
 	return _rattle > 0.0
 
 
-## two token holders who can both see the player may be told to charge together. two pairs of eyes
-## filling at once is an unmistakable tell, and the counter is already written: breaking the line
-## during the charge fizzles it for both of them. for probes, force_sync opens the window on the
-## next role tick regardless of the dice.
 var force_sync := false
 
 
-## a token holder about to choose its next attack asks here. false: shoot as you like. true: hold, the
-## squad is lining up a sync; when the second holder arrives both are told to charge on this tick.
 func sync_hold(kiwi: Node3D) -> bool:
 	if not _sync_armed or kiwi == null or not holds_token(kiwi):
 		return false
@@ -197,9 +170,6 @@ func is_sync_armed() -> bool:
 	return _sync_armed
 
 
-## cover for this bird against `toward`: an authored CoverPoint if the level has one that fits, else
-## a spot FOUND in the geometry. for a flanker it also has to be closer to `toward` than the bird
-## already is. Vector3.INF when there is none.
 func claim_cover(kiwi: Node3D, toward: Vector3, flank := false) -> Vector3:
 	if kiwi == null:
 		return Vector3.INF
@@ -231,21 +201,13 @@ func claim_cover(kiwi: Node3D, toward: Vector3, flank := false) -> Vector3:
 	return found
 
 
-## the rings of candidate spots around a bird, and how many round each ring. 36 spots, each costing
-## up to three rays, once per role tick per bird: cheap enough to never author a cover point.
 const AUTO_RINGS := [3.5, 6.5, 9.5]
 const AUTO_DIRS := 12
-## two birds do not share a spot closer than this
 const SPOT_APART := 1.8
 
 var _spots := {}
 
 
-## cover read off the level itself, no markers needed. a candidate is cover when the world blocks
-## the line from the player's eyes to a bird's eye height at the spot, it has ground under it, the
-## bird can run to it in a straight line (there is no navigation, so a spot behind a wall from the
-## bird is no use), it is not on top of the player, and nobody else has taken it. nearer is better;
-## a flanker prefers spots that also close the distance.
 func find_cover(kiwi: Node3D, toward: Vector3, flank := false) -> Vector3:
 	var here := kiwi.global_position
 	var my_d := Vector2(here.x - toward.x, here.z - toward.z).length()
@@ -286,7 +248,6 @@ func _spot_taken(at: Vector3, kiwi: Node3D) -> bool:
 	return false
 
 
-## a straight run from here to there at knee height meets nothing of the world.
 func _clear_run(kiwi: Node3D, from: Vector3, to: Vector3) -> bool:
 	var space := kiwi.get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(from + Vector3.UP * 0.3, to + Vector3.UP * 0.3, 1)
@@ -303,9 +264,6 @@ func release_cover(kiwi: Node3D) -> void:
 			_claims.erase(key)
 
 
-## a point at a tangent to the line to the player, FLANK_STEP off, on the ground. not clever, but a
-## squad in a level with no cover points authored still moves instead of standing in a row. the side
-## alternates with the bird so two flankers do not pick the same spot.
 func tangent_point(kiwi: Node3D, toward: Vector3, side := 0) -> Vector3:
 	var here := kiwi.global_position
 	var to := toward - here
@@ -319,7 +277,6 @@ func tangent_point(kiwi: Node3D, toward: Vector3, side := 0) -> Vector3:
 	return goal if grounded == Vector3.INF else grounded
 
 
-## the ground under a point, or INF when there is none to stand on.
 func _ground(kiwi: Node3D, at: Vector3) -> Vector3:
 	var space := kiwi.get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(at + Vector3.UP * 3.0, at - Vector3.UP * 6.0, 1)
@@ -329,8 +286,6 @@ func _ground(kiwi: Node3D, at: Vector3) -> Vector3:
 	return hit["position"]
 
 
-## a cover point counts as cover when the line from the player's eyes to a bird's eye height at the
-## point is blocked by the world.
 func _covered(point: Vector3, toward: Vector3, kiwi: Node3D) -> bool:
 	var space := kiwi.get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(toward + Vector3.UP * 1.2, point + Vector3.UP * 0.35, 1)
@@ -347,9 +302,6 @@ func _assign_roles() -> void:
 			if k.has_method("can_see_target") and k.can_see_target():
 				seeing.append(id)
 			continue
-		## the first bird without a turn suppresses if it can, the next flanks, the third holds, and
-		## round again. a lone hunter that has lost you therefore lights up your cover rather than
-		## charging in, which is the better behaviour on its own.
 		var beam_ready: bool = k.has_method("beam_ready") and k.beam_ready()
 		if idle % 3 == 0 and beam_ready:
 			_roles[id] = Role.SUPPRESS
@@ -358,9 +310,6 @@ func _assign_roles() -> void:
 		else:
 			_roles[id] = Role.FLANK
 		idle += 1
-	## the window opens here; the birds walk into it from _choose_attack, each holding its fire until
-	## the other is ready too, so the two charges start on the same tick however their bursts were
-	## staggered. a window nobody fills in SYNC_WAIT closes on its own.
 	if seeing.size() >= 2 and not _sync_armed and (force_sync or (_sync_cooldown <= 0.0 and randf() < SYNC_CHANCE)):
 		_sync_armed = true
 		_sync_wait = 0.0
@@ -393,8 +342,6 @@ func _set_leader(kiwi: Node3D) -> void:
 	leader_changed.emit(_leader)
 
 
-## a freed node compares equal to null and stays in every dictionary it was ever put in. swept
-## every frame, the same discipline as the ring, the reticle and the vitals bar.
 func _sweep() -> void:
 	var gone := false
 	for i in range(_members.size() - 1, -1, -1):

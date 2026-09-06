@@ -1,14 +1,6 @@
 class_name LobbyPanel
 extends Control
 
-## the co-op page: host a game, find one on this network, or type an address.
-##
-## the SEARCH is why there is a beacon. Two people on the same wifi should not have to read an ip
-## address out loud to each other, so the host answers a broadcast with its name and the client
-## lists what answered; typing an address is still there for the case where the network will not
-## carry a broadcast, which is most university wifi.
-##
-## once a game is up this is also the lobby: who is in, and the one button only the host has.
 
 signal back_pressed()
 
@@ -110,8 +102,6 @@ func _on_found(servers: Array) -> void:
 			_on_join())
 
 
-## the one button that is not everybody's: the host decides when the run starts, because the run is
-## one run. everyone else is told, by the same call.
 func _on_start() -> void:
 	if not Net.is_host():
 		return

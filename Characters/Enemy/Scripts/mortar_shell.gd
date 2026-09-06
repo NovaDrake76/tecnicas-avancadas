@@ -1,12 +1,6 @@
 class_name MortarShell
 extends Node3D
 
-## one round from the mortar kiwi: a shell on a parabola and, from the moment it leaves the tube, a
-## RING ON THE GROUND where it will land, filling up as it falls. that ring is the whole design: you
-## are told where and when, and standing on it is the one thing that gets you hurt. it lands on
-## nothing the mortar can see, which is the point of a mortar; cover between the blast and you cuts
-## the damage, so a wall still means something, and a roof means everything. the shell is silent in
-## the air: the ring is the warning, and a whistle on top of it only made the same point louder.
 
 signal burst(at: Vector3)
 
@@ -62,9 +56,6 @@ func _ready() -> void:
 	_shell.material_override = body
 	add_child(_shell)
 
-	## the telegraph: a ring the size of the blast, and nothing inside it. it says WHERE, and the
-	## shell falling through the air says when -- a disc growing to the edge said the same thing a
-	## second time and turned every landing into a painted plate on the ground.
 	var ring_mat := StandardMaterial3D.new()
 	ring_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	ring_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -75,8 +66,7 @@ func _ready() -> void:
 	ring_mat.no_depth_test = false
 	_ring = MeshInstance3D.new()
 	var ring := TorusMesh.new()
-	## TorusMesh.rings is the count AROUND the big circle and ring_segments around the tube, the
-	## opposite of what the names suggest.
+	## TorusMesh.rings is the count AROUND the big circle and ring_segments around the tube, the opposite of what the names suggest.
 	ring.inner_radius = _radius - 0.08
 	ring.outer_radius = _radius
 	ring.rings = 40
@@ -121,7 +111,6 @@ func _explode() -> void:
 	tw.tween_property(light, "light_energy", 0.0, 0.35)
 	tw.tween_callback(light.queue_free)
 
-	## the biggest sound in the game: it pushes everything else down for a beat when it lands near you
 	Sfx.play(&"mortar_blast", at)
 	Sfx.hdr(at, 10.0, 30.0)
 
@@ -130,12 +119,7 @@ func _explode() -> void:
 	queue_free()
 
 
-## damage falls off to the ring's edge, and cover between the blast and you cuts it hard. the ray is
-## from knee height at the blast, so a crate you are crouched behind counts and a kerb does not.
 func _hurt(at: Vector3) -> void:
-	## a shell does not choose. everybody standing in the ring takes it, each with their own cover
-	## ray: two operatives sheltering behind the same crate is a decision they made together, and two
-	## standing in the open is a mistake they made together.
 	for who in Player.all(get_tree()):
 		_hurt_one(who, at)
 

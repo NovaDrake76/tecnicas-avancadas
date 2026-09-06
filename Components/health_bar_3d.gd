@@ -1,8 +1,6 @@
 class_name HealthBar3D
 extends Node3D
 
-## a world space bar built from two unshaded billboard quads at real world size.
-## it appears when the owner is damaged and hides again after hide_after seconds, 0 means never hide.
 
 const COLOR_HARM := Color(0.85, 0.25, 0.25)
 const COLOR_GAIN := Color(0.35, 0.8, 0.45)
@@ -38,7 +36,7 @@ func _quad(col: Color, z: float) -> MeshInstance3D:
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.albedo_color = col
 	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-	## no fixed_size here, on geometry that flag scales the bar up with distance instead of keeping it legible.
+	## no fixed_size here: on geometry that flag scales the bar up with distance instead of keeping it legible.
 	m.disable_receive_shadows = true
 	mi.material_override = m
 	mi.position.z = z
@@ -46,7 +44,6 @@ func _quad(col: Color, z: float) -> MeshInstance3D:
 	return mi
 
 
-## drive it from a Health component, this is all a caller has to do.
 func track(h: Health) -> void:
 	if h == null:
 		return
@@ -60,7 +57,7 @@ func track(h: Health) -> void:
 func set_ratio(r: float) -> void:
 	_ratio = clampf(r, 0.0, 1.0)
 	if _fill:
-		## scale from the left edge, a centred half bar just looks like a small full one.
+		## scaled from the left edge; a centred half bar just looks like a small full one.
 		_fill.scale.x = maxf(_ratio, 0.0001)
 		_fill.position.x = -width * 0.5 * (1.0 - _ratio)
 	if _fill_mat:

@@ -1,7 +1,5 @@
 extends Node
 
-## pooled bullet hole decals on static surfaces, autoloaded as BulletHoles.
-## a ring buffer, the oldest hole is reused once the pool is full so they never accumulate.
 
 const POOL := 96
 const HOLE_SIZE := 0.09
@@ -21,14 +19,13 @@ func _ready() -> void:
 		d.visible = false
 		add_child(d)
 		_decals.append(d)
-	## build the vfx caches at load, material creation is when godot compiles their pipelines.
+	## the vfx caches are built at load; material creation is when godot compiles their pipelines.
 	ImpactFx.warm()
 	TracerFx.warm()
 	MuzzleFlashFx.warm()
 	BurstFx.warm()
 
 
-## stamp a hole at point, projected into the surface whose outward normal is given.
 func mark(point: Vector3, normal: Vector3) -> void:
 	if _decals.is_empty():
 		return
@@ -36,7 +33,6 @@ func mark(point: Vector3, normal: Vector3) -> void:
 	var d := _decals[_next]
 	_next = (_next + 1) % POOL
 
-	## orient so local +Y is the surface normal, a decal projects along -Y into the wall.
 	var t := n.cross(Vector3.RIGHT)
 	if t.length() < 0.05:
 		t = n.cross(Vector3.FORWARD)
@@ -61,7 +57,6 @@ func active_holes() -> int:
 	return count
 
 
-## a procedural hole, dark punched core with a lighter chipped rim and soft alpha falloff.
 func _make_texture() -> Texture2D:
 	var s := 64
 	var img := Image.create(s, s, false, Image.FORMAT_RGBA8)

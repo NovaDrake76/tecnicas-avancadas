@@ -1,15 +1,11 @@
 class_name OptionsPanel
 extends VBoxContainer
 
-## video, audio and controls, shared by the main menu and the pause menu. a pure view onto the
-## settings autoload: every control writes through and saves, so there is no apply or cancel to get wrong.
 
 signal back_pressed
 
 const TABS := ["VIDEO", "AUDIO", "CONTROLS"]
 
-## caption, then the actions whose keys it prints. one row can carry several, which is how the
-## four movement keys and the two lean keys read as one line each.
 const KEYS := [
 	["MOVE", ["move_forward", "move_left", "move_back", "move_right"]],
 	["SPRINT", ["sprint"]],
@@ -117,9 +113,6 @@ func _controls() -> Control:
 	page.add_child(invert)
 
 	MenuStyle.sheet_section(page, "KEYS")
-	## TWO columns. fourteen bindings in one ran off the bottom of the screen at 1080, and the last
-	## four -- interact, the fire selector, the weapon cycle and the slots -- were simply not there.
-	## this is the one page in the game whose entire job is to be looked something up in.
 	var pairs: Array = []
 	for row in KEYS:
 		pairs.append([String(row[0]), _binding(row[1] as Array)])
@@ -138,11 +131,6 @@ func _controls() -> Control:
 	return page
 
 
-## where the open page actually ends, so the gate can ask whether it fits. it is a sheet built from a
-## list that grows every time the game gains a verb, which is exactly the shape that runs off screen
-## quietly.
-## every key here is resolved from the input map, so the sheet says what the game actually
-## listens for rather than what someone typed the day it was written.
 func _binding(actions: Array) -> String:
 	var keys: Array[String] = []
 	for action in actions:

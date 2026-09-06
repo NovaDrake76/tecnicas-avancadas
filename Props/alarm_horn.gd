@@ -1,12 +1,6 @@
 class_name AlarmHorn
 extends StaticBody3D
 
-## the compound's klaxon on a post. a runner that reaches it pulls the lever and the whole garrison
-## goes to ALARM; the player can cut it first, and then the runners have to find a friend instead.
-## built from primitives in _ready like the range target, so there is no model to import and it
-## reads at a distance, which matters because the player has to be able to find it before the
-## runner does. it decides nothing about the alarm itself: it tells Alarm, and Alarm tells it when
-## the compound has calmed down so the siren stops and it can be pulled again.
 
 signal raised(by: Node)
 signal cut
@@ -52,7 +46,6 @@ func _ready() -> void:
 	add_child(_interact)
 	_interact.interacted.connect(func(_by: Node) -> void: cut_horn())
 
-	## a real siren recording, looped on its own wail; tracked so a horn behind the container is muffled
 	_siren = Sfx.attach(&"siren", self, Vector3(0.0, post_height, 0.0))
 	_siren.volume_db += siren_db
 	Sfx.track(_siren)
@@ -96,7 +89,6 @@ func _build() -> void:
 	foot.position = Vector3(0.0, 0.03, 0.0)
 	add_child(foot)
 
-	## the red band is what says "alarm" from across the yard, lit or not
 	var band := MeshInstance3D.new()
 	var ring := CylinderMesh.new()
 	ring.top_radius = 0.075
@@ -108,7 +100,6 @@ func _build() -> void:
 	band.position = Vector3(0.0, post_height - 0.55, 0.0)
 	add_child(band)
 
-	## the klaxon: a cone leaning forward and down off the top of the post
 	_head = MeshInstance3D.new()
 	var cone := CylinderMesh.new()
 	cone.top_radius = 0.24
@@ -121,7 +112,6 @@ func _build() -> void:
 	_head.rotation_degrees = Vector3(-70.0, 0.0, 0.0)
 	add_child(_head)
 
-	## the small box the lever lives in, at hand height. this is what "cut" is about.
 	var box := MeshInstance3D.new()
 	var bm := BoxMesh.new()
 	bm.size = Vector3(0.18, 0.24, 0.1)
@@ -155,14 +145,12 @@ func _process(delta: float) -> void:
 	if not _raised:
 		return
 	_time += delta
-	## a turning beacon: the pulse is what the eye reads as "alarm" from a distance
 	var pulse := 0.5 + 0.5 * sin(_time * 9.0)
 	_beacon_mat.emission_energy_multiplier = 1.5 + 4.5 * pulse
 	_light.light_energy = 1.0 + 5.0 * pulse
 	_beacon.rotation.y += delta * 6.0
 
 
-## a runner reached it. the compound goes to ALARM, the siren starts and the beacon lights.
 func raise(by: Node) -> void:
 	if _disabled:
 		return
@@ -177,8 +165,6 @@ func raise(by: Node) -> void:
 	raised.emit(by)
 
 
-## the player cut it. runners skip it from now on and have to find a friend instead, which is the
-## pre-emptive stealth play: something to do about the horn BEFORE being seen.
 func cut_horn() -> void:
 	if _disabled:
 		return
@@ -191,7 +177,6 @@ func cut_horn() -> void:
 	cut.emit()
 
 
-## for tools and probes that need the horn back.
 func restore() -> void:
 	_disabled = false
 	_interact.set_enabled(can_be_cut)

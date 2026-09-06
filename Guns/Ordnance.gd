@@ -6,8 +6,7 @@ enum MagType {
 	Rifle,
 	PistolHeavy,
 	PistolMachine,
-	## the bolt rifle's. added at the END on purpose: a magazine .tres stores the type as a NUMBER,
-	## so an insertion anywhere else would silently turn every saved shotgun magazine into a rifle one.
+	## at the END on purpose: a magazine .tres stores the type as a NUMBER, so inserting earlier would turn every saved shotgun magazine into a rifle one.
 	Marksman,
 }
 

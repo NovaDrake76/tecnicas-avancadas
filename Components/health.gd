@@ -1,11 +1,9 @@
 class_name Health
 extends Node
 
-## generic health for any entity, attach as a child node and let something else call take_damage.
 
 signal damaged(amount: float, current: float)
 signal died
-## fires on every change including heal and revive, this is the one a bar should listen to.
 signal health_changed(current: float, max_health: float)
 
 @export var max_health: float = 30.0
@@ -31,7 +29,6 @@ func is_alive() -> bool:
 	return current > 0.0
 
 
-## dead entities stay dead here, use revive for that.
 func heal(amount: float) -> void:
 	if current <= 0.0:
 		return

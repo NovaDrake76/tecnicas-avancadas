@@ -1,14 +1,7 @@
 class_name MenuStyle
 extends RefCounted
 
-## the look of every menu screen in one place, so the main menu and the pause menu cannot drift apart.
-## static factories rather than a theme resource, because these screens are built in code.
 
-## the game speaks in one condensed face, three weights. the project default is the regular one, so
-## a paragraph never has to be overridden; a heading and a thing you can press step up, because on a
-## menu the reader is looking for what to DO and weight is what points at it. condensed rather than
-## plain because a mission brief and a parts list are both narrow columns of words, and a condensed
-## face fits about a fifth more of them on a line at the same height.
 const FACE_BOLD := preload("res://Fonts/IBMPlexSansCondensed-Bold.ttf")
 const FACE_MEDIUM := preload("res://Fonts/IBMPlexSansCondensed-SemiBold.ttf")
 
@@ -16,13 +9,11 @@ const DIM := Color(0.72, 0.78, 0.7)
 const BRIGHT := Color(0.95, 0.97, 0.92)
 const HOT := Color(1.0, 0.82, 0.3)
 const INK := Color(0.03, 0.05, 0.03)
-## the one warm accent for prices, kinds and the selected thing. red, the way a kit screen reads.
 const ACCENT := Color(0.86, 0.3, 0.22)
 const HAIRLINE := Color(1.0, 1.0, 1.0, 0.09)
 const CARD := Color(0.085, 0.09, 0.085)
 const CARD_HOVER := Color(0.13, 0.135, 0.13)
 
-## sizes for a 1920x1080 canvas, the project base.
 const T_TITLE := 104
 const T_HEADING := 64
 const T_BODY := 34
@@ -77,8 +68,6 @@ static func spacer(parent: Control, height: float) -> Control:
 	return c
 
 
-## the dark gradient behind a menu column. it fades out, because a flat rectangle leaves a hard seam
-## down the frame that reads as a rendering bug rather than as art.
 static func scrim(parent: Control, width := 1060.0, alpha := 0.72) -> TextureRect:
 	var grad := Gradient.new()
 	grad.set_color(0, Color(INK, alpha))
@@ -99,7 +88,6 @@ static func scrim(parent: Control, width := 1060.0, alpha := 0.72) -> TextureRec
 	return r
 
 
-## the column every menu hangs its buttons on: anchored to the left edge, vertically centred.
 static func column(parent: Control) -> VBoxContainer:
 	var col := VBoxContainer.new()
 	col.set_anchors_preset(Control.PRESET_CENTER_LEFT)
@@ -110,12 +98,7 @@ static func column(parent: Control) -> VBoxContainer:
 	return col
 
 
-## ---------------------------------------------------------------- the sheet look
-## the dark kit-screen widgets the bench introduced, so the mission board and any later sheet are cut
-## from the same cloth. sizes are 1080p pixels.
-
 const OK := Color(0.55, 0.85, 0.6)
-## the letter carries its own colour wherever it is drawn: the report card, its ring, its term bars.
 const GRADE_COLORS := {
 	"A+": Color(1.0, 0.86, 0.35), "A": Color(1.0, 0.86, 0.35), "B": Color(0.55, 0.85, 0.6),
 	"C": Color(0.88, 0.92, 0.96), "D": Color(1.0, 0.62, 0.28), "F": Color(1.0, 0.35, 0.3),
@@ -126,23 +109,11 @@ static func grade_color(letter: String) -> Color:
 	return GRADE_COLORS.get(letter, BRIGHT)
 
 
-## the margins every full screen sheet is laid out inside, in one place because both of them --
-## the board and the bench -- want the same frame and had the same number typed twice.
-##
-## the BOTTOM one is bigger than the top on purpose, and that is not taste. A sheet's last row is
-## its buttons, and the bottom edge of the screen is the edge most likely to go missing: the
-## editor's embedded Game view crops a strip for its own toolbar, a windowed run gives some of it
-## to the title bar, and a taskbar takes more. 32 px of clearance meant DEPLOY was sliced in half
-## the moment anything at all was taken off the bottom -- photographed, in the editor, by Nathan.
-## 72 leaves the buttons standing clear of a strip that size, and on a full screen it reads as the
-## sheet being framed rather than as a gap.
 const SHEET_EDGE := 64
 const SHEET_TOP := 36
 const SHEET_BOTTOM := 72
 
 
-## the frame a sheet is drawn inside. one call rather than four overrides, so the two sheets cannot
-## drift apart again.
 static func sheet_margins(margin: MarginContainer) -> void:
 	margin.add_theme_constant_override("margin_left", SHEET_EDGE)
 	margin.add_theme_constant_override("margin_right", SHEET_EDGE)

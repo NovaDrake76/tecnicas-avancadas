@@ -1,8 +1,6 @@
 class_name Interactable
 extends Node
 
-## a reusable look at it and press a key target.
-## drop it under any body the interactor's ray can hit, it exposes a verb and a press callback.
 
 signal interacted(by: Node)
 
