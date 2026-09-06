@@ -89,7 +89,7 @@ func _zoom_by(factor: float) -> void:
 	var was := _want
 	_want = clampf(_want * factor, zoom_min, zoom_max)
 	if not is_equal_approx(was, _want):
-		UiSfx.play("switch")
+		UiSfx.play("zoom")
 
 
 func set_magnification(mag: float) -> void:

@@ -17,13 +17,16 @@ const BANKS := {
 	"bench_open": ["res://Sounds/ui/bench_open_1.ogg"],
 	"bench_close": ["res://Sounds/ui/bench_close_1.ogg"],
 	"page": ["res://Sounds/ui/page_1.ogg"],
+	"zoom": ["res://Sounds/ui/zoom_1.ogg"],
+	"select": ["res://Sounds/ui/select_1.ogg"],
 	"pause_close": [],
+	"board_close": [],
 }
 const GAIN_DB := {"hover": -12.0, "click": -4.0, "confirm": -4.0, "deploy": 0.0, "switch": -6.0,
 	"back": -4.0, "buy": -2.0, "install": -4.0, "error": -4.0, "tick": -6.0, "stamp": -4.0, "objective": -6.0,
-	"bench_open": -6.0, "bench_close": -6.0, "page": -6.0}
+	"bench_open": -6.0, "bench_close": -6.0, "page": -6.0, "zoom": -8.0, "select": -4.0}
 const QUIET := &"ui_quiet"
-const SILENT := ["pause_close"]
+const SILENT := ["pause_close", "board_close"]
 
 var _streams := {}
 var _last := {}

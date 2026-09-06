@@ -128,7 +128,7 @@ func close(silent := false) -> void:
 	if not visible:
 		return
 	if not silent:
-		UiSfx.play("back")
+		UiSfx.play("board_close")
 	remove_from_group("holds_mouse")
 	visible = false
 	var hud := get_tree().get_first_node_in_group("hud")
@@ -145,7 +145,7 @@ func select(index: int) -> void:
 	if index < 0 or index >= Run.level_count():
 		return
 	if index != _selected:
-		UiSfx.play("switch")
+		UiSfx.play("select")
 	_selected = index
 	_refresh()
 
