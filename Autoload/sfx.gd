@@ -84,6 +84,11 @@ const EVENTS := {
 	## hauling a body. the grab is the player's own hands, so it is in the head; the drop is out in
 	## the world where the body lands, and it is the cloth thump of the bb impact taken well down in
 	## pitch, which is a body settling rather than a pellet landing.
+	## the binoculars. cloth and gear rather than a machine: the crouch clips are the only thing on
+	## disk that is a person moving their own kit about, and they are the same body the takedown and
+	## the body carry use. up is pitched above down because a thing being raised sounds like it.
+	&"binocs_up": {"2d": true, "bus": &"Player", "db": -15.0, "clips": "player/crouch", "n": 3, "pitch": [1.12, 1.2]},
+	&"binocs_down": {"2d": true, "bus": &"Player", "db": -17.0, "clips": "player/crouch", "n": 3, "pitch": [0.92, 1.0]},
 	&"body_grab": {"2d": true, "bus": &"Player", "db": -16.0, "clips": "player/crouch", "n": 3, "pitch": [0.82, 0.9]},
 	&"body_drop": {"bus": &"World", "db": -10.0, "unit": 6.0, "max": 40.0, "voices": 2, "clips": "impacts/bb_body", "n": 3, "pitch": [0.62, 0.7]},
 	&"step_grass": {"2d": true, "bus": &"Player", "db": -25.0, "voices": 2, "clips": "player/step_grass", "n": 5, "pitch": [0.92, 1.1]},

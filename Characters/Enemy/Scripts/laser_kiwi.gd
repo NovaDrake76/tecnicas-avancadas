@@ -237,14 +237,14 @@ func _step_hunt(delta: float) -> void:
 ## squad scatters the same way. arriving does not earn a turn; it puts the bird somewhere new, and
 ## movement is the point.
 func _step_role(delta: float) -> void:
-	var duty := Squad.role_for(self)
+	var job := Squad.role_for(self)
 	_role_timer -= delta
-	if _role_goal == Vector3.INF or _role_timer <= 0.0 or _role_role != duty:
-		_role_role = duty
+	if _role_goal == Vector3.INF or _role_timer <= 0.0 or _role_role != job:
+		_role_role = job
 		_role_timer = Squad.ROLE_INTERVAL
 		_role_arrived = false
-		_role_goal = Squad.claim_cover(self, _player.global_position, duty == Squad.Role.FLANK)
-		if _role_goal == Vector3.INF and (duty != Squad.Role.HOLD or Squad.is_rattled()):
+		_role_goal = Squad.claim_cover(self, _player.global_position, job == Squad.Role.FLANK)
+		if _role_goal == Vector3.INF and (job != Squad.Role.HOLD or Squad.is_rattled()):
 			_role_goal = Squad.tangent_point(self, _player.global_position)
 	if _role_goal == Vector3.INF or _role_arrived:
 		velocity.x = move_toward(velocity.x, 0.0, hunt_speed * 6.0 * delta)
@@ -673,3 +673,7 @@ func demo_attack(kind: String, target: Node3D) -> void:
 			_attack = Attack.BURST
 			_pulses_left = 999
 			_attack_timer = 0.0
+
+
+func kind_name() -> String:
+	return "LASER"

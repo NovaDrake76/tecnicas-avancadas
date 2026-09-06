@@ -21,6 +21,8 @@
 [ext_resource type="Script" path="res://Player/utility_belt.gd" id="18_throw"]
 [ext_resource type="Script" path="res://Player/takedown.gd" id="20_takedown"]
 [ext_resource type="Script" path="res://Player/revive.gd" id="21_revive"]
+[ext_resource type="Script" path="res://Player/binoculars.gd" id="22_binocs"]
+[ext_resource type="Script" path="res://Player/pinger.gd" id="23_ping"]
 [ext_resource type="Script" path="res://Player/body_drag.gd" id="19_drag"]
 [ext_resource type="Script" path="res://Components/viewmodel_pass.gd" id="20_vmpass"]
 
@@ -104,6 +106,12 @@ max_health = 100.0
 
 [node name="Utilities" type="Node" parent="."]
 script = ExtResource("18_throw")
+
+[node name="Binoculars" type="Node" parent="."]
+script = ExtResource("22_binocs")
+
+[node name="Pings" type="Node" parent="."]
+script = ExtResource("23_ping")
 
 [node name="Takedown" type="Node" parent="."]
 script = ExtResource("20_takedown")

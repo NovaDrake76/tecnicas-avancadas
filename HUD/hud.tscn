@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://HUD/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://HUD/alert_ring.gd" id="2_ring"]
@@ -11,6 +11,10 @@
 [ext_resource type="Script" path="res://HUD/key_cap.gd" id="9_key"]
 [ext_resource type="Script" path="res://HUD/waypoint.gd" id="10_way"]
 [ext_resource type="Script" path="res://HUD/scope_view.gd" id="11_scope"]
+[ext_resource type="Script" path="res://HUD/binocular_view.gd" id="12_binocs"]
+[ext_resource type="Script" path="res://HUD/mark_tags.gd" id="13_marks"]
+[ext_resource type="Script" path="res://HUD/belief_marker.gd" id="14_belief"]
+[ext_resource type="Script" path="res://HUD/team_markers.gd" id="15_team"]
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_hud")
@@ -26,6 +30,20 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("11_scope")
+
+[node name="BinocularView" type="Control" parent="Root"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("12_binocs")
+
+[node name="MarkTags" type="Control" parent="Root"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("13_marks")
 
 [node name="Crosshair" type="Control" parent="Root"]
 unique_name_in_owner = true
@@ -250,6 +268,26 @@ mouse_filter = 2
 text = "TAKEDOWN"
 vertical_alignment = 1
 
+[node name="GlassRow" type="HBoxContainer" parent="Root/Stats/Footer"]
+unique_name_in_owner = true
+visible = false
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="GlassKey" type="Control" parent="Root/Stats/Footer/GlassRow"]
+unique_name_in_owner = true
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("9_key")
+action = &"aim"
+text_size = 19
+
+[node name="Glass" type="Label" parent="Root/Stats/Footer/GlassRow"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+vertical_alignment = 1
+
 [node name="GearRows" type="HBoxContainer" parent="Root/Stats/Footer"]
 unique_name_in_owner = true
 mouse_filter = 2
@@ -261,6 +299,20 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("10_way")
+
+[node name="BeliefMarker" type="Control" parent="Root"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("14_belief")
+
+[node name="TeamMarkers" type="Control" parent="Root"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("15_team")
 
 [node name="Vitals" type="Control" parent="Root"]
 unique_name_in_owner = true

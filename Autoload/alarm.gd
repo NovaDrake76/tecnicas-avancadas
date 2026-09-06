@@ -166,6 +166,16 @@ func knowledge_age() -> float:
 	return _age
 
 
+## how far that belief has SPREAD from the last sighting: nothing while somebody has eyes on you,
+## widening once nobody does, capped so a search never becomes the whole level. the birds fan onto
+## a ring this wide and the hud draws it at exactly this radius, so what the garrison is doing and
+## what the player is shown are one number rather than two that can drift.
+func search_spread() -> float:
+	if not has_last_known:
+		return 0.0
+	return minf(_age * SEARCH_SPREAD, SEARCH_SPREAD_MAX)
+
+
 ## a bird found a body. counted here rather than on the bird, because the question is about the
 ## whole garrison and no single bird can answer it.
 func note_body_found() -> void:
@@ -183,7 +193,7 @@ func bodies_found() -> int:
 func search_point(seed_id: int) -> Vector3:
 	if not has_last_known:
 		return last_known
-	var spread := minf(_age * SEARCH_SPREAD, SEARCH_SPREAD_MAX)
+	var spread := search_spread()
 	if spread <= 0.5:
 		return last_known
 	var angle := float(absi(seed_id) % 360) * (PI / 180.0)

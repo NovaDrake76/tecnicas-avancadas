@@ -10,6 +10,7 @@ sfx_prefix = &"harrier"
 weapon_model = "HARRIER"
 accepted_mag = 2
 action = 1
+muzzle_hearing = 8.0
 spring_constant = 200.0
 spring_compression = 0.095
 motor_rpm = 300.0

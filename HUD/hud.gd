@@ -12,6 +12,9 @@ const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 @onready var mode_hint: KeyCap = %ModeHint
 @onready var hopup_label: Label = %Hopup
 @onready var gear_rows: HBoxContainer = %GearRows
+@onready var glass_row: HBoxContainer = %GlassRow
+@onready var glass_key: KeyCap = %GlassKey
+@onready var glass_label: Label = %Glass
 @onready var melee_row: HBoxContainer = %MeleeRow
 @onready var melee_label: Label = %Melee
 @onready var melee_key: KeyCap = %MeleeKey
@@ -104,6 +107,7 @@ func _style() -> void:
 	HudStyle.tune(mass_label, HudStyle.T_MICRO, HudStyle.FAINT)
 	HudStyle.tune(hopup_label, HudStyle.T_MICRO, HudStyle.FAINT)
 	HudStyle.tune(melee_label, HudStyle.T_MICRO, HudStyle.FAINT)
+	HudStyle.tune(glass_label, HudStyle.T_MICRO, HudStyle.BRIGHT)
 	HudStyle.tune(objective_label, HudStyle.T_LABEL, HudStyle.DIM)
 	HudStyle.tune(targets_label, HudStyle.T_VALUE, HudStyle.BRIGHT)
 	HudStyle.tune(timer_label, HudStyle.T_UNIT, HudStyle.FAINT)
@@ -175,6 +179,22 @@ func _bind_weapon() -> void:
 			else:
 				_on_focus_lost())
 
+	## the binoculars say nothing until they are up. then the footer carries the SECOND key -- the
+	## magnification -- because that is the one moment it can be pressed and the one moment it means
+	## anything, and it carries the tally of what has been marked, which is the only number the tool
+	## produces and the only reason to keep glassing.
+	var glass := get_tree().get_first_node_in_group("binoculars") as Binoculars
+	if glass != null:
+		glass_key.visible = false
+		glass.raised_changed.connect(func(up: bool) -> void:
+			glass_row.visible = up
+			_update_glass(glass))
+		glass.marked.connect(func(_bird: Node3D) -> void:
+			_update_glass(glass)
+			pulse(glass_label))
+		glass.zoom_changed.connect(func() -> void: _update_glass(glass))
+	glass_row.visible = false
+
 	## the belt sits with the other quiet figures and speaks up when something is thrown
 	_belt = get_tree().get_first_node_in_group("utility") as UtilityBelt
 	if _belt != null:
@@ -192,6 +212,16 @@ func _on_takedown_reach(within: bool) -> void:
 		melee_key.edge = Color(HudStyle.BRIGHT, 0.55)
 		melee_key.refresh()
 		pulse(melee_label)
+
+
+## the zoom moved from a key to the WHEEL, and a wheel has no key cap: `KeyCap` resolves a letter
+## from the InputMap and the mouse wheel is not an action. The word carries it instead, which is
+## also the only thing here a player might not guess.
+func _update_glass(glass: Binoculars) -> void:
+	if glass == null or not is_instance_valid(glass):
+		return
+	var n := glass.marked_count()
+	glass_label.text = "ZOOM %.1fx    MARKED %d" % [glass.magnification(), n]
 
 
 func _on_gear_changed() -> void:

@@ -106,3 +106,7 @@ func _go_down() -> void:
 	if _sight != null:
 		_sight.visible = false
 	super()
+
+
+func kind_name() -> String:
+	return "SNIPER"

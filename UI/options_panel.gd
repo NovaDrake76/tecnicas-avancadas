@@ -22,6 +22,7 @@ const KEYS := [
 	["THROW UTILITY", ["throw"]],
 	["UTILITY SLOTS", ["utility_1", "utility_2"]],
 	["TAKEDOWN", ["takedown"]],
+	["BINOCULARS", ["binoculars"]],
 	["FIRE MODE", ["toggle_fire_mode"]],
 	["INTERACT", ["interact"]],
 	["CYCLE WEAPON", ["weapon_next", "weapon_prev"]],

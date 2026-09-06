@@ -10,6 +10,7 @@ sfx_prefix = &"merlin"
 weapon_model = "MERLIN"
 accepted_mag = 3
 action = 1
+muzzle_hearing = 8.0
 spring_constant = 180.0
 spring_compression = 0.095
 motor_rpm = 1200.0

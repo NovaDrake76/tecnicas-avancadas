@@ -126,6 +126,30 @@ static func grade_color(letter: String) -> Color:
 	return GRADE_COLORS.get(letter, BRIGHT)
 
 
+## the margins every full screen sheet is laid out inside, in one place because both of them --
+## the board and the bench -- want the same frame and had the same number typed twice.
+##
+## the BOTTOM one is bigger than the top on purpose, and that is not taste. A sheet's last row is
+## its buttons, and the bottom edge of the screen is the edge most likely to go missing: the
+## editor's embedded Game view crops a strip for its own toolbar, a windowed run gives some of it
+## to the title bar, and a taskbar takes more. 32 px of clearance meant DEPLOY was sliced in half
+## the moment anything at all was taken off the bottom -- photographed, in the editor, by Nathan.
+## 72 leaves the buttons standing clear of a strip that size, and on a full screen it reads as the
+## sheet being framed rather than as a gap.
+const SHEET_EDGE := 64
+const SHEET_TOP := 36
+const SHEET_BOTTOM := 72
+
+
+## the frame a sheet is drawn inside. one call rather than four overrides, so the two sheets cannot
+## drift apart again.
+static func sheet_margins(margin: MarginContainer) -> void:
+	margin.add_theme_constant_override("margin_left", SHEET_EDGE)
+	margin.add_theme_constant_override("margin_right", SHEET_EDGE)
+	margin.add_theme_constant_override("margin_top", SHEET_TOP)
+	margin.add_theme_constant_override("margin_bottom", SHEET_BOTTOM)
+
+
 static func sheet_text(parent: Control, text: String, size: int, colour: Color, wrapped := false) -> Label:
 	var l := Label.new()
 	l.text = text

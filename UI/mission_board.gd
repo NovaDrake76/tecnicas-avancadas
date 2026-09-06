@@ -36,10 +36,7 @@ func _ready() -> void:
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	for side in ["left", "right"]:
-		margin.add_theme_constant_override("margin_" + side, 64)
-	margin.add_theme_constant_override("margin_top", 36)
-	margin.add_theme_constant_override("margin_bottom", 32)
+	MenuStyle.sheet_margins(margin)
 	_root.add_child(margin)
 	var page := VBoxContainer.new()
 	page.add_theme_constant_override("separation", 18)
@@ -98,6 +95,15 @@ func selected() -> int:
 ## overflowing, which is what slid the last INTEL row under the DEPLOY footer and cut it in half.
 ## the scroller would carry it, but a sheet whose bottom line is sliced through reads as broken
 ## rather than as scrollable, so the gate treats any overflow at 1080 as a fault.
+## how far the DEPLOY button's bottom edge sits above the bottom of the canvas. it is the number
+## that decides whether the sheet survives losing a strip of the window, which is the one thing that
+## has actually happened to it.
+func footer_clearance() -> float:
+	if _root == null or _deploy_btn == null:
+		return 0.0
+	return _root.size.y - _deploy_btn.get_global_rect().end.y
+
+
 func detail_overflow() -> float:
 	## the column sits inside a MarginContainer inside the scroller, so the scroller is found by
 	## WALKING UP rather than by assuming it is the parent. assuming it was is why the first version

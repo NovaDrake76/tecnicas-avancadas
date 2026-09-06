@@ -19,6 +19,11 @@ const SPAWN_CLEARANCE := 0.15
 ## how far apart two operatives stand on the same insertion marker.
 const RIGHT_OF_SPAWN := 1.6
 
+## standing, crouched, flat. a LADDER rather than two booleans, because everything that reads it
+## -- how far a bird can see you, how loud your boots are, how fast you move -- steps down as you
+## get lower, and two booleans would let a player be both at once.
+enum Stance { STAND, CROUCH, PRONE }
+
 @export var movement: MovementConfig
 
 @export_group("Look")
@@ -26,11 +31,15 @@ const RIGHT_OF_SPAWN := 1.6
 @export var invert_look := false
 @export var pitch_limit_deg: float = 89.0
 
-@export_group("Crouch")
+@export_group("Stance")
 @export var stand_height := 1.8
 @export var crouch_height := 1.0
+## flat on the ground. the capsule is short enough that almost anything in the prop pack clears it,
+## which is the point: prone is what the level's own clutter becomes cover for.
+@export var prone_height := 0.55
 @export var stand_eye := 1.65
 @export var crouch_eye := 0.95
+@export var prone_eye := 0.35
 @export var crouch_lerp_speed := 12.0
 
 @export_group("Lean")
@@ -63,9 +72,19 @@ const RIGHT_OF_SPAWN := 1.6
 @onready var health: Health = $Health
 
 var _jump_buffer := 0.0
-var _crouch_t := 0.0
+var _stance_t := 0.0
 var _base_sensitivity := 0.0022
-var _crouching := false
+var _stance := Stance.STAND
+## set when the crouch key was what lifted the operative out of prone. crouch is a HOLD, so without
+## this a tap is one frame of crouching and then standing bolt upright in the open, which in a
+## stealth game is the worst possible answer to "get me up one step".
+var _crouch_latch := false
+## a jump press spent standing up is not also a jump. without it one press stands the operative up
+## AND launches them, because the stance is raised before the jump buffer is read.
+var _jump_spent := false
+## the jump edge, read ONCE a tick and used by both the stance machine and the jump buffer, so a
+## press spent standing up out of prone can never also arm a jump.
+var _jump_hit := false
 var _grounded := false
 var _peak_fall_vy := 0.0
 var _pitch := 0.0
@@ -78,8 +97,8 @@ var _since_hurt := 999.0
 ## for "the viewmodel", Run for "the pouch" -- and with two operatives in the tree those lookups
 ## would hand back whichever came first. a remote operative's copies leave the groups AND stop
 ## processing: they keep their meshes, which is what the other player sees, and nothing else.
-const REMOTE_SILENT := ["aim_scope", "viewmodel", "interactor", "utility", "takedown",
-	"body_drag", "footsteps", "weapon_rack", "weapon", "pouch", "revive"]
+const REMOTE_SILENT := ["aim_scope", "viewmodel", "interactor", "utility", "takedown", "binoculars",
+	"body_drag", "footsteps", "weapon_rack", "weapon", "pouch", "revive", "pinger"]
 
 ## whether this node is the one this machine drives. everything that reads the mouse, the keyboard,
 ## the camera or the hud hangs off it.
@@ -356,7 +375,7 @@ func _physics_process(delta: float) -> void:
 		_on_landed(_peak_fall_vy)
 		_peak_fall_vy = 0.0
 
-	_update_crouch(delta)
+	_update_stance(delta)
 	_update_lean(delta)
 	_update_jump_buffer(delta)
 	_update_health(delta)
@@ -376,10 +395,14 @@ func wish_dir() -> Vector3:
 
 func current_max_speed() -> float:
 	var base := movement.ground_max_speed
-	if _crouching:
-		base = movement.crouch_max_speed
-	elif Input.is_action_pressed("sprint"):
-		base = movement.run_max_speed
+	match _stance:
+		Stance.CROUCH:
+			base = movement.crouch_max_speed
+		Stance.PRONE:
+			base = movement.prone_max_speed
+		_:
+			if Input.is_action_pressed("sprint"):
+				base = movement.run_max_speed
 	## carrying a body costs nothing. it briefly cost 45 percent, which made every corpse a haul and
 	## quietly discouraged the tidiest thing a player can do; a kiwi is a small bird, and the price of
 	## moving one is the seconds at either end.
@@ -387,6 +410,10 @@ func current_max_speed() -> float:
 
 
 func wants_jump() -> bool:
+	## flat on the ground there is nothing to jump with. the press is not thrown away: it is what
+	## stands you back up, in _update_stance.
+	if _stance == Stance.PRONE:
+		return false
 	return Input.is_action_pressed("jump") if movement.auto_bhop else _jump_buffer > 0.0
 
 
@@ -395,7 +422,29 @@ func is_grounded() -> bool:
 
 
 func is_crouching() -> bool:
-	return _crouching
+	return stance() == Stance.CROUCH
+
+
+func is_prone() -> bool:
+	return stance() == Stance.PRONE
+
+
+## 0 standing, 1 crouched, 2 prone. everything that cares -- the cones, the boots, the reticle --
+## asks this one question.
+##
+## a REMOTE operative's answer is read off its head, and that is a fix as much as an addition. the
+## head's height is already on the wire, because the aim line comes off it; a second message saying
+## the same thing is a second thing that can disagree with the first. until now `is_crouching` on a
+## teammate's puppet was simply false forever, so the birds tested a crouching client at standing
+## height and standing range, and the client had no way of knowing why they kept being seen.
+func stance() -> int:
+	if not _local and head != null:
+		if head.position.y <= (prone_eye + crouch_eye) * 0.5:
+			return Stance.PRONE
+		if head.position.y <= (crouch_eye + stand_eye) * 0.5:
+			return Stance.CROUCH
+		return Stance.STAND
+	return _stance
 
 
 ## a laser found you. the damage goes to the health component, the kick and the shake to the camera.
@@ -473,7 +522,7 @@ func lean_offset() -> Vector3:
 func is_running() -> bool:
 	if _aim != null and _aim.is_aiming():
 		return false
-	if not _grounded or _crouching or not Input.is_action_pressed("sprint"):
+	if not _grounded or _stance != Stance.STAND or not Input.is_action_pressed("sprint"):
 		return false
 	return Vector2(velocity.x, velocity.z).length() > 0.2
 
@@ -536,23 +585,98 @@ func _air_accelerate(hvel: Vector3, dir: Vector3, wish_speed: float, delta: floa
 	return hvel + dir * amount
 
 
-func _update_crouch(delta: float) -> void:
-	var want := Input.is_action_pressed("crouch")
-	## refuse to stand up while something is directly overhead.
-	if not want and _crouching and _ceiling_check != null and _ceiling_check.is_colliding():
-		want = true
-	if want != _crouching:
-		Sfx.play_2d(&"crouch")
-	_crouching = want
+## crouch is HELD and prone is a TOGGLE, which is not an inconsistency: crouching is something you
+## do for a few seconds behind a crate, and prone is something you do for the length of a crawl
+## across open ground. holding a key down for that is not a control, it is a punishment, and every
+## game that has both binds them this way.
+func _update_stance(delta: float) -> void:
+	## the engine's own edge, deliberately. this was briefly worked out here from last tick's state
+	## instead, on a theory about `is_action_just_pressed` firing twice per rendered frame -- the
+	## theory was never demonstrated, it fixed none of the prone symptoms, and the co-op probe
+	## caught what it DID cost: a press that begins and ends between two physics ticks is invisible
+	## to remembered state and is not invisible to the engine's flag. Keeping the engine's answer
+	## is both the smaller change and the more forgiving one. The jump edge is still read once and
+	## shared with the buffer below, which is the only part of that attempt worth keeping.
+	_jump_hit = Input.is_action_just_pressed("jump")
 
-	var target := 1.0 if _crouching else 0.0
-	if is_equal_approx(_crouch_t, target):
+	var want := _stance
+	if Input.is_action_just_pressed("prone"):
+		want = Stance.STAND if _stance == Stance.PRONE else Stance.PRONE
+		_crouch_latch = false
+	elif _stance == Stance.PRONE:
+		## from flat, crouch gets you up ONE step and jump gets you all the way up. neither should
+		## have to be pressed twice, and a player who wants to move NOW presses jump.
+		if Input.is_action_just_pressed("crouch"):
+			want = Stance.CROUCH
+			_crouch_latch = true
+		elif _jump_hit:
+			want = Stance.STAND
+			_jump_spent = true
+	else:
+		## the latch is what makes that step up STICK. it is given up the moment the player says
+		## anything else about their stance -- another press of crouch, a jump, a sprint -- and the
+		## key is a plain hold again from there, so a second tap of crouch takes them from crouched
+		## to standing and the two keys read as one ladder: Z down, Ctrl up a step, Space up.
+		if _crouch_latch and (Input.is_action_just_pressed("crouch") or _jump_hit
+				or Input.is_action_pressed("sprint")):
+			_crouch_latch = false
+		want = Stance.CROUCH if Input.is_action_pressed("crouch") or _crouch_latch else Stance.STAND
+
+	## refuse to rise into something. the cast is pointed at whatever the rise actually IS: prone to
+	## crouch is not the same gap as crouch to standing, and one cast configured for the taller of
+	## the two would refuse a crawl out from under a truck it fits under perfectly well.
+	if want < _stance and not _room_to_rise(want):
+		want = _stance
+	if want != _stance:
+		Sfx.play_2d(&"crouch")
+		_stance = want
+
+	var target := float(_stance)
+	if is_equal_approx(_stance_t, target):
 		return
-	_crouch_t = move_toward(_crouch_t, target, crouch_lerp_speed * delta)
-	var h := lerpf(stand_height, crouch_height, _crouch_t)
+	_stance_t = move_toward(_stance_t, target, crouch_lerp_speed * delta)
+	var h := height_at(_stance_t)
 	(_col.shape as CapsuleShape3D).height = h
 	_col.position.y = h * 0.5
-	head.position.y = lerpf(stand_eye, crouch_eye, _crouch_t)
+	head.position.y = eye_at(_stance_t)
+
+
+## the capsule at any point on the ladder. it is piecewise on purpose: standing to prone passes
+## THROUGH the crouch, which is what the body would actually do.
+func height_at(t: float) -> float:
+	if t <= 1.0:
+		return lerpf(stand_height, crouch_height, t)
+	return lerpf(crouch_height, prone_height, t - 1.0)
+
+
+func eye_at(t: float) -> float:
+	if t <= 1.0:
+		return lerpf(stand_eye, crouch_eye, t)
+	return lerpf(crouch_eye, prone_eye, t - 1.0)
+
+
+func _room_to_rise(want: int) -> bool:
+	if _ceiling_check == null:
+		return true
+	var now := height_at(_stance_t)
+	var to := height_at(float(want))
+	if to <= now + 0.01:
+		return true
+	## the cast has to START CLEAR OF THE FLOOR, and this is the whole of the prone bug. the
+	## convention is that the sphere's top touches the height you are at now, which is fine from a
+	## 1.0 m crouch: a 0.28 sphere centred at 0.72 spans 0.44 to 1.0. From a 0.55 m prone it centres
+	## at 0.27 and spans -0.01 to 0.55 -- through the ground. A ShapeCast3D that begins already
+	## overlapping something reports a hit before it has moved an inch, so EVERY way out of prone
+	## was refused: Z did not stand you up, crouch did not lift you, jump did nothing. Clamped so
+	## the sphere always begins just above the floor, which leaves the crouch case untouched.
+	var radius := 0.28
+	var ball := _ceiling_check.shape as SphereShape3D
+	if ball != null:
+		radius = ball.radius
+	_ceiling_check.position.y = maxf(now - radius, radius + 0.05)
+	_ceiling_check.target_position = Vector3(0.0, to - now, 0.0)
+	_ceiling_check.force_shapecast_update()
+	return not _ceiling_check.is_colliding()
 
 
 ## the body never moves: only the head slides out and the view tips with it, so the capsule
@@ -596,8 +720,13 @@ func _apply_head() -> void:
 
 ## a short forgiveness window so an early jump press still fires on landing.
 func _update_jump_buffer(delta: float) -> void:
-	if Input.is_action_just_pressed("jump"):
-		_jump_buffer = movement.jump_buffer_time
+	## the same edge the stance machine already read, so one press is one buffered jump.
+	if _jump_hit:
+		## the press that got the operative off the floor is not also a leap out of cover.
+		if _jump_spent:
+			_jump_spent = false
+		else:
+			_jump_buffer = movement.jump_buffer_time
 	_jump_buffer = maxf(0.0, _jump_buffer - delta)
 
 

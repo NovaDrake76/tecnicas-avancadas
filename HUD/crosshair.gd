@@ -86,7 +86,9 @@ func _process(delta: float) -> void:
 		want += gap_walk * clampf(speed / top, 0.0, 1.0)
 		if not _player.is_grounded():
 			want += gap_air
-		if _player.is_crouching():
+		if _player.is_prone():
+			want -= gap_crouch * 2.0
+		elif _player.is_crouching():
 			want -= gap_crouch
 	_stance = lerpf(_stance, want, clampf(follow * delta, 0.0, 1.0))
 	_bloom = maxf(0.0, _bloom - bloom_decay * delta)

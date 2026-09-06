@@ -14,6 +14,9 @@ signal aim_changed(aiming: bool)
 ## other; above it the sight picture fades in and the weapon leaves the screen, because a scope is
 ## looked through rather than looked at (see HUD/scope_view.gd for why it is drawn and not modelled).
 @export_range(0.0, 0.95, 0.05) var scope_at := 0.6
+## an optic the player HOLDS instead of the weapon -- the binoculars. it comes up more slowly than a
+## sight, because raising a pair of binoculars is a decision and bringing a rifle up is a reflex.
+@export var optic_in_speed := 5.0
 
 var _cam: Camera3D
 var _viewmodel: ViewmodelMotion
@@ -28,6 +31,11 @@ var _gun: Gun
 ## player switched to another one.
 var _hid := false
 var _base_fov := 75.0
+## the fov an optic in the player's hands is asking for, 0 when there is none. it lives here rather
+## than in Binoculars because THIS node owns the camera's fov and two writers is the whole class of
+## bug that rule exists to prevent: with the binoculars up the aim key is dead and this lerps to the
+## optic instead of to the sight, which is one owner and two sources.
+var _optic_fov := 0.0
 var _t := 0.0
 var _aiming := false
 var _ready_ok := false
@@ -59,13 +67,16 @@ func _process(delta: float) -> void:
 
 	## the pause menu stops this node, so the action alone decides. tying it to the captured mouse
 	## made aiming impossible in an unfocused window, which is where the screenshots are taken.
-	var want := Input.is_action_pressed("aim")
+	var glassing := _optic_fov > 0.0
+	var want := glassing or Input.is_action_pressed("aim")
 	if want != _aiming:
 		_aiming = want
 		aim_changed.emit(_aiming)
-		Sfx.play_2d(&"ads")
+		## the binoculars have their own sound and it is not the rifle coming up.
+		if not glassing:
+			Sfx.play_2d(&"ads")
 
-	_t = move_toward(_t, 1.0 if _aiming else 0.0, ads_in_speed * delta)
+	_t = move_toward(_t, 1.0 if want else 0.0, (optic_in_speed if glassing else ads_in_speed) * delta)
 	_cam.fov = lerpf(_base_fov, target_fov(), _t)
 
 	if _viewmodel != null:
@@ -74,7 +85,9 @@ func _process(delta: float) -> void:
 	## the viewmodel because this node is the one that knows a telescope is involved at all, and the
 	## rack only ever writes visibility when the weapon CHANGES, so the two never fight.
 	if _gun != null and is_instance_valid(_gun):
-		var hide := scope_amount() >= 0.5
+		## a rifle in the hands of somebody holding binoculars to their eyes is a lie, so the weapon
+		## leaves the screen for an optic that is not on it as well as for one that is.
+		var hide := scope_amount() >= 0.5 or (glassing and _t >= 0.5)
 		if hide != _hid:
 			_hid = hide
 			_gun.visible = not hide
@@ -98,9 +111,30 @@ func scope_amount() -> float:
 	return clampf((_t - scope_at) / (1.0 - scope_at), 0.0, 1.0)
 
 
-## what fully aimed means for the weapon in hand.
+## what fully aimed means for the weapon in hand -- or for the optic in them, which wins.
 func target_fov() -> float:
+	if _optic_fov > 0.0:
+		return _optic_fov
 	return _weapon_fov if _weapon_fov > 0.0 else ads_fov
+
+
+## the binoculars, raising and lowering. the fov they want is handed over rather than written.
+func raise_optic(fov: float) -> void:
+	_optic_fov = maxf(fov, 1.0)
+
+
+func lower_optic() -> void:
+	_optic_fov = 0.0
+
+
+func has_optic() -> bool:
+	return _optic_fov > 0.0
+
+
+## the fov the player walks around with, read off the camera once. anything working out a
+## magnification needs it and nothing else knows it.
+func base_fov() -> float:
+	return _base_fov
 
 
 ## eased, 0 at the hip and 1 fully aimed.

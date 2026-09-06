@@ -9,12 +9,17 @@ extends SfxBank
 ## of that the player can hear.
 @export var crouch_stride := 1.5
 @export var crouch_db := -9.0
+## a crawl. shorter than a crouched step and quieter still, which is the price of it: prone is the
+## slowest way across a compound and the only one nobody hears.
+@export var crawl_stride := 1.0
+@export var crawl_db := -15.0
 @export var run_db := 2.0
 @export var land_db := 3.0
 @export var min_speed := 0.8
 
 @export_group("How far it carries")
 ## a kiwi that hears this turns to face it. sneaking is the quiet option, sprinting announces you.
+@export var crawl_noise := 3.0
 @export var crouch_noise := 5.0
 @export var walk_noise := 14.0
 @export var run_noise := 26.0
@@ -50,9 +55,13 @@ func surface() -> StringName:
 
 
 ## the whole rule, kept out of _physics_process so it can be driven and measured directly.
-func advance(distance: float, crouched: bool) -> bool:
+func advance(distance: float, crouched: bool, prone := false) -> bool:
 	_travelled += distance
-	var step := crouch_stride if crouched else stride
+	var step := stride
+	if prone:
+		step = crawl_stride
+	elif crouched:
+		step = crouch_stride
 	if _travelled < step:
 		return false
 	_travelled -= step
@@ -103,10 +112,15 @@ func _physics_process(delta: float) -> void:
 		return
 
 	var crouched: bool = _body.has_method("is_crouching") and _body.is_crouching()
-	if advance(speed * delta, crouched):
-		var loud := crouch_db if crouched else 0.0
+	var prone: bool = _body.has_method("is_prone") and _body.is_prone()
+	if advance(speed * delta, crouched, prone):
+		var loud := 0.0
 		var reach := walk_noise
-		if crouched:
+		if prone:
+			loud = crawl_db
+			reach = crawl_noise
+		elif crouched:
+			loud = crouch_db
 			reach = crouch_noise
 		elif _body.has_method("is_running") and _body.is_running():
 			loud = run_db

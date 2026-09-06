@@ -22,6 +22,7 @@ sfx_prefix = &"osprey"
 weapon_model = "OSPREY"
 accepted_mag = 4
 action = 3
+muzzle_hearing = 3.5
 spring_constant = 450.0
 spring_compression = 0.1
 motor_rpm = 45.0

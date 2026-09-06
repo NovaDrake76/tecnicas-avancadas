@@ -222,3 +222,7 @@ func _build_tube() -> void:
 		leg.position = Vector3(side * 0.1, 0.16, 0.08)
 		leg.rotation_degrees = Vector3(20.0, 0.0, side * -18.0)
 		_tube.add_child(leg)
+
+
+func kind_name() -> String:
+	return "MORTAR"

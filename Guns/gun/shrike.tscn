@@ -10,6 +10,7 @@ sfx_prefix = &"shrike"
 weapon_model = "SHRIKE"
 accepted_mag = 0
 action = 2
+muzzle_hearing = 5.0
 spring_constant = 300.0
 spring_compression = 0.1
 motor_rpm = 90.0

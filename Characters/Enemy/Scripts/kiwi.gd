@@ -22,6 +22,19 @@ enum State { IDLE, WALK, DOWN, FLEE, LOOK, HUNT, ATTACK, SUSPECT, RUNNER, HORN, 
 ## but not where, is telling everyone, has you.
 enum Alert { UNAWARE, CURIOUS, SUSPICIOUS, HUNTING, CALLING, ENGAGED }
 
+## what this bird does when nothing is happening, which is a LEVEL DESIGNER's decision and not one
+## rule for the whole field. WANDER strolls around its own patch, which is what every bird used to
+## do; FIXED holds the spot it was placed on, for a crew on a tube or a sentry on a tower; ROUTE
+## walks the stops of a `PatrolRoute` in order. the last one is what gives a stealth player
+## something to LEARN -- a compound where every bird moves at random has no pattern to read, and
+## reading the pattern is the whole game.
+enum Duty { WANDER, FIXED, ROUTE }
+
+@export_group("Duty")
+@export var duty: Duty = Duty.WANDER
+## the route to walk, when duty is ROUTE. drag a PatrolRoute node onto this in the editor.
+@export var route: NodePath
+
 @export_group("Wander")
 ## radius of the patch it stays inside, measured from wherever it was placed.
 @export var wander_radius := 4.0
@@ -191,6 +204,11 @@ var _home := Vector3.ZERO
 ## compound stands down.
 var _post := Vector3.ZERO
 var _target := Vector3.ZERO
+## the route this bird walks, resolved once, plus where it is along it. the direction only means
+## anything on a route that is not a loop, where the bird turns round at the ends.
+var _route: PatrolRoute
+var _route_index := 0
+var _route_dir := 1
 var _detected := false
 var _call_timer := 0.0
 var _runner_call := 0.0
@@ -220,6 +238,7 @@ func _ready() -> void:
 	add_to_group("kiwi")
 	_home = global_position
 	_post = _home
+	_bind_route()
 	model.rotation.y = deg_to_rad(model_yaw_deg)
 
 	_enable_vertex_colors()
@@ -395,8 +414,16 @@ func _physics_process(delta: float) -> void:
 
 
 func _step_walk(delta: float) -> void:
-	if _move_to(_target, walk_speed, delta):
-		_begin_idle()
+	if not _move_to(_target, _patrol_speed(), delta):
+		return
+	## arriving at a stop MOVES the post. everything that asks where this bird belongs -- how far it
+	## will stray to investigate a noise, where it walks back to when the compound calms down --
+	## then means "the part of the beat I am on" rather than "the spot I was placed on", which for
+	## a patrol eighty metres along its route is a different bird entirely.
+	if duty == Duty.ROUTE and _has_route():
+		_post = _target
+		_home = _target
+	_begin_idle()
 
 
 func _step_flee(delta: float) -> void:
@@ -578,27 +605,85 @@ func is_suspicious() -> bool:
 	return _state == State.SUSPECT
 
 
+## the one place the duty is read. a bird on a ROUTE always moves on -- a patrol that rolled dice
+## about whether to walk would not be a patrol -- a FIXED one never does, and a wandering one keeps
+## the coin flip it always had.
 func _decide() -> void:
-	if randf() < walk_chance:
-		_begin_walk()
-	else:
-		_begin_idle()
+	match duty:
+		Duty.FIXED:
+			_begin_idle()
+		Duty.ROUTE:
+			if _has_route():
+				_begin_walk()
+			else:
+				_begin_idle()
+		_:
+			if randf() < walk_chance:
+				_begin_walk()
+			else:
+				_begin_idle()
 
 
 func _begin_idle() -> void:
 	_state = State.IDLE
-	_timer = randf_range(idle_time_range.x, idle_time_range.y)
+	## a bird on a route waits the route's own dwell, jittered by it. the ORDER of the stops never
+	## varies, which is what leaves a pattern to read; how long it stands at each does, which is
+	## what stops the player running a stopwatch on it.
+	if duty == Duty.ROUTE and _has_route():
+		_timer = _route.wait_time()
+	else:
+		_timer = randf_range(idle_time_range.x, idle_time_range.y)
 	if not idle_clips.is_empty():
 		_play(idle_clips[randi() % idle_clips.size()])
 
 
 func _begin_walk() -> void:
-	## a uniform point in the disc, the square root is what stops them all clustering at the centre.
-	var angle := randf() * TAU
-	var radius := sqrt(randf()) * wander_radius
-	_target = _home + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+	if duty == Duty.ROUTE and _has_route():
+		var step: Array = _route.next_index(_route_index, _route_dir)
+		_route_index = int(step[0])
+		_route_dir = int(step[1])
+		_target = _route.point_at(_route_index)
+	else:
+		## a uniform point in the disc, the square root is what stops them all clustering at the
+		## centre.
+		var angle := randf() * TAU
+		var radius := sqrt(randf()) * wander_radius
+		_target = _home + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
 	_state = State.WALK
 	_play(walk_clip)
+
+
+func _bind_route() -> void:
+	if route.is_empty():
+		return
+	_route = get_node_or_null(route) as PatrolRoute
+	if _route != null and _route.stops() > 0:
+		## it starts from the stop it was PLACED nearest, so a designer can drop a bird anywhere
+		## along its own beat without it walking back to the first marker to begin.
+		_route_index = _route.nearest_index(global_position)
+
+
+## put a bird on a route from code. the editor does the same thing through `duty` and `route` in
+## the inspector; this is what a probe and the shot tools use, since neither of those can drag a
+## node onto a field.
+func set_patrol(node: PatrolRoute) -> void:
+	_route = node
+	duty = Duty.ROUTE if node != null else Duty.WANDER
+	if node != null and node.stops() > 0:
+		_route_index = node.nearest_index(global_position)
+		_post = node.point_at(_route_index)
+		_home = _post
+
+
+func _has_route() -> bool:
+	return _route != null and is_instance_valid(_route) and _route.stops() > 0
+
+
+## how fast this bird walks its beat: the route may set a pace, otherwise its own.
+func _patrol_speed() -> float:
+	if duty == Duty.ROUTE and _has_route() and _route.speed > 0.0:
+		return _route.speed
+	return walk_speed
 
 
 ## the alarm goes up once per bird. after that it is already blown, so fleeing again costs nothing.
@@ -1043,6 +1128,12 @@ func stand_down() -> void:
 	vision.rearm()
 	_detected = false
 	_body_seen = 0.0
+	## a patrol rejoins its beat at the NEAREST stop rather than walking back to where it started:
+	## a bird that chased somebody across the compound and then marched all the way home like a
+	## wind-up toy would be telling the player exactly how little it understood.
+	if duty == Duty.ROUTE and _has_route():
+		_route_index = _route.nearest_index(global_position)
+		_post = _route.point_at(_route_index)
 	_home = _post
 	_target = _post
 	_state = State.WALK
@@ -1172,6 +1263,49 @@ func speak(band: Vector2, db: float, clip_after := 0.0) -> void:
 		get_tree().create_timer(clip_after).timeout.connect(func() -> void:
 			if is_instance_valid(throat) and throat.playing and throat.get_playback_position() >= started + clip_after * 0.5:
 				throat.stop())
+
+
+## ---------------------------------------------------------------- being marked
+##
+## a tag put on this bird by somebody's binoculars. it is kept HERE rather than in a register on the
+## player, because "this bird is marked" is a fact about the bird -- the brief's own rule about state
+## living in the system responsible for it -- and because a bird that goes down or gets freed takes
+## its own tag with it instead of leaving a diamond hanging in the air.
+##
+## it is stored as the moment it runs out rather than as a countdown, so nothing has to tick it. that
+## also makes it right on a machine where this bird is not thinking at all: a kiwi's physics is off
+## on anything that is not the host, and a countdown there would simply stop.
+var _marked_until := -1.0
+
+## said to every machine, including the one that looked. a mark is shared knowledge between two
+## operatives and touches nothing the host arbitrates -- no damage, no state, no alarm -- so both
+## sides can set it and be right, which is why this is call_local and not an ask.
+@rpc("any_peer", "call_local", "reliable")
+func net_mark(seconds: float) -> void:
+	_marked_until = maxf(_marked_until, _now() + maxf(seconds, 0.0))
+
+
+func is_marked() -> bool:
+	return _marked_until > _now() and not is_down()
+
+
+func mark_left() -> float:
+	return maxf(_marked_until - _now(), 0.0) if is_marked() else 0.0
+
+
+func clear_mark() -> void:
+	_marked_until = -1.0
+
+
+func _now() -> float:
+	return float(Time.get_ticks_msec()) / 1000.0
+
+
+## what this bird IS, for a tag. every kiwi in the game shares one model, so a sentry, a laser kiwi,
+## a sniper and a mortar crew look identical at two hundred metres; the binoculars saying which is
+## the answer to a problem the shared mesh created.
+func kind_name() -> String:
+	return "SENTRY"
 
 
 func is_down() -> bool:

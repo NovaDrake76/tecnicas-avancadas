@@ -51,6 +51,10 @@ const NOTICING := 0.02
 @export var notice_gain := 1.5
 ## crouching cuts how far it can pick you out, which is what makes crouch a stealth tool.
 @export_range(0.1, 1.0) var crouch_range_scale := 0.45
+## and flat on the ground. MGSV's guards are described as picking a prone player out at something
+## like a fifth of their standing range, which is the band this sits in: 0.22 of 45 m is about ten
+## metres, so crawling the last stretch of open ground is a real option and not just a slower walk.
+@export_range(0.05, 1.0) var prone_range_scale := 0.22
 
 @export_group("Sight line")
 ## only the world blocks sight, so a kiwi is never hidden behind another kiwi.
@@ -151,8 +155,11 @@ func exposure_to(who: Node3D) -> float:
 		return 0.0
 
 	var reach := sight_range
-	if who.has_method("is_crouching") and who.is_crouching():
-		reach *= crouch_range_scale
+	match stance_of(who):
+		1:
+			reach *= crouch_range_scale
+		2:
+			reach *= prone_range_scale
 
 	var eye := _eye()
 	var at := sight_point(who)
@@ -194,13 +201,36 @@ func sees_point(point: Vector3, max_distance: float) -> bool:
 ## where on the player the eyes test: shoulder standing, chest crouched. a kiwi's eye is 0.35 m up,
 ## so this is what decides whether an 0.85 m barricade at your side hides you. it does, crouched.
 static func sight_point(who: Node3D) -> Vector3:
-	var crouched: bool = who.has_method("is_crouching") and who.is_crouching()
-	var at := who.global_position + Vector3.UP * (0.55 if crouched else 1.2)
+	## shoulder standing, chest crouched, the back of a head prone. a kiwi's eye is 0.35 m up, so
+	## this is what decides whether an 0.85 m barricade at your side hides you -- it does, crouched
+	## -- and it is why almost anything in the prop pack hides a body that is lying down.
+	## written out rather than indexed from an array: indexing an untyped Array hands back a Variant
+	## and the multiply below then has nothing to infer a type from, and a PackedFloat32Array is not
+	## a constant expression. three named numbers say it more plainly anyway.
+	var lift := 1.2
+	match stance_of(who):
+		1:
+			lift = 0.55
+		2:
+			lift = 0.25
+	var at := who.global_position + Vector3.UP * lift
 	## a lean moves the head, not the body, so the point tested moves with it. without this a
 	## player could see round a corner from inside cover and never be seen back.
 	if who.has_method("lean_offset"):
 		at += who.lean_offset() as Vector3
 	return at
+
+
+## 0 standing, 1 crouched, 2 prone, asked through methods so that anything which is not an
+## operative -- a probe's stand-in, a body being carried -- simply answers standing.
+static func stance_of(who: Node3D) -> int:
+	if who == null:
+		return 0
+	if who.has_method("is_prone") and who.is_prone():
+		return 2
+	if who.has_method("is_crouching") and who.is_crouching():
+		return 1
+	return 0
 
 
 func has_line_to(point: Vector3) -> bool:

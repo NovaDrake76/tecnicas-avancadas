@@ -82,6 +82,16 @@ const TRAIL_COLORS := [
 @export var muzzle_fx := false
 @export var muzzle_fx_scale := 1.0
 @export var muzzle_fx_intensity := 0.4
+## how far the REPORT carries. an airsoft gun is quiet and it is not silent: a gearbox at nine
+## thousand rpm makes a noise, and until this existed a rifle fired two metres behind a sentry's
+## head was heard by nobody at all. it TURNS HEADS, the way a footstep does, and it never walks a
+## patrol onto the shooter -- that is `investigate`, and it belongs to the bb's impact, which is a
+## noise somewhere the player is not. so the promise is untouched: a miss still raises no alarm,
+## and nothing about a shot tells a bird who fired it. what it costs the player is a bird nearby
+## turning round, and its eyes take it from there, which is the same bargain crouching and walking
+## already make. 6 m sits between a crouched step (5) and a walked one (14), and a spring gun
+## sets its own lower number in its own scene.
+@export var muzzle_hearing := 6.0
 
 @export_group("Reload")
 ## the weapon is out of frame for this long, then the fullest spare of its type goes in and the old
@@ -261,6 +271,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventMouseButton and event.is_pressed():
+		var optic := get_tree().get_first_node_in_group("aim_scope") as AimScope
+		if optic != null and optic.has_optic():
+			return
+		## the brief: "garanta que o scroll nao altere o Hop-up enquanto o jogador estiver
+		## interagindo com outra interface". The bench answers it by freezing the player, which stops
+		## this node reading anything at all. A pair of binoculars is the other case and is NOT a
+		## freeze -- the operative is still standing there with the wheel under their finger -- so
+		## the refusal is said outright here rather than left to which node the tree visits first.
 		var button := event as InputEventMouseButton
 		if button.button_index == MOUSE_BUTTON_WHEEL_UP:
 			adjust_hopup(1)
@@ -429,6 +447,7 @@ func _spawn_shot(mass_kg: float) -> void:
 	_lay_shot(muzzle.global_transform, shots, mass_kg, hopup, true)
 	if Net.is_online():
 		_net_shot.rpc(muzzle.global_transform, shots, mass_kg, hopup)
+	_report_heard(muzzle.global_position)
 
 	fired.emit(speed, mass_kg)
 
@@ -436,6 +455,28 @@ func _spawn_shot(mass_kg: float) -> void:
 		print("Shot %d | %d x %.2f m/s | %.1f fps | %.2f g | hop-up %.5f | ammo %d/%d"
 			% [_shot, pellets, speed, speed * 3.28084, mass_kg * 1000.0, hopup,
 			   magazine.count, magazine.capacity])
+
+
+## the shot's own noise, at the MUZZLE. it is the same wire the footsteps use and for the same
+## reason: what a bird does about a noise is a decision about the world, so the host makes it once.
+## a client asks; two machines each turning the same sentry would be one shot heard twice.
+func _report_heard(at: Vector3) -> void:
+	if muzzle_hearing <= 0.0:
+		return
+	if multiplayer.is_server():
+		_heard_shot(at, muzzle_hearing)
+	else:
+		_heard_shot.rpc_id(1, at, muzzle_hearing)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _heard_shot(at: Vector3, radius: float) -> void:
+	if not multiplayer.is_server():
+		return
+	for node in get_tree().get_nodes_in_group("kiwi"):
+		var listener := node as Kiwi
+		if listener != null:
+			listener.hear(at, radius)
 
 
 ## another machine's shot, flown here so it can be seen and heard. unreliable on purpose: a bb that
