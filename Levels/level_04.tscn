@@ -1,0 +1,332 @@
+[gd_scene format=3 uid="uid://bc2kar1xyutg4"]
+
+[ext_resource type="Shader" uid="uid://cklqih7708id7" path="res://Shaders/grid_floor.gdshader" id="1_8pmfx"]
+[ext_resource type="PackedScene" path="res://Guns/magazine/magazine_pickup.tscn" id="2_0j3g3"]
+[ext_resource type="PackedScene" path="res://Characters/Enemy/kiwi.tscn" id="3_q2tcm"]
+[ext_resource type="PackedScene" path="res://Characters/Enemy/laser_kiwi.tscn" id="4_ffnd5"]
+[ext_resource type="PackedScene" path="res://Characters/Enemy/sniper_kiwi.tscn" id="5_pfrhl"]
+[ext_resource type="PackedScene" path="res://Characters/Enemy/mortar_kiwi.tscn" id="6_v0upe"]
+[ext_resource type="Script" uid="uid://bufn6abaxlns0" path="res://Levels/hill_ring.gd" id="7_rcqdu"]
+[ext_resource type="Script" uid="uid://bb0mpba02qew7" path="res://Levels/foliage.gd" id="8_8cbt8"]
+[ext_resource type="Script" uid="uid://vsvwn5qk2akl" path="res://Props/alarm_horn.gd" id="9_8fkf2"]
+[ext_resource type="Script" uid="uid://b7cjx1bre0xkg" path="res://Components/objective.gd" id="10_i1bne"]
+[ext_resource type="Script" uid="uid://ce7thhydb1ntv" path="res://Props/prop.gd" id="11_lq60w"]
+[ext_resource type="PackedScene" uid="uid://neeyatftobvw" path="res://Models/Props/Containers/shipping_container_mx_1.glb" id="12_qmbkg"]
+[ext_resource type="PackedScene" uid="uid://decay2lwp6qr7" path="res://Models/Props/Barricades/barricade_b_1.glb" id="13_6qfr8"]
+[ext_resource type="PackedScene" uid="uid://c1rvbshlk47qy" path="res://Models/Props/Containers/wooden_crate_1.glb" id="14_5wbn6"]
+[ext_resource type="PackedScene" uid="uid://dhlda63wtimca" path="res://Models/Props/Containers/wooden_crate_2_a.glb" id="15_8db7s"]
+[ext_resource type="PackedScene" uid="uid://bvkmo8xy37bk2" path="res://Models/Props/Clutter/cement_bags_mp_1_pallet_1.glb" id="16_6tpp5"]
+[ext_resource type="PackedScene" uid="uid://c0cdoivyho4dv" path="res://Models/Props/Barricades/barricade_b_4.glb" id="17_jrsl8"]
+[ext_resource type="PackedScene" uid="uid://ccp1q8m7ld2c2" path="res://Models/Props/Walls/gate_1.glb" id="18_2i8c8"]
+[ext_resource type="PackedScene" uid="uid://ce04qhppjd3r4" path="res://Models/Props/Barrels/wooden_barrel_1.glb" id="19_ys3p4"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bhunq"]
+size = Vector3(200, 1, 200)
+
+[sub_resource type="BoxMesh" id="BoxMesh_bhunq"]
+size = Vector3(200, 1, 200)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_floor"]
+render_priority = 0
+shader = ExtResource("1_8pmfx")
+shader_parameter/base_color = Color(0.27, 0.3, 0.28, 1)
+shader_parameter/minor_color = Color(0.36, 0.4, 0.37, 1)
+shader_parameter/major_color = Color(0.56, 0.61, 0.57, 1)
+shader_parameter/minor_spacing = 1.0
+shader_parameter/major_spacing = 10.0
+shader_parameter/minor_fade_distance = 70.0
+
+[node name="Level02" type="Node3D" unique_id=1296797532]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=592499043]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1945392102]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("BoxShape3D_bhunq")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D" unique_id=1668205991]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+visible = false
+mesh = SubResource("BoxMesh_bhunq")
+surface_material_override/0 = SubResource("ShaderMaterial_floor")
+
+[node name="MagazinePickup" parent="StaticBody3D" unique_id=1832003954 instance=ExtResource("2_0j3g3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.8, 0, 118)
+
+[node name="MagazinePickup2" parent="StaticBody3D" unique_id=387518638 instance=ExtResource("2_0j3g3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.9, 0, 118)
+
+[node name="Kiwi" parent="StaticBody3D" unique_id=234739535 instance=ExtResource("3_q2tcm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6332865, 0.0009, 18.569555)
+
+[node name="Kiwi2" parent="StaticBody3D" unique_id=36400458 instance=ExtResource("3_q2tcm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.847343, 0.0009, 39.100533)
+
+[node name="LaserKiwi" parent="StaticBody3D" unique_id=1387126501 instance=ExtResource("4_ffnd5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.18046, 0.0009, 19.132435)
+hunt_speed = 3.6
+attack_range = 18.0
+hunt_sight = 32.0
+search_time = 3.5
+hunt_call_interval = Vector2(3.5, 6.5)
+stuck_time = 1.0
+armour_threshold = 0.6
+plate_health = 3
+plate_alerts = true
+pulses = 4
+pulse_gap = 0.16
+pulse_damage = 9.0
+pulse_spread = 0.14
+bolt_speed = 38.0
+burst_recover = 1.2
+charge_time = 1.1
+beam_time = 1.4
+beam_dps = 30.0
+beam_recover = 1.8
+beam_track = 7.0
+beam_chance = 0.4
+beam_cooldown = 6.0
+laser_range = 40.0
+
+[node name="Kiwi4" parent="StaticBody3D" unique_id=681656259 instance=ExtResource("3_q2tcm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.624063, 0.0009, 57.656)
+
+[node name="SniperKiwi" parent="StaticBody3D" unique_id=96830782 instance=ExtResource("5_pfrhl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.890753, 0.0009, 46.13222)
+sight_line_radius = 0.008
+slug_speed = 95.0
+slug_damage = 30.0
+slug_thickness = 2.6
+aim_lock_before = 0.3
+search_time = 3.5
+hunt_call_interval = Vector2(3.5, 6.5)
+stuck_time = 1.0
+armour_threshold = 0.6
+plate_health = 3
+plate_alerts = true
+pulse_gap = 0.16
+pulse_damage = 9.0
+pulse_spread = 0.14
+bolt_speed = 38.0
+burst_recover = 1.2
+wander_radius = 0.0
+walk_chance = 0.0
+
+[node name="MortarKiwi" parent="StaticBody3D" unique_id=1425183038 instance=ExtResource("6_v0upe")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.59269, 0.0009, 33.415043)
+min_range = 8.0
+max_range = 60.0
+flight_time = 2.6
+cooldown = 6.0
+first_shot_delay = 1.5
+blast_radius = 3.5
+blast_damage = 38.0
+cover_factor = 0.35
+flee_range = 10.0
+
+[node name="PlayerSpawn" type="Marker3D" parent="." unique_id=1558634180 groups=["player_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.0536585, 2.33, 76.43822)
+
+[node name="HillRing" type="Node3D" parent="." unique_id=787393305]
+script = ExtResource("7_rcqdu")
+noise_seed = 8801
+
+[node name="Foliage" type="Node3D" parent="." unique_id=1304473682]
+script = ExtResource("8_8cbt8")
+scatter_seed = 5150
+
+[node name="AlarmHorn" type="StaticBody3D" parent="." unique_id=1958469587]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, 40)
+script = ExtResource("9_8fkf2")
+
+[node name="ObjectiveManifests" type="Node3D" parent="." unique_id=189902145]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -14)
+script = ExtResource("10_i1bne")
+id = &"manifests"
+label = "Take the supply manifests"
+work_time = 4.0
+prompt = "Take the manifests"
+
+[node name="ObjectiveExfil" type="Node3D" parent="." unique_id=1385986506]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 44)
+script = ExtResource("10_i1bne")
+id = &"exfil"
+kind = 3
+label = "Get out"
+reach = 3.5
+
+[node name="Camp" type="Node3D" parent="." unique_id=531317193]
+
+[node name="Container1" type="StaticBody3D" parent="Camp" unique_id=189955244]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.5, -11.311142, 0, 27.101406)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("12_qmbkg")
+
+[node name="Container2" type="StaticBody3D" parent="Camp" unique_id=1505196421]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.45479, 0, 55.485004)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("12_qmbkg")
+
+[node name="Container4" type="StaticBody3D" parent="Camp" unique_id=684071238]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.366287, 2.44029, 24.380789)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("12_qmbkg")
+
+[node name="Container3" type="StaticBody3D" parent="Camp" unique_id=638848634]
+transform = Transform3D(-3.059797e-08, 0, 0.7, 0, 0.7, 0, -0.7, 0, -3.059797e-08, -3.9438539, 0, 56.586586)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("12_qmbkg")
+
+[node name="BarricadeSouth2" type="StaticBody3D" parent="Camp" unique_id=1615789528]
+transform = Transform3D(0.9999752, 0, 0, 0, 1, 0, 0, 0, 0.9999752, -11.89489, 0, 47.24135)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("13_6qfr8")
+
+[node name="BarricadeSouth3" type="StaticBody3D" parent="Camp" unique_id=1950481313]
+transform = Transform3D(0.9999752, 0, 0, 0, 1, 0, 0, 0, 0.9999752, -4.8832936, 0, 38.06635)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("13_6qfr8")
+
+[node name="Crate4" type="StaticBody3D" parent="Camp" unique_id=1291030561]
+transform = Transform3D(0.98314184, 0, -0.18284452, 0, 1, 0, 0.18284452, 0, 0.98314184, -13.20062, 0, 39.62666)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("14_5wbn6")
+
+[node name="Crate1" type="StaticBody3D" parent="Camp" unique_id=2033048092]
+transform = Transform3D(0.9397, 0, 0.342, 0, 1, 0, -0.342, 0, 0.9397, -15.867836, 0, 29)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("14_5wbn6")
+
+[node name="Crate8" type="StaticBody3D" parent="Camp" unique_id=2023647544]
+transform = Transform3D(-0.72252524, 0, -0.6913445, 0, 1, 0, 0.6913445, 0, -0.72252524, -10.850575, 2.5127451, 32.230194)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("14_5wbn6")
+
+[node name="Crate3" type="StaticBody3D" parent="Camp" unique_id=1775554686]
+transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, -1.1453409, 0, 58.262066)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("14_5wbn6")
+
+[node name="Crate6" type="StaticBody3D" parent="Camp" unique_id=2691256]
+transform = Transform3D(0.66030574, 0, 1.3468468, 0, 1.5, 0, -1.3468468, 0, 0.66030574, -24.963646, 0, 62.385384)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("14_5wbn6")
+
+[node name="Crate7" type="StaticBody3D" parent="Camp" unique_id=1294679242]
+transform = Transform3D(0.0072496533, 0, 1.4999824, 0, 1.4999999, 0, -1.4999824, 0, 0.0072496533, -8.781258, 0, 20.510963)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("14_5wbn6")
+
+[node name="Crate5" type="StaticBody3D" parent="Camp" unique_id=1787093982]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9387836, 0, 58.096523)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("14_5wbn6")
+
+[node name="Crate9" type="StaticBody3D" parent="Camp" unique_id=1007518617]
+transform = Transform3D(-0.91539675, 0, -0.40255284, 0, 1.2, 0, 0.40255284, 0, -0.91539675, -11.336146, 2.806078, 30.86134)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("14_5wbn6")
+
+[node name="Crate2" type="StaticBody3D" parent="Camp" unique_id=1766694728]
+transform = Transform3D(0.96589994, 0, -0.2588, 0, 1, 0, 0.2588, 0, 0.96589994, -14.867838, 0, 30.6)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("15_8db7s")
+
+[node name="Crate11" type="StaticBody3D" parent="Camp" unique_id=158235720]
+transform = Transform3D(0.9994627, 0, -0.031850874, 0, 1, 0, 0.031850874, 0, 0.9994627, -4.142711, 0, 57.750366)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("15_8db7s")
+
+[node name="Crate10" type="StaticBody3D" parent="Camp" unique_id=2068979238]
+transform = Transform3D(0.8902708, 0, 0.45536578, 0, 1, 0, -0.45536578, 0, 0.8902708, -11.176506, 3.9219184, 30.48225)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("15_8db7s")
+
+[node name="Pallet" type="StaticBody3D" parent="Camp" unique_id=1092456774]
+transform = Transform3D(0.9781, 0, 0.2079, 0, 1, 0, -0.2079, 0, 0.9781, -14.124605, 0, 47.525627)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("16_6tpp5")
+
+[node name="BarricadeNorthA" type="StaticBody3D" parent="Camp" unique_id=240078429]
+transform = Transform3D(5, 0, 0, 0, 1, 0, 0, 0, 1, -20.969406, 0, 63.949127)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("17_jrsl8")
+
+[node name="BarricadeNorthA4" type="StaticBody3D" parent="Camp" unique_id=179738586]
+transform = Transform3D(3, 0, 0, 0, 1, 0, 0, 0, 1, -4.506135, 0, 63.949127)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("17_jrsl8")
+
+[node name="BarricadeNorthA5" type="StaticBody3D" parent="Camp" unique_id=645440798]
+transform = Transform3D(-5.2453663e-07, 0, 1, 0, 1, 0, -12, 0, -4.371139e-08, -0.023721695, 0, 46.076366)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("17_jrsl8")
+
+[node name="BarricadeNorthA8" type="StaticBody3D" parent="Camp" unique_id=2106089931]
+transform = Transform3D(-5.2453663e-07, 0, 1, 0, 1, 0, -12, 0, -4.371139e-08, -28.600706, 0, 46.076366)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("17_jrsl8")
+
+[node name="BarricadeNorthA7" type="StaticBody3D" parent="Camp" unique_id=894526718]
+transform = Transform3D(9.5, 0, 0, 0, 1, 0, 0, 0, 1, -14.05142, 0, 16.36243)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("17_jrsl8")
+
+[node name="BarricadeNorthA6" type="StaticBody3D" parent="Camp" unique_id=788352535]
+transform = Transform3D(-1.3113416e-07, 0, 1, 0, 1, 0, -3, 0, -4.371139e-08, -0.023721695, 0, 21.16836)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("17_jrsl8")
+
+[node name="BarricadeNorthA9" type="StaticBody3D" parent="Camp" unique_id=15315570]
+transform = Transform3D(-1.3113416e-07, 0, 1, 0, 1, 0, -3, 0, -4.371139e-08, -28.530115, 0, 21.16836)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("17_jrsl8")
+
+[node name="BarricadeNorthA3" type="StaticBody3D" parent="Camp" unique_id=531090219]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.589678, 0, 32.573254)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("17_jrsl8")
+
+[node name="BarricadeNorthA2" type="StaticBody3D" parent="Camp" unique_id=907573179]
+transform = Transform3D(4, 0, 0, 0, 1, 0, 0, 0, 1, -12.674473, 0, 45.030968)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("17_jrsl8")
+
+[node name="Gate" type="StaticBody3D" parent="Camp" unique_id=1704046925]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.590687, 0, 63.658905)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("18_2i8c8")
+
+[node name="WoodBarrel" type="StaticBody3D" parent="Camp" unique_id=1803181142]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.575483, 0, 46.093124)
+collision_mask = 0
+script = ExtResource("11_lq60w")
+model = ExtResource("19_ys3p4")
