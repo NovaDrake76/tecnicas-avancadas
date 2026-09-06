@@ -18,7 +18,7 @@
 [ext_resource type="PackedScene" path="res://Guns/gun/osprey.tscn" id="19_osprey"]
 [ext_resource type="Script" path="res://Player/magazine_pouch.gd" id="16_pouch"]
 [ext_resource type="Script" path="res://Components/health.gd" id="17_health"]
-[ext_resource type="Script" path="res://Player/distraction.gd" id="18_throw"]
+[ext_resource type="Script" path="res://Player/utility_belt.gd" id="18_throw"]
 [ext_resource type="Script" path="res://Player/takedown.gd" id="20_takedown"]
 [ext_resource type="Script" path="res://Player/revive.gd" id="21_revive"]
 [ext_resource type="Script" path="res://Player/body_drag.gd" id="19_drag"]
@@ -102,7 +102,7 @@ script = ExtResource("16_pouch")
 script = ExtResource("17_health")
 max_health = 100.0
 
-[node name="Distraction" type="Node" parent="."]
+[node name="Utilities" type="Node" parent="."]
 script = ExtResource("18_throw")
 
 [node name="Takedown" type="Node" parent="."]

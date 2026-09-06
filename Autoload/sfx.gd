@@ -132,6 +132,15 @@ const EVENTS := {
 	&"mortar_fire": {"bus": &"Threat", "db": -2.0, "unit": 18.0, "max": 200.0, "voices": 3, "clips": "mortar/fire", "n": 4, "pitch": [0.95, 1.05]},
 	&"mortar_blast": {"bus": &"Threat", "db": 2.0, "unit": 26.0, "max": 240.0, "voices": 3, "clips": "mortar/blast", "n": 5, "pitch": [0.95, 1.05],
 		"far": {"from": 45.0, "layers": [{"clips": "mortar/blast_far", "n": 4, "db": -2.0, "pitch": [0.95, 1.05]}]}},
+	## the player's own explosion. it sits on the Threat bus with the shells and the beams rather
+	## than on World, because what that bus does is push the music and the bed down for a beat, and
+	## whether the bang was yours or theirs makes no difference to that. quieter and shorter of reach
+	## than the mortar (unit 20 against 26, no boost against +2): a hand grenade is a smaller charge,
+	## and the mortar keeps being the biggest thing in the game.
+	&"frag_pin": {"2d": true, "bus": &"Player", "db": -10.0, "clips": "grenade/pin", "n": 2, "pitch": [0.97, 1.05]},
+	&"frag_bounce": {"bus": &"World", "db": -10.0, "unit": 8.0, "max": 45.0, "voices": 3, "cooldown": 0.05, "clips": "grenade/bounce", "n": 3, "pitch": [0.9, 1.1]},
+	&"frag_blast": {"bus": &"Threat", "db": 0.0, "unit": 20.0, "max": 200.0, "voices": 3, "clips": "grenade/blast", "n": 4, "pitch": [0.96, 1.05],
+		"far": {"from": 40.0, "layers": [{"clips": "grenade/blast_far", "n": 2, "db": -2.0, "pitch": [0.95, 1.05]}]}},
 	&"heli_rotor_near": {"bus": &"Threat", "db": 0.0, "unit": 40.0, "max": 160.0, "clips": "gunship/rotor_near_loop", "n": 0},
 	&"heli_rotor_far": {"bus": &"Threat", "db": -2.0, "unit": 60.0, "max": 450.0, "clips": "gunship/rotor_far_loop", "n": 0},
 	&"heli_gun": {"bus": &"Threat", "db": 0.0, "unit": 30.0, "max": 260.0, "clips": "gunship/gun_burst", "n": 1},

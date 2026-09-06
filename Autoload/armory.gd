@@ -49,6 +49,7 @@ const CATALOG := [
 	{"id": "mag_heavy", "kind": Part.Kind.MAGAZINE, "title": "Heavy pistol magazine", "price": 150, "mag_type": Ordnance.MagType.PistolHeavy},
 	{"id": "mag_machine", "kind": Part.Kind.MAGAZINE, "title": "Machine pistol magazine", "price": 150, "mag_type": Ordnance.MagType.PistolMachine},
 	{"id": "mag_marksman", "kind": Part.Kind.MAGAZINE, "title": "Marksman magazine", "price": 250, "mag_type": Ordnance.MagType.Marksman},
+	{"id": "util_frag", "kind": Part.Kind.UTILITY, "title": "Frag grenade", "price": 250, "utility_id": "frag"},
 ]
 
 ## the kit a fresh run starts with: two weapons, their stock parts, light bbs, two spares each.
@@ -64,6 +65,9 @@ var installed := {}
 var bb_lot := {}
 ## mag type -> spare magazines owned
 var magazines := {}
+## utility id -> how many are carried into a mission. the thrown magazine is not in here: it is
+## free and always full, and a distraction the player has to ration is one they never use.
+var utilities := {}
 var loadout: Array[String] = []
 
 var _parts := {}
@@ -86,6 +90,7 @@ func _ready() -> void:
 		p.bb_mass_kg = row.get("mass", 0.0002)
 		p.weapon_model = row.get("model", "")
 		p.mag_type = row.get("mag_type", Ordnance.MagType.Rifle)
+		p.utility_id = row.get("utility_id", "")
 		_parts[p.id] = p
 	reset()
 	Run.level_cleared.connect(_on_level_cleared)
@@ -107,6 +112,10 @@ func reset() -> void:
 	for t in MAG_PATHS:
 		bb_lot[t] = "bb_020"
 	magazines = STARTER_MAGAZINES.duplicate()
+	## no grenades in the starter kit, on purpose. the frag is the one thing in the game that ends
+	## an infiltration, and a run that opens with one in the pouch invites the player to spend it
+	## before they have found out what being quiet is worth.
+	utilities.clear()
 	loadout.assign(STARTER_LOADOUT)
 	changed.emit()
 
@@ -152,6 +161,12 @@ func buy(id: String) -> bool:
 		if int(magazines.get(p.mag_type, 0)) >= pouch_cap:
 			refused.emit("The pouch holds %d %s magazines" % [pouch_cap, Ordnance.type_name(p.mag_type)])
 			return false
+	elif p.kind == Part.Kind.UTILITY:
+		## the belt says how many fit, not the ledger: one place decides what an operative can carry.
+		var belt_cap := int(UtilityBelt.row(p.utility_id).get("max", 0))
+		if int(utilities.get(p.utility_id, 0)) >= belt_cap:
+			refused.emit("The belt holds %d %s" % [belt_cap, p.title.to_lower() + "s"])
+			return false
 	elif owns(id):
 		refused.emit("%s is already yours" % p.title)
 		return false
@@ -161,6 +176,8 @@ func buy(id: String) -> bool:
 	points -= p.price
 	if p.kind == Part.Kind.MAGAZINE:
 		magazines[p.mag_type] = int(magazines.get(p.mag_type, 0)) + 1
+	elif p.kind == Part.Kind.UTILITY:
+		utilities[p.utility_id] = int(utilities.get(p.utility_id, 0)) + 1
 	else:
 		owned[id] = true
 	bought.emit(p)
@@ -270,10 +287,11 @@ func apply_to_player(player: Node) -> void:
 				pouch.add(make_magazine(g.accepted_mag))
 	for g in rack.weapons():
 		g.emit_state()
-	## the noisemakers are kit too: topped up here and nowhere else, so they cannot be farmed mid-mission
-	var throw := _find(player, "distraction")
-	if throw != null and throw.has_method("refill"):
-		throw.refill()
+	## the belt is kit too: filled here and nowhere else, so nothing on it can be farmed mid-mission.
+	## the free kinds come back full and the bought ones come back at what was paid for.
+	var belt := _find(player, "utility")
+	if belt != null and belt.has_method("refill"):
+		belt.refill(utilities)
 	changed.emit()
 
 

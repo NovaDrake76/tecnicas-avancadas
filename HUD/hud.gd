@@ -11,8 +11,8 @@ const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 @onready var mode_icon: FireModeIcon = %ModeIcon
 @onready var mode_hint: KeyCap = %ModeHint
 @onready var hopup_label: Label = %Hopup
-@onready var gear_label: Label = %Gear
-@onready var gear_key: KeyCap = %GearKey
+@onready var gear_rows: HBoxContainer = %GearRows
+@onready var melee_row: HBoxContainer = %MeleeRow
 @onready var melee_label: Label = %Melee
 @onready var melee_key: KeyCap = %MeleeKey
 @onready var message_label: Label = %Message
@@ -43,6 +43,12 @@ var _aiming := false
 var _last_detections := -1
 var _status_tween: Tween
 var _pouch: MagazinePouch
+var _belt: UtilityBelt
+## what the belt looked like when the rows were last built, and the two controls in each row.
+## the rows are only rebuilt when the KINDS change, which is once a mission: throwing something
+## must not free and rebuild the label that is about to be pulsed.
+var _gear_shown: Array[String] = []
+var _gear_cells := {}
 var _bound := false
 
 
@@ -97,7 +103,6 @@ func _style() -> void:
 	## the brief wants these two permanently on screen. they stay, quietly, and speak up on change.
 	HudStyle.tune(mass_label, HudStyle.T_MICRO, HudStyle.FAINT)
 	HudStyle.tune(hopup_label, HudStyle.T_MICRO, HudStyle.FAINT)
-	HudStyle.tune(gear_label, HudStyle.T_MICRO, HudStyle.FAINT)
 	HudStyle.tune(melee_label, HudStyle.T_MICRO, HudStyle.FAINT)
 	HudStyle.tune(objective_label, HudStyle.T_LABEL, HudStyle.DIM)
 	HudStyle.tune(targets_label, HudStyle.T_VALUE, HudStyle.BRIGHT)
@@ -144,18 +149,17 @@ func _bind_weapon() -> void:
 		_pouch.added.connect(_on_spare_added)
 	_update_spare()
 
-	## the takedown is the one verb with nothing to count, so it sits with the quiet figures saying
-	## only that it exists -- a verb nobody knows they have is not a verb -- and brightens when there
-	## is actually a bird within reach of it. that brightening is the whole prompt: it says "here,
-	## now" without another line of text in the middle of the screen, which is where the player is
-	## trying to see the bird from.
+	## the takedown only names itself when there is a bird to use it on. it used to sit in the block
+	## all mission, on the grounds that a verb nobody knows they have is not a verb -- but a line that
+	## is always there is one the eye stops reading by the second mission, and it was taking footer
+	## room from the things that DO change. Nathan's call, and it makes the row a prompt rather than a
+	## label: it appears exactly when it means something, which is what every other prompt here does.
+	## the controls page still lists it, which is where a player looks for a verb they have forgotten.
 	var hands := get_tree().get_first_node_in_group("takedown")
 	if hands != null:
 		hands.reach_changed.connect(_on_takedown_reach)
 		hands.started.connect(func(_t: Node3D) -> void: pulse(melee_label))
-	else:
-		melee_label.text = ""
-		melee_key.visible = false
+	melee_row.visible = false
 
 	## a teammate on the floor. the ring is the same one a reload and a job use, and the prompt is
 	## the same row an interactable uses: the game has one shape for "something is running" and one
@@ -171,27 +175,87 @@ func _bind_weapon() -> void:
 			else:
 				_on_focus_lost())
 
-	## the thrown magazines sit with the other quiet figures and speak up when one is thrown
-	var throw := get_tree().get_first_node_in_group("distraction")
-	if throw != null:
-		throw.changed.connect(_on_gear_changed)
-		_on_gear_changed(throw.count, throw.max_count)
+	## the belt sits with the other quiet figures and speaks up when something is thrown
+	_belt = get_tree().get_first_node_in_group("utility") as UtilityBelt
+	if _belt != null:
+		_belt.changed.connect(_on_gear_changed)
+	_sync_gear(true)
 
 
-## the only readout in the block that changes with where the player is STANDING rather than with
-## what they are carrying, so it is the only one that brightens on its own.
+## the only readout in the block that answers to where the player is STANDING rather than to what
+## they are carrying, and now the only one that comes and goes with it.
 func _on_takedown_reach(within: bool) -> void:
-	var shade := HudStyle.BRIGHT if within else HudStyle.FAINT
-	melee_label.add_theme_color_override("font_color", shade)
-	melee_key.ink = shade
-	melee_key.edge = Color(shade, 0.55)
-	melee_key.refresh()
+	melee_row.visible = within
+	if within:
+		melee_label.add_theme_color_override("font_color", HudStyle.BRIGHT)
+		melee_key.ink = HudStyle.BRIGHT
+		melee_key.edge = Color(HudStyle.BRIGHT, 0.55)
+		melee_key.refresh()
+		pulse(melee_label)
 
 
-func _on_gear_changed(count: int, max_count: int) -> void:
-	gear_label.text = "MAG  x%d" % count if max_count > 0 else ""
-	gear_key.visible = max_count > 0
-	pulse(gear_label)
+func _on_gear_changed() -> void:
+	_sync_gear(false)
+
+
+## the belt, one row per kind: a key, the name and how many are left. the row for the thing in hand
+## is bright and wears the THROW key; the others are faint and wear the key that would bring them to
+## hand, which is the only sentence either of them needs. the order is the table's and never the
+## selection's, because a row that jumps as you cycle cannot be read at a glance -- and a kind stays
+## on screen at x0, since the count going to nothing is how the player learns they are out.
+func _sync_gear(force: bool) -> void:
+	if _belt == null or not is_instance_valid(_belt):
+		return
+	if force or _gear_shown != _belt.carried:
+		_gear_shown = _belt.carried.duplicate()
+		_gear_cells.clear()
+		for child in gear_rows.get_children():
+			gear_rows.remove_child(child)
+			child.queue_free()
+		for id in _gear_shown:
+			var row := HBoxContainer.new()
+			row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			row.add_theme_constant_override("separation", 5)
+			gear_rows.add_child(row)
+			## the number that puts this kind in hand, always shown, whether it is in hand or not:
+			## the key means the same thing every time it is pressed, which is the whole reason it
+			## is a number and not a cycle.
+			var pick := KeyCap.new()
+			pick.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			pick.text_size = 19
+			pick.action = UtilityBelt.key_for(id)
+			row.add_child(pick)
+			## and the throw key, on the row that is in hand and nowhere else, so the pair reads as
+			## one sentence: press this number, then press this to throw it.
+			var cap := KeyCap.new()
+			cap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			cap.text_size = 19
+			cap.action = &"throw"
+			row.add_child(cap)
+			var label := Label.new()
+			label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			HudStyle.tune(label, HudStyle.T_MICRO, HudStyle.FAINT)
+			row.add_child(label)
+			_gear_cells[id] = {"pick": pick, "cap": cap, "label": label}
+	var picked := _belt.selected()
+	for id in _gear_shown:
+		var cell: Dictionary = _gear_cells[id]
+		var pick := cell["pick"] as KeyCap
+		var cap := cell["cap"] as KeyCap
+		var label := cell["label"] as Label
+		var here := id == picked
+		var shade := HudStyle.BRIGHT if here else HudStyle.FAINT
+		cap.visible = here
+		for k in [pick, cap]:
+			k.ink = shade
+			k.edge = Color(shade, 0.55)
+			k.refresh()
+		var was := label.text
+		label.text = "%s  x%d" % [UtilityBelt.title_of(id), _belt.count(id)]
+		label.add_theme_color_override("font_color", shade)
+		if was != "" and was != label.text:
+			pulse(label)
 
 
 ## the hud listens to exactly one weapon at a time. switching moves every connection over,

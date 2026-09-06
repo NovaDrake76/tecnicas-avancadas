@@ -363,6 +363,38 @@ func _build_loadout_left() -> void:
 			var b := _small(row, "Buy one more for $%s" % _thousands(mag_part.price), _buy.bind(mag_part.id), Armory.can_afford(mag_part.id))
 			b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
+	## what the operative throws. the free kinds are not listed: the thrown magazine is always full
+	## and costs nothing, so a card offering to sell one would be a card that does nothing.
+	var for_belt: Array[Part] = []
+	for p in Armory.parts_of(Part.Kind.UTILITY):
+		if not bool(UtilityBelt.row(p.utility_id).get("free", false)):
+			for_belt.append(p)
+	if not for_belt.is_empty():
+		_gap(_left, 14)
+		_section(_left, "UTILITIES")
+		for p in for_belt:
+			var card := _card(_left, false, Callable())
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 14)
+			card.add_child(row)
+			var col := VBoxContainer.new()
+			col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			col.add_theme_constant_override("separation", 0)
+			row.add_child(col)
+			var n := int(Armory.utilities.get(p.utility_id, 0))
+			var belt_cap := int(UtilityBelt.row(p.utility_id).get("max", 0))
+			_text(col, UtilityBelt.title_of(p.utility_id), 13, MenuStyle.DIM, true)
+			_text(col, "%d of %d on the belt" % [n, belt_cap], 22, MenuStyle.BRIGHT, true)
+			## what it does, before it is paid for. a grenade is the one thing in the kit that ends
+			## an infiltration, and a player who found that out by throwing one has been ambushed by
+			## their own equipment.
+			_text(col, UtilityBelt.note_of(p.utility_id), 15, MenuStyle.DIM, true)
+			## it is a slot on the belt rather than a round of ammunition: bought once and filled
+			## again every deployment, the same way a spare magazine is. buying grenades before every
+			## mission would be a chore standing in for a decision.
+			var b := _small(row, "Carry one more for $%s" % _thousands(p.price), _buy.bind(p.id), Armory.can_afford(p.id))
+			b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+
 
 func _build_platform_right(model: String) -> void:
 	var gun := _gun_named(model)

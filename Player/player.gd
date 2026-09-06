@@ -78,7 +78,7 @@ var _since_hurt := 999.0
 ## for "the viewmodel", Run for "the pouch" -- and with two operatives in the tree those lookups
 ## would hand back whichever came first. a remote operative's copies leave the groups AND stop
 ## processing: they keep their meshes, which is what the other player sees, and nothing else.
-const REMOTE_SILENT := ["aim_scope", "viewmodel", "interactor", "distraction", "takedown",
+const REMOTE_SILENT := ["aim_scope", "viewmodel", "interactor", "utility", "takedown",
 	"body_drag", "footsteps", "weapon_rack", "weapon", "pouch", "revive"]
 
 ## whether this node is the one this machine drives. everything that reads the mouse, the keyboard,

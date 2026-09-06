@@ -231,6 +231,8 @@ text = "HOP-UP  --"
 vertical_alignment = 1
 
 [node name="MeleeRow" type="HBoxContainer" parent="Root/Stats/Footer"]
+unique_name_in_owner = true
+visible = false
 mouse_filter = 2
 theme_override_constants/separation = 8
 
@@ -248,23 +250,10 @@ mouse_filter = 2
 text = "TAKEDOWN"
 vertical_alignment = 1
 
-[node name="GearRow" type="HBoxContainer" parent="Root/Stats/Footer"]
-mouse_filter = 2
-theme_override_constants/separation = 8
-
-[node name="GearKey" type="Control" parent="Root/Stats/Footer/GearRow"]
-unique_name_in_owner = true
-size_flags_vertical = 4
-mouse_filter = 2
-script = ExtResource("9_key")
-action = &"throw"
-text_size = 19
-
-[node name="Gear" type="Label" parent="Root/Stats/Footer/GearRow"]
+[node name="GearRows" type="HBoxContainer" parent="Root/Stats/Footer"]
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
-vertical_alignment = 1
+theme_override_constants/separation = 20
 
 [node name="Waypoint" type="Control" parent="Root"]
 unique_name_in_owner = true

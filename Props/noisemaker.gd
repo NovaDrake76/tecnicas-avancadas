@@ -1,5 +1,5 @@
 class_name Noisemaker
-extends RigidBody3D
+extends Throwable
 
 ## a spent magazine thrown to make a noise somewhere else. it is the one deliberate sound the player
 ## can make, and it does something a footstep never does: the birds that hear it WALK OVER to look.
@@ -14,36 +14,21 @@ const MODEL := "res://Models/Ammo/rifle_mag.obj"
 ## a landing slower than this is a roll, not a clatter, and makes no noise.
 @export var clank_speed := 2.5
 @export var noise_radius := 18.0
-@export var lifetime := 12.0
-
-## the copy on another machine falls and clatters like this one; only the thrower's asks the birds
-## to come and look, or one magazine would pull the same patrol twice.
-var mine := true
-var _landed := false
 
 
 func _ready() -> void:
 	add_to_group("noisemaker")
-	collision_layer = 4
-	collision_mask = 1
 	mass = 0.12
-	contact_monitor = true
-	max_contacts_reported = 2
-	continuous_cd = true
+	super()
+
+
+func _build() -> void:
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
 	box.size = Vector3(0.06, 0.13, 0.03)
 	shape.shape = box
 	add_child(shape)
-	if ResourceLoader.exists(MODEL):
-		var mesh := load(MODEL) as Mesh
-		if mesh != null:
-			var mi := MeshInstance3D.new()
-			mi.mesh = mesh
-			var bounds := mesh.get_aabb()
-			mi.position = -bounds.get_center()
-			add_child(mi)
-	get_tree().create_timer(lifetime).timeout.connect(queue_free)
+	_show_model(MODEL)
 
 
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
@@ -77,7 +62,3 @@ func _walk_over(at: Vector3) -> void:
 func _ask_walk_over(at: Vector3) -> void:
 	if multiplayer.is_server():
 		_walk_over(at)
-
-
-func has_landed() -> bool:
-	return _landed

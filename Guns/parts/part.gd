@@ -1,11 +1,14 @@
 class_name Part
 extends Resource
 
-## one row of the armory catalogue: a spring, a motor, a lot of bbs, a weapon or a spare magazine.
+## one row of the armory catalogue: a spring, a motor, a lot of bbs, a weapon, a spare magazine
+## or a utility to throw.
 ## every row is bought and owned the same way, only what it does to a weapon differs, so one type with
 ## a kind beats five that would each need the same price and title.
 
-enum Kind { SPRING, MOTOR, BB_LOT, WEAPON, MAGAZINE }
+## UTILITY went at the END, the same rule the magazine types follow: a member inserted anywhere
+## else renumbers every one after it, and a kind is stored as a number wherever one is stored.
+enum Kind { SPRING, MOTOR, BB_LOT, WEAPON, MAGAZINE, UTILITY }
 
 @export var id: String = ""
 @export var title: String = ""
@@ -27,6 +30,11 @@ enum Kind { SPRING, MOTOR, BB_LOT, WEAPON, MAGAZINE }
 @export_group("Weapon or magazine")
 @export var weapon_model: String = ""
 @export var mag_type: Ordnance.MagType = Ordnance.MagType.Rifle
+
+@export_group("Utility")
+## the row in UtilityBelt.KINDS this buys one of. the belt owns what it does and how many
+## fit; the catalogue owns only what it costs.
+@export var utility_id: String = ""
 
 
 func fits_weapon(model: String) -> bool:
@@ -51,6 +59,8 @@ func detail() -> String:
 			return weapon_model
 		Kind.MAGAZINE:
 			return "%s magazine" % Ordnance.type_name(mag_type)
+		Kind.UTILITY:
+			return UtilityBelt.title_of(utility_id)
 	return ""
 
 

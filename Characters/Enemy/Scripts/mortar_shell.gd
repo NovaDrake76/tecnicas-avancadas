@@ -25,7 +25,6 @@ var _t := 0.0
 var _apex := 8.0
 var _shell: MeshInstance3D
 var _ring: MeshInstance3D
-var _fill: MeshInstance3D
 var _done := false
 
 
@@ -63,8 +62,9 @@ func _ready() -> void:
 	_shell.material_override = body
 	add_child(_shell)
 
-	## the telegraph: a faint ring the size of the blast, and a disc inside it that grows to the ring
-	## exactly as the shell arrives, so the fill IS the clock.
+	## the telegraph: a ring the size of the blast, and nothing inside it. it says WHERE, and the
+	## shell falling through the air says when -- a disc growing to the edge said the same thing a
+	## second time and turned every landing into a painted plate on the ground.
 	var ring_mat := StandardMaterial3D.new()
 	ring_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	ring_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -86,24 +86,8 @@ func _ready() -> void:
 	_ring.top_level = true
 	_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_ring)
-	var fill_mat := ring_mat.duplicate() as StandardMaterial3D
-	fill_mat.albedo_color = Color(RING, 0.16)
-	_fill = MeshInstance3D.new()
-	var disc := CylinderMesh.new()
-	disc.top_radius = 1.0
-	disc.bottom_radius = 1.0
-	disc.height = 0.02
-	disc.radial_segments = 28
-	disc.rings = 1
-	_fill.mesh = disc
-	_fill.material_override = fill_mat
-	_fill.top_level = true
-	_fill.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(_fill)
 	var ground := _ground_at(_target)
 	_ring.global_position = ground + Vector3.UP * 0.06
-	_fill.global_position = ground + Vector3.UP * 0.05
-	_fill.scale = Vector3(0.01, 1.0, 0.01)
 
 
 func _physics_process(delta: float) -> void:
@@ -117,8 +101,6 @@ func _physics_process(delta: float) -> void:
 	if ahead.distance_squared_to(pos) > 0.0001:
 		_shell.look_at(ahead, Vector3.UP)
 		_shell.rotate_object_local(Vector3.RIGHT, PI * 0.5)
-	var r := maxf(_radius * u, 0.05)
-	_fill.scale = Vector3(r, 1.0, r)
 	if u >= 1.0:
 		_explode()
 
