@@ -46,6 +46,8 @@ func _ready() -> void:
 		add_child(eye)
 		_eye_meshes.append(eye)
 	_eye_light = make_light(EYE, light_range)
+	## the kit is on render layer 2, so the glow under the helmet never lights the helmet from inside.
+	_eye_light.light_cull_mask = 1
 	add_child(_eye_light)
 
 	for i in 4:

@@ -73,11 +73,16 @@ func _ready() -> void:
 	eyes.bind(find_child("Skeleton3D", true, false) as Skeleton3D)
 	_plate = plate_health
 	armour = KiwiArmour.new()
+	armour.kind = _armour_kind()
 	add_child(armour)
 	armour.bind(self, eyes)
 	Squad.leader_changed.connect(func(k: Node3D) -> void:
 		if armour != null and is_instance_valid(armour):
 			armour.set_leader(k == self))
+
+
+func _armour_kind() -> KiwiArmour.Kind:
+	return KiwiArmour.Kind.LASER
 
 
 func _physics_process(delta: float) -> void:

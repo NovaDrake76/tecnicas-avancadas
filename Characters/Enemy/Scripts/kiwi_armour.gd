@@ -2,29 +2,30 @@ class_name KiwiArmour
 extends Node3D
 
 
-const METAL := Color(0.14, 0.15, 0.16)
+enum Kind { LASER, SNIPER }
+
 const METAL_LIGHT := Color(0.24, 0.25, 0.27)
-const TRIM := LaserEyes.GLOW
-const LEADER_TRIM := Color(0.75, 1.0, 0.55)
+## the bones the kit rides: the middle of the spine carries the bob of the whole body, the head carries the helmet, each leg its greave.
+const TORSO_BONE := "spine_01"
+const HEAD_BONE := "head"
+const LEG_L_BONE := "leg_stretch.l"
+const LEG_R_BONE := "leg_stretch.r"
 
 ## the weak point box: the eyes are 77 mm apart, so this covers both with a little to spare.
 @export var weak_size := Vector3(0.15, 0.09, 0.09)
-## how far forward of the eye midpoint the weak point sits, so it is the first thing a bb from the front meets rather th...
+## how far forward of the eye midpoint the weak point sits, so it is the first thing a bb from the front meets rather than the body capsule behind it.
 @export var weak_forward := 0.015
+
+var kind: Kind = Kind.LASER
 
 var _kiwi: CharacterBody3D
 var _eyes: LaserEyes
 var _skeleton: Skeleton3D
-var _bone := -1
-var _calib := Basis.IDENTITY
-var _bound := false
-var _head_rig: Node3D
+var _rigs: Array[BoneRig] = []
+var _head: BoneRig
+var _torso: BoneRig
 var _weak: WeakPoint
-var _plates: Array[MeshInstance3D] = []
-var _trims: Array[MeshInstance3D] = []
-var _plate_mat: StandardMaterial3D
-var _trim_mat: StandardMaterial3D
-var _chevron: MeshInstance3D
+var _suit: KiwiSuit
 var _flash := 0.0
 var _shed := false
 var _leader := false
@@ -34,128 +35,54 @@ func bind(kiwi: CharacterBody3D, eyes: LaserEyes) -> void:
 	_kiwi = kiwi
 	_eyes = eyes
 	_skeleton = kiwi.find_child("Skeleton3D", true, false) as Skeleton3D
-	if _skeleton != null:
-		for i in _skeleton.get_bone_count():
-			if "head" in _skeleton.get_bone_name(i).to_lower():
-				_bone = i
-				break
-	_build_body_plates()
-	_head_rig = Node3D.new()
-	_head_rig.top_level = true
-	add_child(_head_rig)
+	var built := build_suit(kiwi, _skeleton, kind)
+	_suit = built["suit"]
+	_rigs = built["rigs"]
+	_head = built["head"]
+	_torso = built["torso"]
+	var mid: Vector3 = built["mid"]
 	_weak = WeakPoint.new()
 	_weak.setup(kiwi, weak_size)
-	_head_rig.add_child(_weak)
-	_build_visor()
+	_head.frame.add_child(_weak)
+	_weak.position = mid + Vector3(0.0, 0.0, -weak_forward)
 
 
-func _build_materials() -> void:
-	if _plate_mat != null:
-		return
-	_plate_mat = StandardMaterial3D.new()
-	_plate_mat.albedo_color = METAL
-	_plate_mat.roughness = 0.55
-	_plate_mat.metallic = 0.6
-	_plate_mat.emission_enabled = true
-	_plate_mat.emission = Color.WHITE
-	_plate_mat.emission_energy_multiplier = 0.0
-	_trim_mat = StandardMaterial3D.new()
-	_trim_mat.albedo_color = TRIM
-	_trim_mat.emission_enabled = true
-	_trim_mat.emission = TRIM
-	_trim_mat.emission_energy_multiplier = 1.2
-	_trim_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+static func build_suit(kiwi: Node3D, skeleton: Skeleton3D, which: Kind) -> Dictionary:
+	var torso := BoneRig.on(kiwi, skeleton, TORSO_BONE)
+	var head := BoneRig.on(kiwi, skeleton, HEAD_BONE)
+	var leg_l := BoneRig.on(kiwi, skeleton, LEG_L_BONE)
+	var leg_r := BoneRig.on(kiwi, skeleton, LEG_R_BONE)
+	var mid := eye_mid_at_rest(kiwi, skeleton)
+	KiwiBody.fit(kiwi, skeleton, mid + KiwiSuit.HEAD_AT)
+	var suit := KiwiSuit.new()
+	suit.build(which, head.frame, torso.frame, leg_l.frame if leg_l.found else null,
+		leg_r.frame if leg_r.found else null, mid)
+	var rigs: Array[BoneRig] = [torso, head, leg_l, leg_r]
+	return {"suit": suit, "rigs": rigs, "head": head, "torso": torso, "mid": mid}
 
 
-func _plate(parent: Node3D, size: Vector3, at: Vector3, trim_y: float) -> MeshInstance3D:
-	_build_materials()
-	var mi := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = size
-	mi.mesh = box
-	mi.material_override = _plate_mat
-	mi.position = at
-	parent.add_child(mi)
-	_plates.append(mi)
-	var band := MeshInstance3D.new()
-	var strip := BoxMesh.new()
-	strip.size = Vector3(size.x * 0.92, 0.012, size.z + 0.004)
-	band.mesh = strip
-	band.material_override = _trim_mat
-	band.position = Vector3(0.0, trim_y, 0.0)
-	mi.add_child(band)
-	_trims.append(band)
-	return mi
-
-
-func _build_body_plates() -> void:
-	_plate(self, Vector3(0.24, 0.17, 0.05), Vector3(0.0, 0.3, -0.16), 0.02)
-	var back := _plate(self, Vector3(0.22, 0.15, 0.05), Vector3(0.0, 0.32, 0.15), 0.0)
-	_chevron = MeshInstance3D.new()
-	var prism := PrismMesh.new()
-	prism.size = Vector3(0.09, 0.05, 0.01)
-	_chevron.mesh = prism
-	_chevron.material_override = _trim_mat
-	_chevron.position = Vector3(0.0, 0.03, 0.031)
-	_chevron.rotation_degrees = Vector3(0.0, 180.0, 0.0)
-	_chevron.visible = false
-	back.add_child(_chevron)
-
-
-func _build_visor() -> void:
-	_build_materials()
-	var band := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(0.17, 0.03, 0.06)
-	band.mesh = box
-	band.material_override = _plate_mat
-	band.name = "Visor"
-	_head_rig.add_child(band)
-	_plates.append(band)
-	var strip := MeshInstance3D.new()
-	var thin := BoxMesh.new()
-	thin.size = Vector3(0.17, 0.006, 0.062)
-	strip.mesh = thin
-	strip.material_override = _trim_mat
-	strip.position = Vector3(0.0, -0.012, 0.0)
-	band.add_child(strip)
-	_trims.append(strip)
-	for side in [-1.0, 1.0]:
-		var cheek := MeshInstance3D.new()
-		var cb := BoxMesh.new()
-		cb.size = Vector3(0.03, 0.09, 0.06)
-		cheek.mesh = cb
-		cheek.material_override = _plate_mat
-		cheek.position = Vector3(side * 0.085, -0.045, 0.0)
-		band.add_child(cheek)
-		_plates.append(cheek)
+static func eye_mid_at_rest(kiwi: Node3D, skeleton: Skeleton3D) -> Vector3:
+	if skeleton != null:
+		var left := -1
+		var right := -1
+		for i in skeleton.get_bone_count():
+			var bone_name := skeleton.get_bone_name(i).to_lower()
+			if bone_name.begins_with("eye.l"):
+				left = i
+			elif bone_name.begins_with("eye.r"):
+				right = i
+		if left >= 0 and right >= 0:
+			var into := kiwi.global_transform.affine_inverse() * skeleton.global_transform
+			var l := (into * skeleton.get_bone_global_rest(left)).origin
+			var r := (into * skeleton.get_bone_global_rest(right)).origin
+			return (l + r) * 0.5
+	return Vector3(0.0, 0.509, -0.246)
 
 
 func _process(delta: float) -> void:
-	if _flash > 0.0:
+	if _flash > 0.0 and _suit != null:
 		_flash = maxf(0.0, _flash - delta * 6.0)
-		_plate_mat.emission_energy_multiplier = _flash * 3.0
-	if _kiwi == null or _head_rig == null:
-		return
-	var head := _head_transform()
-	if not _bound:
-		if _eyes == null:
-			return
-		_calib = head.basis.orthonormalized().inverse() * _kiwi.global_transform.basis.orthonormalized()
-		_bound = true
-		_head_rig.global_transform = Transform3D(head.basis.orthonormalized() * _calib, head.origin)
-		var mid := _head_rig.global_transform.affine_inverse() * _eyes.between_eyes()
-		_weak.position = mid + Vector3(0.0, 0.0, -weak_forward)
-		var visor := _head_rig.get_node("Visor") as Node3D
-		visor.position = mid + Vector3(0.0, weak_size.y * 0.5 + 0.012, -0.005)
-		return
-	_head_rig.global_transform = Transform3D(head.basis.orthonormalized() * _calib, head.origin)
-
-
-func _head_transform() -> Transform3D:
-	if _skeleton != null and _bone >= 0:
-		return _skeleton.global_transform * _skeleton.get_bone_global_pose(_bone)
-	return _kiwi.global_transform.translated_local(Vector3(0.0, 0.45, -0.2))
+		_suit.flash(_flash)
 
 
 func dent(at: Vector3) -> void:
@@ -183,10 +110,13 @@ func shed() -> void:
 	if _kiwi != null and is_instance_valid(_kiwi):
 		Sfx.play(&"plates_shed", _kiwi.global_position + Vector3.UP * 0.3)
 	var world := get_tree().current_scene
-	for p in _plates:
-		if p.visible:
-			BurstFx.spawn(world, p.global_position, METAL_LIGHT, 10, 3.0, 0.5)
-		p.visible = false
+	if _suit != null:
+		for p in _suit.plates:
+			if p.visible:
+				BurstFx.spawn(world, p.global_position, METAL_LIGHT, 10, 3.0, 0.5)
+			p.visible = false
+		for t in _suit.trims:
+			t.visible = false
 	if _weak != null:
 		_weak.collision_layer = 0
 
@@ -197,12 +127,8 @@ func is_shed() -> bool:
 
 func set_leader(leader: bool) -> void:
 	_leader = leader
-	_build_materials()
-	_trim_mat.albedo_color = LEADER_TRIM if leader else TRIM
-	_trim_mat.emission = LEADER_TRIM if leader else TRIM
-	_trim_mat.emission_energy_multiplier = 2.4 if leader else 1.2
-	if _chevron != null:
-		_chevron.visible = leader
+	if _suit != null:
+		_suit.set_leader(leader)
 
 
 func is_leader() -> bool:
@@ -219,8 +145,9 @@ func weak_centre() -> Vector3:
 
 func hide_all() -> void:
 	visible = false
-	if _head_rig != null:
-		_head_rig.visible = false
+	for rig in _rigs:
+		if rig != null and is_instance_valid(rig):
+			rig.visible = false
 	if _weak != null:
 		_weak.collision_layer = 0
 	set_process(false)

@@ -23,6 +23,10 @@ func _ready() -> void:
 	add_to_group("sniper")
 
 
+func _armour_kind() -> KiwiArmour.Kind:
+	return KiwiArmour.Kind.SNIPER
+
+
 func _physics_process(delta: float) -> void:
 	super(delta)
 	var lit := _state == State.ATTACK and _attack == Attack.CHARGE and not _suppressing

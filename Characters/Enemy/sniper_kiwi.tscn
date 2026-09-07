@@ -20,3 +20,6 @@ laser_range = 80.0
 
 [node name="Vision" parent="."]
 sight_range = 70.0
+
+[node name="KitPreview" parent="."]
+kind = 1
