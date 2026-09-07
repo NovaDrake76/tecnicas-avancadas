@@ -256,6 +256,7 @@ func _follow_weapon(gun: Gun) -> void:
 	_weapon.emit_state()
 	reload_ring.watch(_weapon)
 	crosshair.watch(_weapon)
+	_show_crosshair(not _aiming and not reload_ring.is_showing())
 	_update_spare()
 	show_message(_weapon.weapon_model)
 
@@ -466,6 +467,8 @@ func _on_aim_changed(aiming: bool) -> void:
 
 
 func _show_crosshair(on: bool) -> void:
+	if _weapon != null and is_instance_valid(_weapon) and not _weapon.hip_reticle:
+		on = false
 	if _aim_tween != null and _aim_tween.is_valid():
 		_aim_tween.kill()
 	_aim_tween = create_tween()

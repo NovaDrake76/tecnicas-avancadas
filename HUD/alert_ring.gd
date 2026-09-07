@@ -50,6 +50,10 @@ func watcher_count() -> int:
 	return _watchers.size()
 
 
+func watching(who: Node3D) -> bool:
+	return _watchers.has(who)
+
+
 static func bearing_to(cam: Camera3D, point: Vector3) -> float:
 	var local := cam.global_transform.affine_inverse() * point
 	return atan2(local.x, -local.z)

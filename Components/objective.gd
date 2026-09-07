@@ -1,3 +1,5 @@
+## a tool script so the prop shows in the editor; there _ready builds only the look and _process does nothing.
+@tool
 class_name Objective
 extends Node3D
 
@@ -60,6 +62,9 @@ var _was_working := false
 
 
 func _ready() -> void:
+	if Engine.is_editor_hint():
+		_build_marker()
+		return
 	add_to_group("objective")
 	if kind == Kind.STEAL or kind == Kind.SABOTAGE:
 		_build_handle()
@@ -84,7 +89,7 @@ func _build_handle() -> void:
 
 
 func _process(delta: float) -> void:
-	if _done and _fuse_left < 0.0:
+	if Engine.is_editor_hint() or (_done and _fuse_left < 0.0):
 		return
 	match kind:
 		Kind.ELIMINATE:

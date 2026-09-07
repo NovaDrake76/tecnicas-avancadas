@@ -190,14 +190,27 @@ func _net_down() -> void:
 func net_revive(amount: float) -> void:
 	if not _down:
 		return
-	_down = false
 	if health != null:
 		health.revive()
 		health.current = clampf(amount, 1.0, health.max_health)
 		health.health_changed.emit(health.current, health.max_health)
 	_since_hurt = 0.0
+	_stand_up()
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _net_stand() -> void:
+	_stand_up()
+
+
+func _stand_up() -> void:
+	if not _down:
+		return
+	_down = false
 	_freeze_kit(false)
 	head.position.y = stand_eye
+	if _avatar != null:
+		_avatar.lie(false)
 	if _avatar != null:
 		_avatar.lie(false)
 	Sfx.play_2d(&"pickup")
@@ -400,6 +413,8 @@ func restore() -> void:
 	_suppression = 0.0
 	if health != null:
 		health.revive()
+	if _down:
+		_net_stand.rpc()
 
 
 func _update_health(delta: float) -> void:

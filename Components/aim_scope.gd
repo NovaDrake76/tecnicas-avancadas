@@ -78,7 +78,7 @@ func _on_weapon_changed(gun: Gun) -> void:
 
 
 func scope_amount() -> float:
-	if _weapon_fov <= 0.0 or scope_at >= 1.0:
+	if _optic_fov > 0.0 or _weapon_fov <= 0.0 or scope_at >= 1.0:
 		return 0.0
 	return clampf((_t - scope_at) / (1.0 - scope_at), 0.0, 1.0)
 

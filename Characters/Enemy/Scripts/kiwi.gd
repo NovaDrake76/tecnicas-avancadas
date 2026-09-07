@@ -1159,6 +1159,7 @@ func _fall() -> void:
 		_alert_witnesses()
 		## emitted while we are still here, so a listener can read our position.
 		downed.emit(self)
+	awareness_changed.emit(self, 0.0)
 	if not body.vanish_on_down:
 		_play(down_clip, 0.15)
 	body.collapse(at)

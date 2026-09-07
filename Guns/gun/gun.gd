@@ -62,6 +62,8 @@ const TRAIL_COLORS := [
 @export_group("Aim")
 ## the fov the camera narrows to for THIS weapon while aiming, or 0 to use the scope's own.
 @export_range(0.0, 90.0, 0.5) var aim_fov := 0.0
+## off for a weapon that is only ever aimed through its scope: no crosshair at the hip.
+@export var hip_reticle := true
 ## the muzzle sits right of and below the eye, so firing straight down the barrel never crosses the crosshair.
 @export var converge_on_crosshair := true
 @export var max_aim_distance := 300.0
