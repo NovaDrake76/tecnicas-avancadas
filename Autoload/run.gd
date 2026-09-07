@@ -75,6 +75,8 @@ var targets_down := 0
 var detections := 0
 var run_score := 0
 var completed := {}
+## every mission open on the board, so whoever is building a level can go straight to it. on when the game runs from the editor and off in an exported build, which keeps the progression.
+var open_all := OS.has_feature("editor")
 var best_grades := {}
 
 var _level_score := 0
@@ -273,7 +275,9 @@ func objective_count() -> String:
 
 
 func is_unlocked(index: int) -> bool:
-	return index >= 0 and index < LEVELS.size() and index < OPEN_AT_START + completed.size()
+	if index < 0 or index >= LEVELS.size():
+		return false
+	return open_all or index < OPEN_AT_START + completed.size()
 
 
 func suggested_level() -> int:

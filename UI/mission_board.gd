@@ -184,7 +184,7 @@ func _refresh() -> void:
 	MenuStyle.sheet_clear(_left)
 	MenuStyle.sheet_clear(_right)
 	_points_l.text = "$%s" % MenuStyle.thousands(Armory.points)
-	MenuStyle.sheet_section(_left, "OPERATIONS")
+	MenuStyle.sheet_section(_left, "OPERATIONS" if not Run.open_all else "OPERATIONS   (ALL OPEN)")
 	for i in Run.level_count():
 		var entry: Dictionary = Run.LEVELS[i]
 		var unlocked: bool = Run.is_unlocked(i)
