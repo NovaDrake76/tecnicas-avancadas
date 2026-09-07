@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://Characters/Enemy/kiwi.tscn" id="1_kiwi"]
+[ext_resource type="Script" path="res://Characters/Enemy/Scripts/rusher_kiwi.gd" id="2_rusher"]
+[ext_resource type="Script" path="res://Characters/Enemy/Scripts/kit_preview.gd" id="3_preview"]
+
+[node name="RusherKiwi" instance=ExtResource("1_kiwi")]
+script = ExtResource("2_rusher")
+hunt_speed = 7.5
+peck_cooldown = 2.0
+
+[node name="Blaster" parent="."]
+damage = 8.0
+rounds = 1
+burst_gap = 0.7
+reach = 8.0
+pellets = 3
+pellet_spread = 0.35
+
+[node name="KitPreview" type="Node3D" parent="."]
+script = ExtResource("3_preview")
+kind = 3

@@ -11,7 +11,8 @@ signal marked_changed(marked: bool)
 const CONTACT_HOLD := 0.35
 const SEARCH_CALM := 20.0
 const ALARM_CALM := 30.0
-const REINFORCE_TIME := 45.0
+const REINFORCE_TIME := 30.0
+const WAVE_GAPS: Array[float] = [45.0, 60.0]
 const SEARCH_WEIGHT := 0.35
 const MARK_HOLD := 0.5
 const SEARCH_SPREAD := 1.4
@@ -24,16 +25,22 @@ var search_calm := SEARCH_CALM
 var alarm_calm := ALARM_CALM
 var reinforce_time := REINFORCE_TIME
 var reinforcements_enabled := false
+## the gaps between the waves after the first: the last one repeats while a horn stands.
+var wave_gaps: Array = WAVE_GAPS.duplicate()
+## a mission that answers the alarm with the helicopter instead of birds on foot.
+var gunship := false
 
 var _quiet := 0.0
 var _alarm_time := 0.0
 var _reinforce := -1.0
 var _reinforce_shown := -1
+var _wave := 0
 var _marked := false
 var _mark_quiet := 0.0
 var _ever_hot := false
 var _age := 999.0
 var _bodies_found := 0
+var _runner := 0
 
 
 func _process(delta: float) -> void:
@@ -53,8 +60,9 @@ func _process(delta: float) -> void:
 				_reinforce -= delta
 				if _reinforce <= 0.0:
 					_reinforce = -1.0
-					reinforcements_changed.emit(-1.0)
+					_wave += 1
 					reinforcements_due.emit(last_known)
+					_schedule_wave()
 				elif int(ceil(_reinforce)) != _reinforce_shown:
 					_reinforce_shown = int(ceil(_reinforce))
 					reinforcements_changed.emit(_reinforce)
@@ -68,7 +76,30 @@ func _process(delta: float) -> void:
 				stand_down()
 
 
+func claim_runner(kiwi: Node) -> bool:
+	if _runner != 0:
+		var held := instance_from_id(_runner)
+		if held != null and is_instance_valid(held) and held.has_method("is_runner") and held.is_runner():
+			return false
+	_runner = kiwi.get_instance_id()
+	return true
+
+
+func release_runner(kiwi: Node) -> void:
+	if kiwi != null and _runner == kiwi.get_instance_id():
+		_runner = 0
+
+
+func has_runner() -> bool:
+	if _runner == 0:
+		return false
+	var held := instance_from_id(_runner)
+	return held != null and is_instance_valid(held) and held.has_method("is_runner") and held.is_runner()
+
+
 func reset() -> void:
+	_runner = 0
+	_wave = 0
 	_quiet = 0.0
 	_alarm_time = 0.0
 	_ever_hot = false
@@ -100,7 +131,7 @@ func raise_alarm(at: Vector3) -> void:
 	report_contact(at)
 	if stage != Stage.ALARM:
 		_set_stage(Stage.ALARM)
-	if reinforcements_enabled and _reinforce < 0.0:
+	if reinforcements_enabled and _reinforce < 0.0 and _wave == 0:
 		_reinforce = reinforce_time
 		_reinforce_shown = int(ceil(_reinforce))
 		reinforcements_changed.emit(_reinforce)
@@ -108,6 +139,7 @@ func raise_alarm(at: Vector3) -> void:
 
 func stand_down() -> void:
 	_cancel_reinforcements()
+	_runner = 0
 	_set_stage(Stage.CALM)
 	for node in get_tree().get_nodes_in_group("kiwi"):
 		if node.has_method("stand_down"):
@@ -200,6 +232,7 @@ func _set_stage(value: int) -> void:
 	stage = value
 	if stage != Stage.ALARM:
 		_cancel_reinforcements()
+		_wave = 0
 	stage_changed.emit(stage)
 
 
@@ -219,3 +252,28 @@ func _cancel_reinforcements() -> void:
 	_reinforce = -1.0
 	_reinforce_shown = -1
 	reinforcements_changed.emit(-1.0)
+
+
+func _schedule_wave() -> void:
+	if not reinforcements_enabled or stage != Stage.ALARM or not horn_standing():
+		reinforcements_changed.emit(-1.0)
+		return
+	_reinforce = float(wave_gaps[mini(_wave - 1, wave_gaps.size() - 1)])
+	_reinforce_shown = int(ceil(_reinforce))
+	reinforcements_changed.emit(_reinforce)
+
+
+func horn_standing() -> bool:
+	for node in get_tree().get_nodes_in_group("alarm_horn"):
+		if node.has_method("is_usable") and node.is_usable():
+			return true
+	return false
+
+
+func horn_cut() -> void:
+	if _wave > 0 and not horn_standing():
+		_cancel_reinforcements()
+
+
+func waves_sent() -> int:
+	return _wave

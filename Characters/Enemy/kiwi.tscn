@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://Characters/Enemy/Scripts/kiwi.gd" id="1_kiwi"]
 [ext_resource type="PackedScene" uid="uid://bpgjfdqybi64l" path="res://Models/kiwi.glb" id="2_model"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://Components/creature_steps.gd" id="5_steps"]
 [ext_resource type="Script" path="res://Characters/Enemy/Scripts/kiwi_voice.gd" id="6_voice"]
 [ext_resource type="Script" path="res://Characters/Enemy/Scripts/kiwi_body.gd" id="7_body"]
+[ext_resource type="Script" path="res://Characters/Enemy/Scripts/bird_gun.gd" id="8_gun"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_kiwi"]
 radius = 0.2
@@ -41,3 +42,6 @@ script = ExtResource("4_vision")
 
 [node name="Steps" type="Node3D" parent="."]
 script = ExtResource("5_steps")
+
+[node name="Blaster" type="Node3D" parent="."]
+script = ExtResource("8_gun")

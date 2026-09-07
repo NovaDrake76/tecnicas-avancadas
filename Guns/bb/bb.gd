@@ -81,6 +81,7 @@ func _on_impact(point: Vector3, normal: Vector3, hit_body: Object, energy: float
 func _tell_host_miss(point: Vector3, radius: float) -> void:
 	if not multiplayer.is_server():
 		return
+	_suppress_near(point)
 	for node in get_tree().get_nodes_in_group("kiwi"):
 		var bird := node as Node3D
 		if bird != null and bird.has_method("investigate") \
@@ -88,7 +89,20 @@ func _tell_host_miss(point: Vector3, radius: float) -> void:
 			bird.investigate(point)
 
 
+const SUPPRESS_NEAR := 2.5
+const SUPPRESS_FOR := 2.0
+
+
+func _suppress_near(point: Vector3) -> void:
+	for node in get_tree().get_nodes_in_group("kiwi"):
+		var bird := node as Node3D
+		if bird != null and bird.has_method("suppress") \
+				and bird.global_position.distance_to(point) <= SUPPRESS_NEAR:
+			bird.suppress(SUPPRESS_FOR)
+
+
 func _heard_at(point: Vector3) -> void:
+	_suppress_near(point)
 	if impact_hearing <= 0.0:
 		return
 	for node in get_tree().get_nodes_in_group("kiwi"):

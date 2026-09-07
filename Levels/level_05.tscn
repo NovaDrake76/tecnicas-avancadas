@@ -36,7 +36,7 @@ shader_parameter/minor_spacing = 1.0
 shader_parameter/major_spacing = 10.0
 shader_parameter/minor_fade_distance = 70.0
 
-[node name="Level02" type="Node3D" unique_id=1296797532]
+[node name="Level05" type="Node3D" unique_id=1296797532]
 
 [node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=592499043]
 
@@ -64,7 +64,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.847343, 0.0009, 39.100533)
 
 [node name="LaserKiwi" parent="StaticBody3D" unique_id=1387126501 instance=ExtResource("4_laser")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.823765, 0.0009, 17.96407)
-hunt_speed = 3.6
 attack_range = 18.0
 hunt_sight = 32.0
 search_time = 3.5
@@ -78,12 +77,10 @@ pulse_gap = 0.16
 pulse_damage = 9.0
 pulse_spread = 0.14
 bolt_speed = 38.0
-burst_recover = 1.2
 charge_time = 1.1
 beam_time = 1.4
 beam_dps = 30.0
 beam_recover = 1.8
-beam_track = 7.0
 beam_chance = 0.4
 beam_cooldown = 6.0
 laser_range = 40.0
@@ -108,7 +105,6 @@ pulse_gap = 0.16
 pulse_damage = 9.0
 pulse_spread = 0.14
 bolt_speed = 38.0
-burst_recover = 1.2
 wander_radius = 0.0
 walk_chance = 0.0
 

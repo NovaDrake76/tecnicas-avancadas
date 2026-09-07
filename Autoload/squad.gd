@@ -1,7 +1,7 @@
 extends Node
 
 
-enum Role { HOLD, ATTACK, FLANK, SUPPRESS }
+enum Role { HOLD, ATTACK, FLANK, SUPPRESS, APPROACH }
 
 signal leader_changed(kiwi: Node3D)
 signal rattled
@@ -25,11 +25,18 @@ var _sync_armed := false
 var _sync_wait := 0.0
 var _sync_waiting := {}
 const SYNC_WAIT := 1.5
+## an approacher walks in only while the player has been quiet this long: fire keeps them in cover.
+const QUIET_TO_ADVANCE := 2.0
+const APPROACHERS := 2
+const FLANKERS := 2
+
+var _player_quiet := 99.0
 
 
 ## physics, not process: the birds this coordinates move on the physics clock, and under load the two clocks decouple and roles rotate faster than a bird can reach its spot.
 func _physics_process(delta: float) -> void:
 	_sweep()
+	_player_quiet += delta
 	_rattle = maxf(0.0, _rattle - delta)
 	_sync_cooldown = maxf(0.0, _sync_cooldown - delta)
 	if _sync_armed:
@@ -45,7 +52,16 @@ func _physics_process(delta: float) -> void:
 		_assign_roles()
 
 
+func note_player_shot() -> void:
+	_player_quiet = 0.0
+
+
+func player_quiet() -> float:
+	return _player_quiet
+
+
 func reset() -> void:
+	_player_quiet = 99.0
 	_members.clear()
 	_tokens.clear()
 	_roles.clear()
@@ -264,6 +280,22 @@ func release_cover(kiwi: Node3D) -> void:
 			_claims.erase(key)
 
 
+func flank_point(kiwi: Node3D, toward: Vector3) -> Vector3:
+	var here := kiwi.global_position
+	var to := toward - here
+	to.y = 0.0
+	if to.length_squared() < 0.01:
+		to = Vector3.FORWARD
+	var right := to.normalized().cross(Vector3.UP)
+	var hand := 1.0 if (kiwi.get_instance_id() % 2) == 0 else -1.0
+	var reach := clampf(to.length() * 0.8, 6.0, 14.0)
+	var goal := toward + right * hand * reach + to.normalized() * 2.0
+	var grounded := _ground(kiwi, goal)
+	if grounded == Vector3.INF:
+		return Vector3.INF
+	return grounded if _clear_run(kiwi, here, grounded) else Vector3.INF
+
+
 func tangent_point(kiwi: Node3D, toward: Vector3, side := 0) -> Vector3:
 	var here := kiwi.global_position
 	var to := toward - here
@@ -293,8 +325,8 @@ func _covered(point: Vector3, toward: Vector3, kiwi: Node3D) -> bool:
 
 
 func _assign_roles() -> void:
-	var idle := 0
 	var seeing: Array = []
+	var free: Array = []
 	for k in _members:
 		var id: int = k.get_instance_id()
 		if _tokens.has(id):
@@ -302,14 +334,26 @@ func _assign_roles() -> void:
 			if k.has_method("can_see_target") and k.can_see_target():
 				seeing.append(id)
 			continue
-		var beam_ready: bool = k.has_method("beam_ready") and k.beam_ready()
-		if idle % 3 == 0 and beam_ready:
+		free.append(k)
+	var focus: Vector3 = Alarm.last_known
+	free.sort_custom(func(a: Node3D, b: Node3D) -> bool:
+		return a.global_position.distance_to(focus) < b.global_position.distance_to(focus))
+	var suppressors := 0 if _members.size() <= 1 else maxi(1, floori(float(free.size()) / 3.0))
+	var approachers := 0
+	var flankers := 0
+	for i in free.size():
+		var k: Node3D = free[i]
+		var id: int = k.get_instance_id()
+		if i < suppressors:
 			_roles[id] = Role.SUPPRESS
-		elif idle % 3 == 2:
-			_roles[id] = Role.HOLD
-		else:
+		elif approachers < APPROACHERS:
+			_roles[id] = Role.APPROACH
+			approachers += 1
+		elif flankers < FLANKERS:
 			_roles[id] = Role.FLANK
-		idle += 1
+			flankers += 1
+		else:
+			_roles[id] = Role.HOLD
 	if seeing.size() >= 2 and not _sync_armed and (force_sync or (_sync_cooldown <= 0.0 and randf() < SYNC_CHANCE)):
 		_sync_armed = true
 		_sync_wait = 0.0

@@ -3,11 +3,16 @@ extends Node3D
 
 const ARMORY_SCENE := "res://Levels/armory.tscn"
 const PLAYER_SCENE := "res://Player/Player.tscn"
+const WAVE_SCENES := ["res://Characters/Enemy/kiwi.tscn", "res://Characters/Enemy/kiwi.tscn",
+	"res://Characters/Enemy/rusher_kiwi.tscn"]
+const WAVE_MIN_DISTANCE := 20.0
+const WAVE_FALLBACK_DISTANCE := 40.0
 
 @onready var players: Node3D = $Players
 @onready var level_holder: Node3D = $LevelHolder
 
 var _level: Node
+var _waves := 0
 
 
 func _player() -> Player:
@@ -112,6 +117,7 @@ func _go_armory() -> void:
 @rpc("authority", "call_local", "reliable")
 func _go_level(index: int) -> void:
 	Run.level_index = index
+	_waves = 0
 	if PauseMenu.is_open():
 		PauseMenu.close()
 	var who := _player()
@@ -175,6 +181,9 @@ func _begin() -> void:
 func _on_reinforcements_due(at: Vector3) -> void:
 	if _level == null or not is_instance_valid(_level) or Run.state != Run.State.PLAYING:
 		return
+	if not Alarm.gunship:
+		_send_wave(at)
+		return
 	if get_tree().get_first_node_in_group("gunship") != null:
 		return
 	var from := Vector3.ZERO
@@ -190,6 +199,71 @@ func _on_reinforcements_due(at: Vector3) -> void:
 	var ship := Gunship.new()
 	_level.add_child(ship)
 	ship.dispatch(from, at)
+
+
+func _send_wave(at: Vector3) -> void:
+	var from := _wave_origin(at)
+	if from == Vector3.INF:
+		return
+	var side := at - from
+	side.y = 0.0
+	side = side.normalized().cross(Vector3.UP) if side.length_squared() > 0.01 else Vector3.RIGHT
+	var spots: Array = []
+	for i in WAVE_SCENES.size():
+		spots.append(from + side * (float(i) - 1.0) * 2.5)
+	_waves += 1
+	_net_wave.rpc(_waves, spots, at)
+
+
+@rpc("authority", "call_local", "reliable")
+func _net_wave(wave: int, spots: Array, at: Vector3) -> void:
+	if _level == null or not is_instance_valid(_level):
+		return
+	for i in mini(spots.size(), WAVE_SCENES.size()):
+		var packed := load(WAVE_SCENES[i]) as PackedScene
+		if packed == null:
+			continue
+		var bird := packed.instantiate() as Kiwi
+		bird.name = "Wave%dBird%d" % [wave, i]
+		bird.add_to_group("reinforcement")
+		_level.add_child(bird)
+		bird.global_position = spots[i]
+		if multiplayer.is_server():
+			Run.adopt(bird)
+			bird.told(at)
+
+
+func _wave_origin(at: Vector3) -> Vector3:
+	var best := Vector3.INF
+	var best_d := INF
+	for node in get_tree().get_nodes_in_group("bird_spawn"):
+		var marker := node as Node3D
+		if marker == null:
+			continue
+		var d := marker.global_position.distance_to(at)
+		if d >= WAVE_MIN_DISTANCE and d < best_d:
+			best_d = d
+			best = marker.global_position
+	if best != Vector3.INF:
+		return best
+	var origin: Vector3 = (_level as Node3D).global_position if _level is Node3D else Vector3.ZERO
+	var out := at - origin
+	out.y = 0.0
+	out = out.normalized() if out.length_squared() > 1.0 else Vector3.BACK
+	for dir in [-out, out]:
+		var grounded := _ground(at + dir * WAVE_FALLBACK_DISTANCE)
+		if grounded != Vector3.INF:
+			return grounded
+	return Vector3.INF
+
+
+func _ground(point: Vector3) -> Vector3:
+	var space := get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(point + Vector3.UP * 40.0, point + Vector3.DOWN * 40.0, 1)
+	var hit := space.intersect_ray(query)
+	if hit.is_empty():
+		return Vector3.INF
+	return hit["position"] + Vector3.UP * 0.05
 
 
 func move_player_to_spawn() -> void:

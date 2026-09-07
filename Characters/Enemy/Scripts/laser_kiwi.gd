@@ -5,16 +5,10 @@ extends Kiwi
 enum Attack { NONE, BURST, CHARGE, BEAM, RECOVER }
 
 @export_group("Hunt")
-@export var hunt_speed := 3.6
 ## it stands and shoots inside this, closes in outside it.
 @export var attack_range := 18.0
-## once it knows you are there it picks you out further than a calm bird would.
-@export var hunt_sight := 32.0
-## how long it searches where it last saw you before it gives up and goes back to loafing.
-@export var search_time := 3.5
 ## a hunter keeps calling while it hunts, so a squad closing in can be counted by ear.
 @export var hunt_call_interval := Vector2(3.5, 6.5)
-@export var stuck_time := 1.0
 
 @export_group("Armour")
 ## a plain kiwi goes down to one bb because that is the airsoft fiction: a hit puts a target out.
@@ -32,7 +26,9 @@ enum Attack { NONE, BURST, CHARGE, BEAM, RECOVER }
 @export var pulse_spread := 0.14
 ## how fast a bolt flies.
 @export var bolt_speed := 38.0
-@export var burst_recover := 1.2
+## a burst is aimed where you will be when it arrives; off, it is aimed where you are, which a walk dodges.
+@export var lead_shots := true
+@export var burst_recover := 0.8
 
 @export_group("Beam")
 @export var charge_time := 1.1
@@ -40,7 +36,7 @@ enum Attack { NONE, BURST, CHARGE, BEAM, RECOVER }
 @export var beam_dps := 30.0
 @export var beam_recover := 1.8
 ## how fast the beam can follow you, in metres per second at the target.
-@export var beam_track := 7.0
+@export var beam_track := 10.0
 @export_range(0.0, 1.0) var beam_chance := 0.4
 @export var beam_cooldown := 6.0
 @export var laser_range := 40.0
@@ -49,11 +45,6 @@ enum Attack { NONE, BURST, CHARGE, BEAM, RECOVER }
 
 var armour: KiwiArmour
 var _plate := 0
-var _player: Node3D
-var _last_seen := Vector3.ZERO
-var _search := 0.0
-var _stuck := 0.0
-var _seen := false
 var _attack := Attack.NONE
 var _attack_timer := 0.0
 var _pulses_left := 0
@@ -62,10 +53,6 @@ var _aim := Vector3.ZERO
 var _beam_ready := 0.0
 var _suppressing := false
 var _unseen_for := 0.0
-var _role_goal := Vector3.INF
-var _role_timer := 0.0
-var _role_role := 0
-var _role_arrived := false
 
 
 func _ready() -> void:
@@ -93,7 +80,6 @@ func _physics_process(delta: float) -> void:
 		if _hunt_call <= 0.0:
 			_hunt_call = randf_range(hunt_call_interval.x, hunt_call_interval.y)
 			voice.alarm()
-		_step_hunt(delta)
 	super(delta)
 
 
@@ -108,10 +94,6 @@ func told(at: Vector3) -> void:
 		_stuck = 0.0
 		return
 	super(at)
-
-
-func has_contact() -> bool:
-	return _seen
 
 
 func _begin_hunt(toward: Vector3) -> void:
@@ -176,6 +158,11 @@ func _step_hunt(delta: float) -> void:
 	if not _seen and _suppress_possible() and Squad.request_fire(self):
 		_begin_suppress()
 		return
+	if not _seen and _is_suppressor() and _beam_ready <= 0.0 and Alarm.has_last_known and _unseen_for < 0.8:
+		velocity.x = move_toward(velocity.x, 0.0, hunt_speed * 6.0 * delta)
+		velocity.z = move_toward(velocity.z, 0.0, hunt_speed * 6.0 * delta)
+		_turn_to(Alarm.last_known, turn_speed * 2.0, delta)
+		return
 
 	_role_goal = Vector3.INF
 	var goal := _player.global_position if _seen else _last_seen
@@ -202,9 +189,19 @@ func _step_role(delta: float) -> void:
 		_role_role = job
 		_role_timer = Squad.ROLE_INTERVAL
 		_role_arrived = false
-		_role_goal = Squad.claim_cover(self, _player.global_position, job == Squad.Role.FLANK)
-		if _role_goal == Vector3.INF and (job != Squad.Role.HOLD or Squad.is_rattled()):
+		if job == Squad.Role.FLANK:
+			_role_goal = Squad.flank_point(self, _player.global_position)
+		elif job == Squad.Role.APPROACH:
+			_role_goal = Vector3.INF
+		else:
+			_role_goal = Squad.claim_cover(self, _player.global_position, false)
+		if _role_goal == Vector3.INF and job != Squad.Role.APPROACH and (job != Squad.Role.HOLD or Squad.is_rattled()):
 			_role_goal = Squad.tangent_point(self, _player.global_position)
+	var dist := global_position.distance_to(_player.global_position)
+	if job == Squad.Role.APPROACH and Squad.player_quiet() > Squad.QUIET_TO_ADVANCE and not is_suppressed() and dist > approach_stop:
+		_play(run_clip, 0.15)
+		_move_to(_player.global_position, hunt_speed, delta)
+		return
 	if _role_goal == Vector3.INF or _role_arrived:
 		velocity.x = move_toward(velocity.x, 0.0, hunt_speed * 6.0 * delta)
 		velocity.z = move_toward(velocity.z, 0.0, hunt_speed * 6.0 * delta)
@@ -233,8 +230,12 @@ func _begin_attack() -> void:
 		_play(idle_clips[0], 0.2)
 
 
+func _is_suppressor() -> bool:
+	return Squad.hunter_count() <= 1 or Squad.role_for(self) == Squad.Role.SUPPRESS
+
+
 func _suppress_possible() -> bool:
-	if Squad.role_for(self) != Squad.Role.SUPPRESS or _beam_ready > 0.0 or not Alarm.has_last_known:
+	if not _is_suppressor() or _beam_ready > 0.0 or not Alarm.has_last_known:
 		return false
 	if _unseen_for < 0.8:
 		return false
@@ -291,7 +292,12 @@ func _step_attack(delta: float, at: Vector3, dist: float) -> void:
 				_fire_charged()
 		Attack.BEAM:
 			if not _suppressing:
-				_aim = _aim.move_toward(at, beam_track * delta)
+				var ahead := at
+				if "velocity" in _player:
+					var v: Vector3 = _player.velocity
+					v.y = 0.0
+					ahead = at + v * 0.12
+				_aim = _aim.move_toward(ahead, beam_track * delta)
 			var hit := _cast(eyes.between_eyes(), _aim)
 			_net_beam_aim.rpc(hit["point"], hit["player"])
 			if hit["player"]:
@@ -393,12 +399,27 @@ func rattle() -> void:
 	_role_timer = 0.0
 
 
+## a bird told mid-burst hands its turn back before it talks, or the squad counts a talker as a shooter.
+func _begin_call(from: Vector3) -> void:
+	if _state == State.ATTACK:
+		_abort_attack()
+		Squad.release_fire(self)
+	super(from)
+
+
 func _abort_attack() -> void:
 	eyes.beam_stop()
 	eyes.charge_stop(_attack == Attack.CHARGE)
 	eyes.set_glow(0.0)
 	_attack = Attack.NONE
 	_suppressing = false
+
+
+func _interrupt_for_peck() -> void:
+	if _state == State.ATTACK:
+		_abort_attack()
+		Squad.release_fire(self)
+		_state = State.HUNT
 
 
 func beam_ready() -> bool:
@@ -419,8 +440,14 @@ func _fire_pulse() -> void:
 	_since_burst = 0.0
 	var from := eyes.eye_position(_pulse_right)
 	_pulse_right = not _pulse_right
-	var spread := pulse_spread * (2.0 if Squad.is_rattled() else 1.0)
-	var to := VisionCone.sight_point(_player) + Vector3(
+	var spread := pulse_spread * (2.0 if Squad.is_rattled() or is_suppressed() else 1.0)
+	var at := VisionCone.sight_point(_player)
+	var flight := from.distance_to(at) / maxf(bolt_speed, 0.01)
+	var lead := Vector3.ZERO
+	if lead_shots and "velocity" in _player:
+		lead = (_player.velocity as Vector3) * flight
+		lead.y = 0.0
+	var to := at + lead + Vector3(
 		randf_range(-spread, spread),
 		randf_range(-spread, spread),
 		randf_range(-spread, spread))
@@ -464,11 +491,7 @@ func _end_hunt() -> void:
 	eyes.set_glow(0.0)
 	_attack = Attack.NONE
 	_suppressing = false
-	Squad.leave(self)
-	vision.rearm()
-	_home = global_position
-	awareness_changed.emit(self, 0.0)
-	_begin_idle()
+	super()
 
 
 func hear(at: Vector3, radius: float) -> void:
@@ -541,9 +564,6 @@ func stand_down() -> void:
 		_end_hunt()
 	super()
 
-
-func is_hunting() -> bool:
-	return _state == State.HUNT or _state == State.ATTACK
 
 
 func is_attacking() -> bool:

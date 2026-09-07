@@ -49,10 +49,29 @@ enum Duty { WANDER, FIXED, ROUTE }
 ## the body has to come round at least as fast as the head goes back to centre, or the cone would swing off the target w...
 @export var suspect_turn_speed := 6.0
 
+@export_group("Fight")
+## a bird that has you moves at this: faster than a walk, slower than a sprint, so you cannot walk away from one, only lose it.
+@export var hunt_speed := 7.0
+## once it knows you are there it picks you out further than a calm bird would.
+@export var hunt_sight := 32.0
+## how long it searches where it last saw you before it gives up.
+@export var search_time := 3.5
+@export var stuck_time := 1.0
+## an approaching bird stops this far from you and shoots from there.
+@export var approach_stop := 6.0
+
+@export_group("Peck")
+## inside this a bird stops shooting and goes for you with the beak.
+@export var peck_reach := 2.2
+@export var peck_damage := 25.0
+@export var peck_windup := 1.2
+@export var peck_cooldown := 3.0
+@export var peck_shove := 6.0
+
 @export_group("Stealth")
 ## how far a burst carries.
 @export var witness_radius := 14.0
-@export var flee_speed := 3.4
+@export var flee_speed := 7.5
 @export var flee_distance := 18.0
 @export var flee_time := 6.0
 
@@ -133,6 +152,21 @@ var _returning := false
 var _tier_sent := -1
 var _body_seen := 0.0
 var _body_scan := 0.0
+var _player: Node3D
+var _seen := false
+var _last_seen := Vector3.ZERO
+var _search := 0.0
+var _stuck := 0.0
+var _fight_time := 0.0
+var _role_goal := Vector3.INF
+var _role_timer := 0.0
+var _role_role := 0
+var _role_arrived := false
+var _suppressed_until := 0.0
+var _pecking := false
+var _peck_timer := 0.0
+var _peck_ready := 0.0
+@onready var blaster: BirdGun = get_node_or_null("Blaster") as BirdGun
 
 
 func _ready() -> void:
@@ -230,7 +264,14 @@ func _physics_process(delta: float) -> void:
 		_scan_for_bodies(delta)
 	voice.tick(delta, _is_calm())
 
+	if _step_peck(delta):
+		_publish_tier()
+		move_and_slide()
+		return
+
 	match _state:
+		State.HUNT, State.ATTACK:
+			_step_hunt(delta)
 		State.DOWN:
 			velocity.x = 0.0
 			velocity.z = 0.0
@@ -517,7 +558,14 @@ func _on_awareness_changed(value: float) -> void:
 
 
 func _on_alarmed(from: Vector3) -> void:
-	_begin_alarm_run(from)
+	if Alarm.stage != Alarm.Stage.ALARM and _errand_available() and Alarm.claim_runner(self):
+		_begin_alarm_run(from)
+		return
+	_begin_hunt(from)
+
+
+func _errand_available() -> bool:
+	return _nearest_horn() != null or _nearest_calm_bird() != null
 
 
 func _begin_alarm_run(from: Vector3) -> void:
@@ -619,8 +667,12 @@ func _pull_horn() -> void:
 func _after_run() -> void:
 	_goal_horn = null
 	_goal_bird = null
-	vision.rearm()
+	Alarm.release_runner(self)
 	_home = global_position
+	if Alarm.is_hot():
+		_begin_hunt(_alarm_from)
+		return
+	vision.rearm()
 	_begin_idle()
 
 
@@ -675,6 +727,195 @@ func saw(at: Vector3) -> void:
 	_learn(at, true)
 
 
+func _begin_hunt(toward: Vector3) -> void:
+	if _player == null or not is_instance_valid(_player):
+		_player = Player.nearest(get_tree(), global_position)
+	if _player == null:
+		_begin_idle()
+		return
+	_last_seen = toward
+	_search = search_time
+	_stuck = 0.0
+	_fight_time = 0.0
+	_role_goal = Vector3.INF
+	_state = State.HUNT
+	_play(run_clip, 0.15)
+	voice.alarm()
+	Squad.join(self)
+	awareness_changed.emit(self, 1.0)
+
+
+func _step_hunt(delta: float) -> void:
+	if _player == null or not is_instance_valid(_player) \
+			or (_player.has_method("is_alive") and not _player.is_alive()):
+		_end_hunt()
+		return
+	if Alarm.stage == Alarm.Stage.CALM:
+		_end_hunt()
+		return
+	var at := VisionCone.sight_point(_player)
+	var dist := global_position.distance_to(_player.global_position)
+	_seen = dist <= hunt_sight and vision.sees_point(at, hunt_sight)
+	if _seen:
+		_last_seen = _player.global_position
+		_search = search_time
+		Alarm.report_contact(_last_seen)
+	elif Alarm.stage == Alarm.Stage.ALARM:
+		_search = search_time
+		var believed := Alarm.search_point(get_instance_id())
+		if Alarm.has_last_known and believed.distance_to(_last_seen) > 1.5:
+			_last_seen = believed
+			_stuck = 0.0
+	if not _seen and Alarm.stage != Alarm.Stage.ALARM and _search <= 0.0:
+		_end_hunt()
+		return
+
+	## a bird fighting under a mere SEARCH gets on its radio after a while: the full alarm's third source.
+	_fight_time += delta
+	if Alarm.stage == Alarm.Stage.SEARCHING and _fight_time > lone_runner_time:
+		_fight_time = 0.0
+		Sfx.play(&"kiwi_radio", global_position + Vector3.UP * 0.4)
+		Alarm.raise_alarm(global_position)
+
+	if blaster != null:
+		blaster.tick(delta, _player, _seen and dist <= blaster.reach and not is_suppressed())
+
+	if _seen:
+		_step_role(delta)
+		return
+	_role_goal = Vector3.INF
+	var arrived := _move_to(_last_seen, hunt_speed, delta)
+	var moved := get_position_delta().length() / maxf(delta, 0.0001) > 0.3
+	_stuck = 0.0 if moved or arrived else _stuck + delta
+	if arrived or _stuck > stuck_time:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		if not idle_clips.is_empty():
+			_play(idle_clips[0])
+		rotation.y += delta * 1.1
+		_search -= delta
+		if _search <= 0.0:
+			_end_hunt()
+
+
+func _step_role(delta: float) -> void:
+	var job := Squad.role_for(self)
+	_role_timer -= delta
+	if _role_goal == Vector3.INF or _role_timer <= 0.0 or _role_role != job:
+		_role_role = job
+		_role_timer = Squad.ROLE_INTERVAL
+		_role_arrived = false
+		_role_goal = _role_target(job)
+	var dist := global_position.distance_to(_player.global_position)
+	var advancing := job == Squad.Role.APPROACH and Squad.player_quiet() > Squad.QUIET_TO_ADVANCE and not is_suppressed()
+	if advancing and dist > approach_stop:
+		_play(run_clip, 0.15)
+		_move_to(_player.global_position, hunt_speed, delta)
+		return
+	if _role_goal == Vector3.INF or _role_arrived:
+		velocity.x = move_toward(velocity.x, 0.0, hunt_speed * 6.0 * delta)
+		velocity.z = move_toward(velocity.z, 0.0, hunt_speed * 6.0 * delta)
+		_turn_to(_player.global_position, turn_speed * 2.0, delta)
+		if not idle_clips.is_empty():
+			_play(idle_clips[0], 0.2)
+		return
+	_play(run_clip, 0.15)
+	if _move_to(_role_goal, hunt_speed, delta):
+		_role_arrived = true
+		return
+	var moved := get_position_delta().length() / maxf(delta, 0.0001) > 0.3
+	_stuck = 0.0 if moved else _stuck + delta
+	if _stuck > stuck_time:
+		_stuck = 0.0
+		_role_goal = Squad.tangent_point(self, _player.global_position, -1 if randf() < 0.5 else 1)
+
+
+func _role_target(job: int) -> Vector3:
+	match job:
+		Squad.Role.FLANK:
+			var goal := Squad.flank_point(self, _player.global_position)
+			return goal if goal != Vector3.INF else Squad.tangent_point(self, _player.global_position)
+		Squad.Role.APPROACH:
+			return Vector3.INF
+	var cover := Squad.claim_cover(self, _player.global_position, false)
+	if cover == Vector3.INF and Squad.is_rattled():
+		cover = Squad.tangent_point(self, _player.global_position)
+	return cover
+
+
+func _end_hunt() -> void:
+	Squad.leave(self)
+	vision.rearm()
+	_home = global_position
+	_seen = false
+	awareness_changed.emit(self, 0.0)
+	_begin_idle()
+
+
+func is_hunting() -> bool:
+	return _state == State.HUNT or _state == State.ATTACK
+
+
+func can_see_target() -> bool:
+	return _seen
+
+
+func hunt_target() -> Node3D:
+	return _player
+
+
+func _step_peck(delta: float) -> bool:
+	_peck_ready = maxf(0.0, _peck_ready - delta)
+	if _pecking:
+		velocity.x = move_toward(velocity.x, 0.0, hunt_speed * 8.0 * delta)
+		velocity.z = move_toward(velocity.z, 0.0, hunt_speed * 8.0 * delta)
+		var prey := Player.nearest(get_tree(), global_position)
+		if prey != null:
+			_turn_to(prey.global_position, turn_speed * 3.0, delta)
+		_peck_timer -= delta
+		if _peck_timer <= 0.0:
+			_pecking = false
+			_peck_ready = peck_cooldown
+			if prey != null and multiplayer.is_server() and prey.has_method("take_peck") \
+					and global_position.distance_to(prey.global_position) <= peck_reach * 1.25:
+				var dir := prey.global_position - global_position
+				dir.y = 0.0
+				prey.take_peck(peck_damage, global_position, dir.normalized() * peck_shove + Vector3.UP * 2.5)
+				Sfx.play(&"takedown", prey.global_position + Vector3.UP * 0.8)
+		return true
+	if not is_hunting() or _peck_ready > 0.0 or not multiplayer.is_server():
+		return false
+	var near := Player.nearest(get_tree(), global_position)
+	if near == null or (near.has_method("is_alive") and not near.is_alive()):
+		return false
+	if global_position.distance_to(near.global_position) > peck_reach:
+		return false
+	_pecking = true
+	_peck_timer = peck_windup
+	_interrupt_for_peck()
+	voice.alarm()
+	Sfx.play(&"takedown_swing", global_position + Vector3.UP * 0.4, 0.0, 1.0, true)
+	if not idle_clips.is_empty():
+		_play(idle_clips[0], 0.1)
+	return true
+
+
+func _interrupt_for_peck() -> void:
+	pass
+
+
+func is_pecking() -> bool:
+	return _pecking
+
+
+func suppress(seconds: float) -> void:
+	_suppressed_until = maxf(_suppressed_until, _now() + seconds)
+
+
+func is_suppressed() -> bool:
+	return _suppressed_until > _now()
+
+
 func _flee_target(from: Vector3) -> void:
 	var dir := global_position - from
 	dir.y = 0.0
@@ -713,6 +954,9 @@ func witness(at: Vector3) -> void:
 
 func _learn(from: Vector3, needs_report: bool) -> void:
 	if _state == State.DOWN:
+		return
+	## a bird already on the radio or in the fight knows: its own cone filling late must not restart the call mid-burst.
+	if _state == State.CALL or is_hunting():
 		return
 	if not _detected:
 		_detected = true
@@ -813,7 +1057,7 @@ func is_dragged() -> bool:
 
 
 func has_contact() -> bool:
-	return false
+	return _seen
 
 
 func alert_tier() -> int:
@@ -848,6 +1092,11 @@ func was_detected() -> bool:
 func stand_down() -> void:
 	if _state == State.DOWN:
 		return
+	if is_hunting():
+		Squad.leave(self)
+	Alarm.release_runner(self)
+	_seen = false
+	_pecking = false
 	vision.rearm()
 	_detected = false
 	_body_seen = 0.0
@@ -896,8 +1145,12 @@ func _net_down() -> void:
 func _fall() -> void:
 	if _state == State.DOWN:
 		return
+	if is_hunting():
+		Squad.leave(self, true)
+	_pecking = false
 	_state = State.DOWN
 	velocity = Vector3.ZERO
+	Alarm.release_runner(self)
 	## nothing may hit us twice, and the body stops blocking anything it was blocking.
 	collision_layer = 0
 	var at := global_position + Vector3.UP * 0.3

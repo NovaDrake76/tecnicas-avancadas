@@ -19,6 +19,8 @@ extends Control
 @export var gap_air := 14.0
 ## taken off while crouched, which is the stance the stealth rules already reward.
 @export var gap_crouch := 2.5
+## how far the arms open under fire, at full suppression.
+@export var gap_suppressed := 14.0
 @export var bloom_per_shot := 7.0
 @export var bloom_max := 26.0
 ## pixels per second.
@@ -70,6 +72,8 @@ func _process(delta: float) -> void:
 			want -= gap_crouch * 2.0
 		elif _player.is_crouching():
 			want -= gap_crouch
+		if _player.has_method("suppression"):
+			want += gap_suppressed * float(_player.suppression())
 	_stance = lerpf(_stance, want, clampf(follow * delta, 0.0, 1.0))
 	_bloom = maxf(0.0, _bloom - bloom_decay * delta)
 	queue_redraw()

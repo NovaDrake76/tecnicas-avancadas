@@ -3,7 +3,7 @@ class_name KitPreview
 extends Node3D
 
 
-enum Kind { LASER, SNIPER, MORTAR }
+enum Kind { LASER, SNIPER, MORTAR, RUSHER }
 
 ## which kit to show in the EDITOR; in the game the bird builds its own and this node does nothing.
 @export var kind: Kind = Kind.LASER
@@ -30,6 +30,8 @@ func preview() -> void:
 	match kind:
 		Kind.MORTAR:
 			MortarKiwi.build_mortar(kiwi, skeleton)
+		Kind.RUSHER:
+			RusherKiwi.build_kit(kiwi, skeleton)
 		Kind.SNIPER:
 			KiwiArmour.build_suit(kiwi, skeleton, KiwiArmour.Kind.SNIPER)
 		_:

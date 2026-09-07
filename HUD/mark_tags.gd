@@ -66,6 +66,8 @@ static func strokes(kind: String, at: Vector2, r: float) -> Array[PackedVector2A
 			return _speaker(at, r)
 		"MORTAR":
 			return _bomb(at, r)
+		"RUSHER":
+			return _chevrons(at, r)
 	var plain: Array[PackedVector2Array] = [_diamond(at, r)]
 	return plain
 
@@ -115,6 +117,14 @@ static func _speaker(at: Vector2, r: float) -> Array[PackedVector2Array]:
 		left + Vector2(r * 0.5, r * 0.4), left + Vector2(0.0, r * 0.4), left + Vector2(0.0, -r * 0.4)]),
 		_arc(mouth, r * 0.5, -0.9, 0.9, 8),
 		_arc(mouth, r * 0.95, -0.9, 0.9, 10)]
+	return out
+
+
+static func _chevrons(at: Vector2, r: float) -> Array[PackedVector2Array]:
+	var out: Array[PackedVector2Array] = []
+	for row in [-0.45, 0.25]:
+		var tip := at + Vector2(0.0, r * row - r * 0.35)
+		out.append(PackedVector2Array([tip + Vector2(-r * 0.75, r * 0.6), tip, tip + Vector2(r * 0.75, r * 0.6)]))
 	return out
 
 

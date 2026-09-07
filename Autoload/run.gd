@@ -23,18 +23,26 @@ signal detections_changed(count: int)
 signal shot_hit(lethal: bool)
 
 const LEVELS := [
-	{"path": "res://Levels/level_01.tscn", "name": "North Field", "par": 90.0, "reinforcements": false,
+	{"path": "res://Levels/level_01.tscn", "name": "North Field", "par": 90.0, "reinforcements": true,
 		"optional": ["clear_field", "no_shots", "horn_cut", "no_body_found"],
 		"brief": "A forward supply camp. Command wants the two advanced birds working out of it taken off the board, and the crate of range-finding gear they brought with them. Take them out, take the case, and walk out the way you came. The camp keeps three ordinary sentries and an alarm horn by the container: a bird that sees you runs for it.",
 		"image": "res://UI/missions/level_01.png"},
-	{"path": "res://Levels/level_02.tscn", "name": "The Woods", "par": 110.0, "reinforcements": false, "reinforce_time": 60.0,
+	{"path": "res://Levels/level_02.tscn", "name": "The Woods", "par": 110.0, "reinforcements": true,
 		"optional": ["no_shots", "no_body_found", "ghost"],
 		"brief": "The field station the camp reported to. The records room holds the empire's supply manifests: take them and get out, and nobody needs to know you were here. The woods are held by six birds, one of them armoured with laser eyes, a sniper watching the approach and a mortar that shells wherever they last saw you.",
 		"image": "res://UI/missions/level_02.png"},
-	{"path": "res://Levels/level_03.tscn", "name": "The Summit", "par": 130.0, "reinforcements": false, "reinforce_time": 45.0,
+	{"path": "res://Levels/level_03.tscn", "name": "The Summit", "par": 130.0, "reinforcements": true,
 		"optional": ["horn_cut", "no_body_found", "ghost"],
 		"brief": "The manifests named this place: the depot the whole northern front is armed out of. Put charges on both stores and be off the mountain when they go. A walled compound, a sniper on the watchtower who sees the whole approach, two armoured laser kiwis, a mortar and a horn in the yard. The charges are loud by design, so the way out is the hard half.",
 		"image": "res://UI/missions/level_03.png"},
+	{"path": "res://Levels/level_04.tscn", "name": "The Crossing", "par": 100.0, "reinforcements": true,
+		"optional": ["no_shots", "horn_cut", "no_body_found"],
+		"brief": "The road the depot fed. A staging camp went up on the crossing within a week of the mountain going quiet, and the paperwork moving through it is the next thread: take the manifests out of it and leave the way you came. The camp is held in numbers now: ten sentries on the crates and the gate, two armoured birds with laser eyes, a pair of chargers that close the moment they hear you, a sniper on the open ground and a mortar behind the containers. Every one of them carries a blaster, the manifests are guarded up the road, and the horn in the yard calls more.",
+		"image": "res://UI/missions/level_04.png"},
+	{"path": "res://Levels/level_05.tscn", "name": "The Long Yard", "par": 115.0, "reinforcements": true,
+		"optional": ["horn_cut", "no_body_found", "ghost"],
+		"brief": "The empire answered the crossing by building bigger. The long yard is the same camp twice over -- twice the crates, twice the walls, the same six birds spread thin across it -- and the manifests are at the far end of it. More cover to cross means more cover to use; the mortar behind it means standing still in that cover is what gets you killed.",
+		"image": "res://UI/missions/level_05.png"},
 ]
 
 const OPEN_AT_START := 2
@@ -138,6 +146,7 @@ func begin_level(level: Node) -> void:
 	Alarm.reset()
 	Alarm.reinforcements_enabled = bool(current().get("reinforcements", false))
 	Alarm.reinforce_time = float(current().get("reinforce_time", Alarm.REINFORCE_TIME))
+	Alarm.gunship = bool(current().get("gunship", false))
 	Squad.reset()
 
 	var kiwis := _kiwis_in(level)
@@ -366,6 +375,15 @@ func advance() -> bool:
 	return true
 
 
+func adopt(kiwi: Node) -> void:
+	if not kiwi.alerted.is_connected(_on_kiwi_alerted):
+		kiwi.alerted.connect(_on_kiwi_alerted)
+	if not kiwi.awareness_changed.is_connected(_on_kiwi_awareness):
+		kiwi.awareness_changed.connect(_on_kiwi_awareness)
+	if not kiwi.tier_changed.is_connected(_on_kiwi_tier):
+		kiwi.tier_changed.connect(_on_kiwi_tier)
+
+
 func _kiwis_in(level: Node) -> Array:
 	var out := []
 	for node in get_tree().get_nodes_in_group("kiwi"):
@@ -391,6 +409,7 @@ func _bind_gun() -> void:
 
 
 func _on_shot_fired(_speed: float, _mass_kg: float) -> void:
+	Squad.note_player_shot()
 	if state == State.PLAYING:
 		if multiplayer.is_server():
 			shots_fired += 1

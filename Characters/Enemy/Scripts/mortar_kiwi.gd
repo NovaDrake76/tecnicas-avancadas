@@ -39,6 +39,10 @@ func _on_alarmed(from: Vector3) -> void:
 	_begin_bombard(from)
 
 
+func _step_hunt(_delta: float) -> void:
+	pass
+
+
 func told(at: Vector3) -> void:
 	if _state == State.HUNT:
 		_aim_at = at

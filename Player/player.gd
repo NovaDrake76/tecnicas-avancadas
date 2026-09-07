@@ -39,7 +39,7 @@ enum Stance { STAND, CROUCH, PRONE }
 
 @export_group("Health")
 ## health comes back on its own once nothing has hit you for a while.
-@export var regen_delay := 6.0
+@export var regen_delay := 10.0
 @export var regen_rate := 15.0
 ## regeneration stops here; the rest comes back at the armoury.
 @export_range(0.0, 1.0) var regen_cap := 0.70
@@ -64,6 +64,8 @@ var _peak_fall_vy := 0.0
 var _pitch := 0.0
 var _lean := 0.0
 var _since_hurt := 999.0
+var _since_shot_at := 999.0
+var _suppression := 0.0
 const REMOTE_SILENT := ["aim_scope", "viewmodel", "interactor", "utility", "takedown", "binoculars",
 	"body_drag", "footsteps", "weapon_rack", "weapon", "pouch", "revive", "pinger"]
 
@@ -331,6 +333,38 @@ func stance() -> int:
 	return _stance
 
 
+func note_shot_at(landed: bool) -> void:
+	if not is_multiplayer_authority():
+		_net_shot_at.rpc_id(get_multiplayer_authority(), landed)
+		return
+	_since_shot_at = 0.0
+	_suppression = minf(_suppression + (0.45 if landed else 0.3), 1.0)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _net_shot_at(landed: bool) -> void:
+	if is_multiplayer_authority():
+		note_shot_at(landed)
+
+
+func take_peck(amount: float, from: Vector3, shove: Vector3) -> void:
+	if not is_multiplayer_authority():
+		_net_peck.rpc_id(get_multiplayer_authority(), amount, from, shove)
+		return
+	velocity += shove
+	take_laser_hit(amount, from)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _net_peck(amount: float, from: Vector3, shove: Vector3) -> void:
+	if is_multiplayer_authority():
+		take_peck(amount, from, shove)
+
+
+func suppression() -> float:
+	return _suppression
+
+
 func take_laser_hit(amount: float, from: Vector3) -> void:
 	if not is_multiplayer_authority():
 		_net_hurt.rpc_id(get_multiplayer_authority(), amount, from)
@@ -339,6 +373,7 @@ func take_laser_hit(amount: float, from: Vector3) -> void:
 		return
 	health.take_damage(amount)
 	_since_hurt = 0.0
+	_since_shot_at = 0.0
 	var k := clampf(amount / 7.0, 0.12, 1.0)
 	if camera != null:
 		camera.add_damage_kick(2.2 * k, 1.6 * k, from)
@@ -361,13 +396,18 @@ func is_alive() -> bool:
 
 func restore() -> void:
 	_since_hurt = 999.0
+	_since_shot_at = 999.0
+	_suppression = 0.0
 	if health != null:
 		health.revive()
 
 
 func _update_health(delta: float) -> void:
 	_since_hurt += delta
-	if health != null and health.is_alive() and _since_hurt > regen_delay:
+	_since_shot_at += delta
+	_suppression = maxf(0.0, _suppression - 0.4 * delta)
+	## no healing under fire: being shot AT resets the clock, not only being hit.
+	if health != null and health.is_alive() and minf(_since_hurt, _since_shot_at) > regen_delay:
 		var ceiling := health.max_health * regen_cap
 		if health.current < ceiling:
 			health.heal(minf(regen_rate * delta, ceiling - health.current))

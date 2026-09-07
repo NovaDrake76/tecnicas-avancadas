@@ -175,6 +175,7 @@ func cut_horn() -> void:
 	_head.rotation_degrees = Vector3(-120.0, 0.0, 0.0)
 	_band_mat.albedo_color = BAND.darkened(0.5)
 	cut.emit()
+	Alarm.horn_cut()
 
 
 func restore() -> void:

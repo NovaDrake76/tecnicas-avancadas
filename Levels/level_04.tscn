@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://Characters/Enemy/laser_kiwi.tscn" id="4_ffnd5"]
 [ext_resource type="PackedScene" path="res://Characters/Enemy/sniper_kiwi.tscn" id="5_pfrhl"]
 [ext_resource type="PackedScene" path="res://Characters/Enemy/mortar_kiwi.tscn" id="6_v0upe"]
+[ext_resource type="PackedScene" path="res://Characters/Enemy/rusher_kiwi.tscn" id="20_rushr"]
 [ext_resource type="Script" uid="uid://bufn6abaxlns0" path="res://Levels/hill_ring.gd" id="7_rcqdu"]
 [ext_resource type="Script" uid="uid://bb0mpba02qew7" path="res://Levels/foliage.gd" id="8_8cbt8"]
 [ext_resource type="Script" uid="uid://vsvwn5qk2akl" path="res://Props/alarm_horn.gd" id="9_8fkf2"]
@@ -36,7 +37,7 @@ shader_parameter/minor_spacing = 1.0
 shader_parameter/major_spacing = 10.0
 shader_parameter/minor_fade_distance = 70.0
 
-[node name="Level02" type="Node3D" unique_id=1296797532]
+[node name="Level04" type="Node3D" unique_id=1296797532]
 
 [node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=592499043]
 
@@ -64,7 +65,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.847343, 0.0009, 39.100533)
 
 [node name="LaserKiwi" parent="StaticBody3D" unique_id=1387126501 instance=ExtResource("4_ffnd5")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.18046, 0.0009, 19.132435)
-hunt_speed = 3.6
 attack_range = 18.0
 hunt_sight = 32.0
 search_time = 3.5
@@ -78,12 +78,10 @@ pulse_gap = 0.16
 pulse_damage = 9.0
 pulse_spread = 0.14
 bolt_speed = 38.0
-burst_recover = 1.2
 charge_time = 1.1
 beam_time = 1.4
 beam_dps = 30.0
 beam_recover = 1.8
-beam_track = 7.0
 beam_chance = 0.4
 beam_cooldown = 6.0
 laser_range = 40.0
@@ -108,7 +106,6 @@ pulse_gap = 0.16
 pulse_damage = 9.0
 pulse_spread = 0.14
 bolt_speed = 38.0
-burst_recover = 1.2
 wander_radius = 0.0
 walk_chance = 0.0
 
@@ -124,8 +121,50 @@ blast_damage = 38.0
 cover_factor = 0.35
 flee_range = 10.0
 
+[node name="Kiwi5" parent="StaticBody3D" unique_id=1120345867 instance=ExtResource("3_q2tcm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0.0009, 60.5)
+
+[node name="Kiwi6" parent="StaticBody3D" unique_id=1120345868 instance=ExtResource("3_q2tcm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.0, 0.0009, 61.0)
+
+[node name="Kiwi7" parent="StaticBody3D" unique_id=1120345869 instance=ExtResource("3_q2tcm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.0, 0.0009, 43.0)
+
+[node name="Kiwi8" parent="StaticBody3D" unique_id=1120345870 instance=ExtResource("3_q2tcm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0.0009, 32.0)
+
+[node name="Kiwi9" parent="StaticBody3D" unique_id=1120345871 instance=ExtResource("3_q2tcm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.5, 0.0009, 19.0)
+
+[node name="Kiwi10" parent="StaticBody3D" unique_id=1120345872 instance=ExtResource("3_q2tcm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0.0009, -9.0)
+
+[node name="Kiwi11" parent="StaticBody3D" unique_id=1120345873 instance=ExtResource("3_q2tcm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.0, 0.0009, -17.0)
+
+[node name="LaserKiwi2" parent="StaticBody3D" unique_id=1120345874 instance=ExtResource("4_ffnd5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.0, 0.0009, 24.0)
+
+[node name="RusherKiwi" parent="StaticBody3D" unique_id=1120345875 instance=ExtResource("20_rushr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 0.0009, 43.5)
+
+[node name="RusherKiwi2" parent="StaticBody3D" unique_id=1120345876 instance=ExtResource("20_rushr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0.0009, 27.0)
+
 [node name="PlayerSpawn" type="Marker3D" parent="." unique_id=1558634180 groups=["player_spawn"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.0536585, 2.33, 76.43822)
+
+[node name="BirdSpawnRoad" type="Marker3D" parent="." unique_id=1120345880 groups=["bird_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0, 2.0)
+
+[node name="BirdSpawnWest" type="Marker3D" parent="." unique_id=1120345881 groups=["bird_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40.0, 0, 40.0)
+
+[node name="BirdSpawnEast" type="Marker3D" parent="." unique_id=1120345882 groups=["bird_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.0, 0, 50.0)
+
+[node name="BirdSpawnSouth" type="Marker3D" parent="." unique_id=1120345883 groups=["bird_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.0, 0, 84.0)
 
 [node name="HillRing" type="Node3D" parent="." unique_id=787393305]
 script = ExtResource("7_rcqdu")
