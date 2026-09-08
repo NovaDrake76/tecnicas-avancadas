@@ -43,6 +43,10 @@ const LEVELS := [
 		"optional": ["horn_cut", "no_body_found", "ghost"],
 		"brief": "The empire answered the crossing by building bigger. The long yard is the same camp twice over -- twice the crates, twice the walls, the same six birds spread thin across it -- and the manifests are at the far end of it. More cover to cross means more cover to use; the mortar behind it means standing still in that cover is what gets you killed.",
 		"image": "res://UI/missions/level_05.png"},
+	{"path": "res://Levels/level_06.tscn", "name": "The Mountain Range", "par": 115.0, "reinforcements": true,
+		"optional": ["horn_cut", "no_body_found", "ghost"],
+		"brief": "Lorem Ipsum.",
+		"image": "res://UI/missions/level_05.png"},
 ]
 
 const OPEN_AT_START := 2
