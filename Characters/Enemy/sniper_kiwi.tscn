@@ -18,6 +18,9 @@ beam_chance = 1.0
 beam_cooldown = 3.5
 laser_range = 80.0
 
+[node name="Blaster" parent="."]
+enabled = false
+
 [node name="Vision" parent="."]
 sight_range = 70.0
 

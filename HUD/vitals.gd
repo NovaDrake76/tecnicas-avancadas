@@ -93,7 +93,7 @@ func _process(delta: float) -> void:
 		watch(Player.local(get_tree()))
 	_flash = maxf(0.0, _flash - delta * 3.2)
 	var missing := 1.0 - _ratio
-	_rim.modulate.a = clampf(_flash * 0.85 + missing * missing * 0.7, 0.0, 1.0)
+	_rim.modulate.a = clampf(_flash * 0.3 + missing * missing * 0.7, 0.0, 1.0)
 	var pressed := 0.0
 	if _player != null and is_instance_valid(_player) and _player.has_method("suppression"):
 		pressed = float(_player.suppression())

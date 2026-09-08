@@ -34,6 +34,7 @@ const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 @onready var spare_label: Label = %Spare
 @onready var reload_ring: ReloadRing = %ReloadRing
 @onready var vitals: Vitals = %Vitals
+@onready var damage_marks: DamageMarks = %DamageMarks
 
 var _weapon: Gun
 var _interactor: Interactor
@@ -118,6 +119,7 @@ func _bind_weapon() -> void:
 		push_warning("hud.gd: no weapon to follow; HUD will stay blank.")
 
 	vitals.watch(Player.local(get_tree()))
+	damage_marks.watch(Player.local(get_tree()))
 
 	_interactor = get_tree().get_first_node_in_group("interactor") as Interactor
 	if _interactor != null:

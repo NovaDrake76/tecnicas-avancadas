@@ -33,7 +33,6 @@ func _build() -> void:
 	add_child(_column)
 
 	MenuStyle.title(_column, "CO-OP", MenuStyle.T_HEADING)
-	MenuStyle.label(_column, "Two operatives, one compound. Same network.", MenuStyle.T_LABEL)
 	MenuStyle.spacer(_column, 10)
 
 	MenuStyle.button(_column, "HOST A GAME", _on_host)

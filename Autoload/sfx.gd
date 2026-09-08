@@ -82,7 +82,7 @@ const EVENTS := {
 
 	&"kiwi_step": {"bus": &"Kiwis", "db": -18.0, "unit": 3.0, "max": 24.0, "voices": 6, "cooldown": 0.03, "clips": "kiwi/step", "n": 8, "pitch": [0.95, 1.1]},
 	&"kiwi_poof": {"bus": &"Kiwis", "db": -6.0, "unit": 8.0, "max": 50.0, "voices": 3, "clips": "kiwi/poof", "n": 3, "pitch": [0.95, 1.08]},
-	&"kiwi_blaster": {"bus": &"Kiwis", "db": -7.0, "unit": 6.0, "max": 70.0, "voices": 6, "cooldown": 0.03, "clips": "weapons/pistol_pop", "n": 4, "pitch": [1.18, 1.3]},
+	&"kiwi_blaster": {"bus": &"Threat", "db": -9.0, "unit": 8.0, "max": 70.0, "voices": 6, "cooldown": 0.03, "clips": "laser/bolt", "n": 4, "pitch": [1.15, 1.32]},
 	&"kiwi_radio": {"bus": &"Kiwis", "db": -4.0, "unit": 10.0, "max": 60.0, "voices": 2, "clips": "kiwi/radio", "n": 2},
 
 	&"laser_bolt": {"bus": &"Threat", "db": -2.0, "unit": 10.0, "max": 80.0, "voices": 6, "clips": "laser/bolt", "n": 4, "pitch": [0.94, 1.06]},

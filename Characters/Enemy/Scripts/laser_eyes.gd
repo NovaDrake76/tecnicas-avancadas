@@ -34,6 +34,7 @@ var _sparks: GPUParticles3D
 var _charge_parts: GPUParticles3D
 var _hum: AudioStreamPlayer3D
 var _time := 0.0
+var _combat := false
 
 
 func _ready() -> void:
@@ -43,11 +44,13 @@ func _ready() -> void:
 		eye.mesh = _sphere
 		eye.material_override = _eye_mat
 		eye.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		eye.visible = false
 		add_child(eye)
 		_eye_meshes.append(eye)
 	_eye_light = make_light(EYE, light_range)
 	## the kit is on render layer 2, so the glow under the helmet never lights the helmet from inside.
 	_eye_light.light_cull_mask = 1
+	_eye_light.visible = false
 	add_child(_eye_light)
 
 	for i in 4:
@@ -105,6 +108,14 @@ func between_eyes() -> Vector3:
 
 func set_glow(level: float) -> void:
 	_glow = clampf(level, 0.0, 1.0)
+
+
+func set_combat(on: bool) -> void:
+	_combat = on
+
+
+func is_lit() -> bool:
+	return _combat and visible
 
 
 func zap() -> void:
@@ -188,9 +199,11 @@ func _process(delta: float) -> void:
 	var size_mul := lerpf(1.0, 2.6, _glow) * flicker
 	for i in 2:
 		var eye := _eye_meshes[i]
+		eye.visible = _combat
 		eye.global_position = eye_position(i == 1)
 		eye.scale = Vector3.ONE * size_mul
 	var mid := between_eyes()
+	_eye_light.visible = _combat
 	_eye_light.global_position = mid
 	_eye_light.light_energy = lerpf(idle_glow * 1.6, 8.0, _glow) * flicker
 	_charge_parts.global_position = mid

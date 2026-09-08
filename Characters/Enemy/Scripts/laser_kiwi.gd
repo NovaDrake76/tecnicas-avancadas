@@ -75,6 +75,7 @@ func _armour_kind() -> KiwiArmour.Kind:
 func _physics_process(delta: float) -> void:
 	_beam_ready = maxf(0.0, _beam_ready - delta)
 	_since_burst += delta
+	eyes.set_combat(_state == State.HUNT or _state == State.ATTACK)
 	if _state == State.HUNT or _state == State.ATTACK:
 		_hunt_call -= delta
 		if _hunt_call <= 0.0:
@@ -147,6 +148,9 @@ func _step_hunt(delta: float) -> void:
 	if _state == State.ATTACK:
 		_step_attack(delta, at, dist)
 		return
+
+	if blaster != null:
+		blaster.tick(delta, _player, _seen and dist <= blaster.reach and not is_suppressed())
 
 	if _seen and dist <= attack_range:
 		if Squad.request_fire(self):
