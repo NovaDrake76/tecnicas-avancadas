@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://HUD/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://HUD/alert_ring.gd" id="2_ring"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://HUD/vitals.gd" id="6_vitals"]
 [ext_resource type="Script" path="res://HUD/damage_marks.gd" id="17_marks"]
 [ext_resource type="Script" path="res://HUD/magazine_check.gd" id="18_check"]
+[ext_resource type="Script" path="res://HUD/hint_icon.gd" id="19_hint"]
 [ext_resource type="Script" path="res://HUD/crosshair.gd" id="7_cross"]
 [ext_resource type="Script" path="res://HUD/hit_marker.gd" id="8_marker"]
 [ext_resource type="Script" path="res://HUD/key_cap.gd" id="9_key"]
@@ -204,6 +205,16 @@ mouse_filter = 2
 text = "x0"
 horizontal_alignment = 2
 
+[node name="HopRow" type="HBoxContainer" parent="Root/Stats"]
+mouse_filter = 2
+alignment = 2
+
+[node name="Hopup" type="Label" parent="Root/Stats/HopRow"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "HOP-UP  --"
+vertical_alignment = 1
+
 [node name="ModeRow" type="HBoxContainer" parent="Root/Stats"]
 mouse_filter = 2
 theme_override_constants/separation = 15
@@ -215,17 +226,17 @@ size_flags_vertical = 4
 mouse_filter = 2
 script = ExtResource("9_key")
 action = &"toggle_fire_mode"
-text_size = 22
+text_size = 19
 
 [node name="ModeIcon" type="Control" parent="Root/Stats/ModeRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(45, 30)
+custom_minimum_size = Vector2(35, 23)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
 script = ExtResource("4_mode")
-round_size = Vector2(12, 30)
-gap = 5.0
+round_size = Vector2(9, 23)
+gap = 4.0
 
 [node name="Mode" type="Label" parent="Root/Stats/ModeRow"]
 unique_name_in_owner = true
@@ -242,12 +253,6 @@ alignment = 2
 unique_name_in_owner = true
 mouse_filter = 2
 text = "-- g"
-vertical_alignment = 1
-
-[node name="Hopup" type="Label" parent="Root/Stats/Footer"]
-unique_name_in_owner = true
-mouse_filter = 2
-text = "HOP-UP  --"
 vertical_alignment = 1
 
 [node name="MeleeRow" type="HBoxContainer" parent="Root/Stats/Footer"]
@@ -270,30 +275,122 @@ mouse_filter = 2
 text = "TAKEDOWN"
 vertical_alignment = 1
 
-[node name="GlassRow" type="HBoxContainer" parent="Root/Stats/Footer"]
+[node name="Hints" type="VBoxContainer" parent="Root"]
+unique_name_in_owner = true
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 52.0
+offset_top = -300.0
+offset_right = 520.0
+offset_bottom = -46.0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 2
+
+[node name="GlassRow" type="HBoxContainer" parent="Root/Hints"]
 unique_name_in_owner = true
 visible = false
 mouse_filter = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 12
 
-[node name="GlassKey" type="Control" parent="Root/Stats/Footer/GlassRow"]
+[node name="GlassKeys" type="HBoxContainer" parent="Root/Hints/GlassRow"]
+custom_minimum_size = Vector2(32, 0)
+mouse_filter = 2
+
+[node name="GlassKey" type="Control" parent="Root/Hints/GlassRow/GlassKeys"]
 unique_name_in_owner = true
+size_flags_horizontal = 0
 size_flags_vertical = 4
 mouse_filter = 2
 script = ExtResource("9_key")
 action = &"aim"
 text_size = 19
 
-[node name="Glass" type="Label" parent="Root/Stats/Footer/GlassRow"]
+[node name="Glass" type="Label" parent="Root/Hints/GlassRow"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
 vertical_alignment = 1
 
-[node name="GearRows" type="HBoxContainer" parent="Root/Stats/Footer"]
+[node name="GearRows" type="HBoxContainer" parent="Root/Hints"]
 unique_name_in_owner = true
 mouse_filter = 2
 theme_override_constants/separation = 20
+
+[node name="GlassHint" type="HBoxContainer" parent="Root/Hints"]
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="GlassHintKeys" type="HBoxContainer" parent="Root/Hints/GlassHint"]
+custom_minimum_size = Vector2(32, 0)
+mouse_filter = 2
+
+[node name="GlassHintKey" type="Control" parent="Root/Hints/GlassHint/GlassHintKeys"]
+unique_name_in_owner = true
+size_flags_horizontal = 0
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("9_key")
+action = &"binoculars"
+text_size = 19
+
+[node name="GlassHintIcon" type="Control" parent="Root/Hints/GlassHint"]
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("19_hint")
+kind = 4
+
+[node name="WheelHint" type="HBoxContainer" parent="Root/Hints"]
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="WheelHintKeys" type="HBoxContainer" parent="Root/Hints/WheelHint"]
+custom_minimum_size = Vector2(32, 0)
+mouse_filter = 2
+
+[node name="WheelHintIcon" type="Control" parent="Root/Hints/WheelHint/WheelHintKeys"]
+size_flags_horizontal = 0
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("19_hint")
+kind = 1
+plated = true
+
+[node name="HopHintIcon" type="Control" parent="Root/Hints/WheelHint"]
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("19_hint")
+kind = 2
+
+[node name="MagHint" type="HBoxContainer" parent="Root/Hints"]
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="ReloadHintStack" type="VBoxContainer" parent="Root/Hints/MagHint"]
+custom_minimum_size = Vector2(32, 0)
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="ReloadHintKey" type="Control" parent="Root/Hints/MagHint/ReloadHintStack"]
+unique_name_in_owner = true
+size_flags_horizontal = 0
+mouse_filter = 2
+script = ExtResource("9_key")
+action = &"reload"
+text_size = 19
+
+[node name="ReloadHintHold" type="Label" parent="Root/Hints/MagHint/ReloadHintStack"]
+unique_name_in_owner = true
+size_flags_horizontal = 0
+mouse_filter = 2
+text = "HOLD"
+
+[node name="MagHintIcon" type="Control" parent="Root/Hints/MagHint"]
+size_flags_vertical = 0
+mouse_filter = 2
+script = ExtResource("19_hint")
+kind = 0
 
 [node name="Waypoint" type="Control" parent="Root"]
 unique_name_in_owner = true

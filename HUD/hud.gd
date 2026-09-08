@@ -3,6 +3,11 @@ extends CanvasLayer
 const ALERT_COLOR := Color(1.0, 0.35, 0.3)
 const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 
+## the brief's permanent readouts: the count, the reserve, the weapon name, the mass and the hop-up always on screen. off is the minimal hud, where the magazine check and the hints carry them.
+@export var readouts := false
+## how long the hop-up stays up after the wheel moves it, before it fades.
+@export var hopup_linger := 2.5
+
 @onready var type_label: Label = %Type
 @onready var ammo_label: Label = %Ammo
 @onready var capacity_label: Label = %Capacity
@@ -36,6 +41,10 @@ const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 @onready var vitals: Vitals = %Vitals
 @onready var damage_marks: DamageMarks = %DamageMarks
 @onready var magazine_check: MagazineCheck = %MagazineCheck
+@onready var hints: VBoxContainer = %Hints
+@onready var reload_hint_key: KeyCap = %ReloadHintKey
+@onready var reload_hint_hold: Label = %ReloadHintHold
+@onready var glass_hint_key: KeyCap = %GlassHintKey
 
 var _weapon: Gun
 var _interactor: Interactor
@@ -51,6 +60,8 @@ var _belt: UtilityBelt
 var _gear_shown: Array[String] = []
 var _gear_cells := {}
 var _bound := false
+var _hop_tween: Tween
+var _hop_seen := {}
 
 
 func _ready() -> void:
@@ -59,6 +70,7 @@ func _ready() -> void:
 	prompt_label.text = ""
 	prompt_row.visible = false
 	_style()
+	_apply_readouts()
 	_clear_field_readout()
 	alert_ring.clear()
 	mode_hint.refresh()
@@ -91,8 +103,8 @@ func _style() -> void:
 	HudStyle.tune(ammo_label, HudStyle.T_HERO, HudStyle.BRIGHT)
 	HudStyle.tune(capacity_label, HudStyle.T_UNIT, HudStyle.DIM)
 	HudStyle.tune(spare_label, HudStyle.T_UNIT, HudStyle.DIM)
-	HudStyle.tune(mode_label, HudStyle.T_VALUE, HudStyle.HOT)
-	## the brief wants these permanently on screen ("exiba permanentemente"); they stay quiet and speak up on change.
+	HudStyle.tune(mode_label, HudStyle.T_UNIT, HudStyle.HOT)
+	HudStyle.tune(reload_hint_hold, T_HOLD, HudStyle.FAINT)
 	HudStyle.tune(mass_label, HudStyle.T_MICRO, HudStyle.FAINT)
 	HudStyle.tune(hopup_label, HudStyle.T_MICRO, HudStyle.FAINT)
 	HudStyle.tune(melee_label, HudStyle.T_MICRO, HudStyle.FAINT)
@@ -104,6 +116,25 @@ func _style() -> void:
 	HudStyle.tune(status_label, HudStyle.T_VALUE, HudStyle.ALERT)
 	HudStyle.tune(message_label, HudStyle.T_VALUE, HudStyle.HOT)
 	HudStyle.tune(prompt_label, HudStyle.T_UNIT, HudStyle.BRIGHT)
+
+
+func _apply_readouts() -> void:
+	type_label.visible = readouts
+	ammo_label.get_parent().visible = readouts
+	spare_label.visible = readouts
+	mass_label.visible = readouts
+	if readouts:
+		if _hop_tween != null and _hop_tween.is_valid():
+			_hop_tween.kill()
+		hopup_label.visible = true
+		hopup_label.modulate = Color.WHITE
+	else:
+		hopup_label.visible = false
+
+
+func set_readouts(on: bool) -> void:
+	readouts = on
+	_apply_readouts()
 
 
 func _bind_weapon() -> void:
@@ -194,6 +225,14 @@ func _on_gear_changed() -> void:
 	_sync_gear(false)
 
 
+## the width of the key column in the hints: one cap wide, so every picture lands on the same x.
+const KEY_COLUMN := 32.0
+## the gap between a key and the picture beside it.
+const HINT_GAP := 12
+## the word HOLD under the reload key, small enough that the key and the magazine still line up.
+const T_HOLD := 11
+
+
 func _sync_gear(force: bool) -> void:
 	if _belt == null or not is_instance_valid(_belt):
 		return
@@ -206,39 +245,51 @@ func _sync_gear(force: bool) -> void:
 		for id in _gear_shown:
 			var row := HBoxContainer.new()
 			row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			row.add_theme_constant_override("separation", 5)
+			row.add_theme_constant_override("separation", HINT_GAP)
 			gear_rows.add_child(row)
+			var keys := HBoxContainer.new()
+			keys.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			keys.custom_minimum_size = Vector2(KEY_COLUMN, 0.0)
+			keys.add_theme_constant_override("separation", 5)
+			row.add_child(keys)
 			var pick := KeyCap.new()
 			pick.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			pick.text_size = 19
 			pick.action = UtilityBelt.key_for(id)
-			row.add_child(pick)
+			keys.add_child(pick)
 			var cap := KeyCap.new()
 			cap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			cap.text_size = 19
 			cap.action = &"throw"
-			row.add_child(cap)
+			keys.add_child(cap)
+			var icon := HintIcon.new()
+			icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			icon.kind = HintIcon.Kind.GRENADE if id == "frag" else (HintIcon.Kind.MAGAZINE if id == "mag" else HintIcon.Kind.ROUND)
+			row.add_child(icon)
 			var label := Label.new()
 			label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			HudStyle.tune(label, HudStyle.T_MICRO, HudStyle.FAINT)
 			row.add_child(label)
-			_gear_cells[id] = {"pick": pick, "cap": cap, "label": label}
+			_gear_cells[id] = {"pick": pick, "cap": cap, "icon": icon, "label": label}
 	var picked := _belt.selected()
 	for id in _gear_shown:
 		var cell: Dictionary = _gear_cells[id]
 		var pick := cell["pick"] as KeyCap
 		var cap := cell["cap"] as KeyCap
+		var icon := cell["icon"] as HintIcon
 		var label := cell["label"] as Label
 		var here := id == picked
 		var shade := HudStyle.BRIGHT if here else HudStyle.FAINT
 		cap.visible = here
+		pick.visible = _gear_shown.size() > 1
 		for k in [pick, cap]:
 			k.ink = shade
 			k.edge = Color(shade, 0.55)
 			k.refresh()
+		icon.colour = shade
 		var was := label.text
-		label.text = "%s  x%d" % [UtilityBelt.title_of(id), _belt.count(id)]
+		label.text = "x%d" % _belt.count(id)
 		label.add_theme_color_override("font_color", shade)
 		if was != "" and was != label.text:
 			pulse(label)
@@ -262,7 +313,6 @@ func _follow_weapon(gun: Gun) -> void:
 	magazine_check.hide_check()
 	_show_crosshair(not _aiming and not reload_ring.is_showing())
 	_update_spare()
-	show_message(_weapon.weapon_model)
 
 
 func _weapon_signals() -> Array:
@@ -465,7 +515,30 @@ func _on_hopup_changed(value: float, min_value: float, max_value: float) -> void
 	var span := max_value - min_value
 	var pct := 0.0 if span <= 0.0 else (value - min_value) / span * 100.0
 	hopup_label.text = "HOP-UP  %.0f%%" % pct
-	pulse(hopup_label)
+	if readouts:
+		pulse(hopup_label)
+		return
+	var key := _weapon.get_instance_id() if _weapon != null else 0
+	var moved: bool = _hop_seen.has(key) and not is_equal_approx(float(_hop_seen[key]), value)
+	_hop_seen[key] = value
+	if moved:
+		_show_hopup()
+
+
+func _show_hopup() -> void:
+	if _hop_tween != null and _hop_tween.is_valid():
+		_hop_tween.kill()
+	hopup_label.visible = true
+	hopup_label.modulate = Color(1.7, 1.5, 0.95, 1.0)
+	_hop_tween = create_tween()
+	_hop_tween.tween_property(hopup_label, "modulate", Color.WHITE, 0.3)
+	_hop_tween.tween_interval(hopup_linger)
+	_hop_tween.tween_property(hopup_label, "modulate:a", 0.0, 0.5)
+	_hop_tween.tween_callback(func() -> void: hopup_label.visible = false)
+
+
+func hopup_showing() -> bool:
+	return hopup_label.visible and hopup_label.modulate.a > 0.05
 
 
 func _on_fire_failed(reason: Gun.FireBlock, message: String) -> void:
