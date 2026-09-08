@@ -4,6 +4,7 @@ extends CharacterBody3D
 signal hurt(amount: float, from: Vector3)
 
 const SPAWN_PROBE := 300.0
+const SPAWN_LIFT := 1.0
 const SPAWN_CLEARANCE := 0.15
 const RIGHT_OF_SPAWN := 1.6
 
@@ -635,9 +636,10 @@ func respawn_from_void() -> void:
 	rotation.y = spawn.global_rotation.y
 
 
+## the ground UNDER the marker: the ray starts a little above it and goes down, never from high up, or a roof over the marker is the ground.
 func ground_under(point: Vector3) -> Vector3:
 	var query := PhysicsRayQueryParameters3D.create(
-		point + Vector3.UP * SPAWN_PROBE, point - Vector3.UP * SPAWN_PROBE, 1)
+		point + Vector3.UP * SPAWN_LIFT, point - Vector3.UP * SPAWN_PROBE, 1)
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if hit.is_empty():
 		push_warning("player.gd: no ground under the spawn marker at %v; using it as given." % point)
