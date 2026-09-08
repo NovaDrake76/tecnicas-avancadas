@@ -57,6 +57,11 @@ extends Node3D
 @export var reload_pose_stiffness := 42.0
 @export var reload_pose_damping := 9.5
 
+@export_group("Check pose")
+## the weapon turned to show its magazine while the reload key is held; the same springs as the reload pose.
+@export var check_pose_offset := Vector3(-0.03, -0.04, 0.08)
+@export var check_pose_tilt_deg := Vector3(12.0, -18.0, -35.0)
+
 @export_group("Aim down sights")
 ## drag these two in the editor to say where the weapon sits.
 @export var hip_pose: Node3D
@@ -128,6 +133,7 @@ var _reload_pos_vel := Vector3.ZERO
 var _reload_rot := Vector3.ZERO
 var _reload_rot_vel := Vector3.ZERO
 var _reloading := false
+var _checking := false
 var _recoil_pos := Vector3.ZERO
 var _recoil_pos_vel := Vector3.ZERO
 var _recoil_rot := Vector3.ZERO
@@ -257,6 +263,8 @@ func _bind() -> void:
 			g.reload_started.connect(func(_d: float) -> void: set_reloading(true))
 			g.reload_finished.connect(func(_m: Magazine) -> void: set_reloading(false))
 			g.reload_cancelled.connect(func() -> void: set_reloading(false))
+			g.check_started.connect(func() -> void: set_checking(true))
+			g.check_ended.connect(func() -> void: set_checking(false))
 	else:
 		var gun := get_tree().get_first_node_in_group("weapon") as Gun
 		if gun != null:
@@ -269,6 +277,10 @@ func _bind() -> void:
 
 func set_reloading(on: bool) -> void:
 	_reloading = on
+
+
+func set_checking(on: bool) -> void:
+	_checking = on
 
 
 func set_ads(t: float) -> void:
@@ -309,6 +321,10 @@ func _process(delta: float) -> void:
 		reload_pos_target = reload_pose_offset
 		reload_rot_target = Vector3(deg_to_rad(reload_pose_tilt_deg.x),
 			deg_to_rad(reload_pose_tilt_deg.y), deg_to_rad(reload_pose_tilt_deg.z))
+	elif _checking:
+		reload_pos_target = check_pose_offset
+		reload_rot_target = Vector3(deg_to_rad(check_pose_tilt_deg.x),
+			deg_to_rad(check_pose_tilt_deg.y), deg_to_rad(check_pose_tilt_deg.z))
 	var wall_target := Vector3.ZERO
 
 	if _player != null:

@@ -154,7 +154,7 @@ func _process(delta: float) -> void:
 func raise(by: Node) -> void:
 	if _disabled:
 		return
-	Alarm.raise_alarm(global_position)
+	Alarm.raise_alarm(by.alarm_from() if by != null and by.has_method("alarm_from") else global_position)
 	if _raised:
 		return
 	_raised = true

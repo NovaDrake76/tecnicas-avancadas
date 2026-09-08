@@ -6,7 +6,7 @@ signal changed()
 signal thrown(what: Node3D)
 
 const KINDS := [
-	{"id": "mag", "title": "MAG", "max": 3, "free": true, "speed": 11.0, "lift": 2.5,
+	{"id": "mag", "title": "MAG", "max": 3, "free": true, "cut": true, "speed": 11.0, "lift": 2.5,
 		"cooldown": 0.8, "cue": &"", "note": "A clatter. The birds walk over to look."},
 	{"id": "frag", "title": "FRAG", "max": 3, "free": false, "speed": 14.0, "lift": 3.0,
 		"cooldown": 1.0, "cue": &"frag_pin",
@@ -61,6 +61,10 @@ static func note_of(id: String) -> String:
 	return String(row(id).get("note", ""))
 
 
+static func is_cut(id: String) -> bool:
+	return bool(row(id).get("cut", false))
+
+
 static func key_for(id: String) -> StringName:
 	for i in KINDS.size():
 		if KINDS[i]["id"] == id:
@@ -87,6 +91,8 @@ func refill(supply: Dictionary) -> void:
 	carried.clear()
 	for k in KINDS:
 		var id := String(k["id"])
+		if bool(k.get("cut", false)):
+			continue
 		var n := int(k["max"]) if bool(k.get("free", false)) else mini(int(supply.get(id, 0)), int(k["max"]))
 		if n <= 0 and not bool(k.get("free", false)):
 			continue

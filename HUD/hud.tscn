@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://HUD/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://HUD/alert_ring.gd" id="2_ring"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://HUD/report_card.gd" id="5_report"]
 [ext_resource type="Script" path="res://HUD/vitals.gd" id="6_vitals"]
 [ext_resource type="Script" path="res://HUD/damage_marks.gd" id="17_marks"]
+[ext_resource type="Script" path="res://HUD/magazine_check.gd" id="18_check"]
 [ext_resource type="Script" path="res://HUD/crosshair.gd" id="7_cross"]
 [ext_resource type="Script" path="res://HUD/hit_marker.gd" id="8_marker"]
 [ext_resource type="Script" path="res://HUD/key_cap.gd" id="9_key"]
@@ -321,6 +322,13 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("17_marks")
+
+[node name="MagazineCheck" type="Control" parent="Root"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("18_check")
 
 [node name="Vitals" type="Control" parent="Root"]
 unique_name_in_owner = true

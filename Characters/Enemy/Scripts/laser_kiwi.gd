@@ -168,6 +168,18 @@ func _step_hunt(delta: float) -> void:
 		_turn_to(Alarm.last_known, turn_speed * 2.0, delta)
 		return
 
+	if hunt_speed <= 0.0:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		_turn_to(_last_seen, turn_speed, delta)
+		if not idle_clips.is_empty():
+			_play(idle_clips[0], 0.2)
+		if not _seen:
+			_search -= delta
+			if _search <= 0.0:
+				_end_hunt()
+		return
+
 	_role_goal = Vector3.INF
 	var goal := _player.global_position if _seen else _last_seen
 	var arrived := _move_to(goal, hunt_speed, delta)
@@ -350,6 +362,7 @@ func aim_point() -> Vector3:
 
 
 func _fire_charged() -> void:
+	fire_noise()
 	_net_beam.rpc(true)
 	_attack = Attack.BEAM
 	_attack_timer = beam_time
@@ -441,6 +454,7 @@ func role() -> int:
 func _fire_pulse() -> void:
 	if _attack == Attack.CHARGE or _attack == Attack.BEAM or eyes.is_beaming():
 		return
+	fire_noise()
 	_since_burst = 0.0
 	var from := eyes.eye_position(_pulse_right)
 	_pulse_right = not _pulse_right

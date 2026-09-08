@@ -13,13 +13,16 @@ signal reload_started(duration: float)
 signal reload_finished(mag: Magazine)
 signal reload_cancelled
 signal reload_failed(message: String)
+signal check_started
+signal check_ended
 
 enum FireMode { SEMI, AUTO }
-enum FireBlock { NONE, NO_MAGAZINE, EMPTY, COOLDOWN, RELOADING }
+enum FireBlock { NONE, NO_MAGAZINE, EMPTY, COOLDOWN, RELOADING, CHECKING }
 enum Action { AEG, GAS_BLOWBACK, PUMP, BOLT }
 
 const BB_SCENE := preload("res://Guns/bb/bb.tscn")
 const DEFAULT_BB_MASS := 0.0002
+const CHECK_HOLD := 0.28
 const AIM_MASK := 0b1001
 
 const TRAIL_COLORS := [
@@ -78,6 +81,8 @@ const TRAIL_COLORS := [
 @export var muzzle_hearing := 6.0
 
 @export_group("Reload")
+## the surface of the model that is the magazine, hidden while it is held up for a check; -1 when the model has none.
+@export var magazine_surface := -1
 ## the weapon is out of frame for this long, then the fullest spare of its type goes in and the old magazine is gone, ro...
 @export var reload_time := 2.2
 
@@ -99,6 +104,12 @@ var _clock := 0.0
 var _next_shot_at := 0.0
 var _reload_until := -1.0
 var _reload_began := 0.0
+var _reload_held := false
+var _reload_held_since := 0.0
+var _checking := false
+var _mag_material: Material
+var _mag_hidden := false
+static var _hidden_material: StandardMaterial3D
 
 
 func owning_player() -> Player:
@@ -216,6 +227,8 @@ func block_message(reason: FireBlock) -> String:
 			return "Cycling"
 		FireBlock.RELOADING:
 			return "Reloading"
+		FireBlock.CHECKING:
+			return "Checking the magazine"
 	return ""
 
 
@@ -230,13 +243,25 @@ func _physics_process(delta: float) -> void:
 	_clock += delta
 	if is_reloading() and _clock >= _reload_until:
 		_finish_reload()
+	if _reload_held and not _checking and not is_reloading() and _clock - _reload_held_since >= CHECK_HOLD:
+		begin_check()
 	if fire_mode == FireMode.AUTO and is_ready() and not is_reloading() and Input.is_action_pressed("fire"):
 		try_fire()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("reload"):
-		start_reload()
+		_reload_held = true
+		_reload_held_since = _clock
+		return
+	if event.is_action_released("reload"):
+		if not _reload_held:
+			return
+		_reload_held = false
+		if _checking:
+			end_check()
+		elif _clock - _reload_held_since < CHECK_HOLD:
+			start_reload()
 		return
 
 	if event.is_action_pressed("toggle_fire_mode"):
@@ -300,6 +325,9 @@ func try_fire() -> bool:
 	if is_reloading():
 		_reject(FireBlock.RELOADING)
 		return false
+	if _checking:
+		_reject(FireBlock.CHECKING)
+		return false
 
 	if not is_ready():
 		_reject(FireBlock.COOLDOWN)
@@ -337,12 +365,60 @@ func _pouch() -> MagazinePouch:
 	return get_tree().get_first_node_in_group("pouch") as MagazinePouch
 
 
+func begin_check() -> void:
+	if _checking or is_reloading():
+		return
+	_checking = true
+	_show_model_magazine(false)
+	Sfx.play_2d(sfx_prefix + "_mag_out")
+	check_started.emit()
+
+
+func end_check() -> void:
+	if not _checking:
+		return
+	_checking = false
+	_show_model_magazine(true)
+	Sfx.play_2d(sfx_prefix + "_mag_in")
+	check_ended.emit()
+
+
+func _show_model_magazine(on: bool) -> void:
+	var mesh := get_node_or_null("Model") as MeshInstance3D
+	if mesh == null or magazine_surface < 0 or mesh.mesh == null or magazine_surface >= mesh.mesh.get_surface_count():
+		return
+	if on:
+		if _mag_hidden:
+			mesh.set_surface_override_material(magazine_surface, _mag_material)
+			_mag_hidden = false
+		return
+	if _mag_hidden:
+		return
+	if _hidden_material == null:
+		_hidden_material = StandardMaterial3D.new()
+		_hidden_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_hidden_material.albedo_color = Color(0.0, 0.0, 0.0, 0.0)
+	_mag_material = mesh.get_surface_override_material(magazine_surface)
+	mesh.set_surface_override_material(magazine_surface, _hidden_material)
+	_mag_hidden = true
+
+
+func magazine_shown() -> bool:
+	return not _mag_hidden
+
+
+func is_checking() -> bool:
+	return _checking
+
+
 func start_reload() -> bool:
 	if is_reloading():
 		return false
+	if _checking:
+		end_check()
 	var pouch := _pouch()
-	if pouch == null or pouch.count(accepted_mag) == 0:
-		var message := "No spare %s magazines" % Ordnance.type_name(accepted_mag)
+	if pouch == null or pouch.loaded(accepted_mag) == 0:
+		var message := "No spare %s magazines with rounds" % Ordnance.type_name(accepted_mag)
 		reload_failed.emit(message)
 		if log_shots:
 			print("Reload refused: %s" % message)
@@ -357,6 +433,8 @@ func start_reload() -> bool:
 
 
 func cancel_reload() -> void:
+	_reload_held = false
+	end_check()
 	if not is_reloading():
 		return
 	_reload_until = -1.0
@@ -370,9 +448,12 @@ func _finish_reload() -> void:
 	if fresh == null:
 		reload_cancelled.emit()
 		return
-	if log_shots and magazine != null and magazine.count > 0:
-		print("Discarded %s with %d left" % [magazine.type_label(), magazine.count])
+	var out := magazine
 	magazine = fresh
+	if out != null:
+		pouch.stow(out)
+		if log_shots:
+			print("Stowed %s with %d left" % [out.type_label(), out.count])
 	Sfx.play_2d(sfx_prefix + "_mag_in")
 	reload_finished.emit(magazine)
 	magazine_changed.emit(magazine)

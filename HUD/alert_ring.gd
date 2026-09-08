@@ -12,6 +12,7 @@ extends Control
 var _watchers := {}
 var _tiers := {}
 var _blink := 0.0
+var _quiet := false
 
 
 func _ready() -> void:
@@ -46,6 +47,19 @@ func clear() -> void:
 	queue_redraw()
 
 
+func set_stage(stage: int) -> void:
+	_quiet = stage == Alarm.Stage.ALARM
+	queue_redraw()
+
+
+func is_quiet() -> bool:
+	return _quiet
+
+
+func drawn_count() -> int:
+	return 0 if _quiet else _watchers.size()
+
+
 func watcher_count() -> int:
 	return _watchers.size()
 
@@ -66,7 +80,7 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	if _watchers.is_empty():
+	if _quiet or _watchers.is_empty():
 		return
 	var cam := get_viewport().get_camera_3d()
 	if cam == null:

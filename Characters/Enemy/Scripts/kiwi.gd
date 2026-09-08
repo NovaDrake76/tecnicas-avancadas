@@ -96,6 +96,8 @@ enum Duty { WANDER, FIXED, ROUTE }
 @export var call_time := 2.0
 ## from a garrison that is ALREADY searching the word gets out quicker, which is Wildlands' own rule; under a full alarm...
 @export var call_time_hot := 0.8
+## how far a bird's own fire carries: a calm friend inside it is told where the shooting is and comes to it.
+@export var fire_hearing := 30.0
 
 @export_group("Bodies")
 ## how long a body has to sit in this bird's cone before it counts as FOUND.
@@ -125,6 +127,7 @@ enum Duty { WANDER, FIXED, ROUTE }
 @onready var body: KiwiBody = $Body
 
 const NET_INTERVAL := 0.05
+const FIRE_NOISE_GAP := 0.5
 
 var net_clip := ""
 var _shown := ""
@@ -166,6 +169,7 @@ var _suppressed_until := 0.0
 var _pecking := false
 var _peck_timer := 0.0
 var _peck_ready := 0.0
+var _fire_noise_left := 0.0
 @onready var blaster: BirdGun = get_node_or_null("Blaster") as BirdGun
 
 
@@ -257,6 +261,7 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= gravity * delta
 	else:
 		velocity.y = 0.0
+	_fire_noise_left = maxf(0.0, _fire_noise_left - delta)
 
 	if _state != State.DOWN:
 		vision.poll(delta)
@@ -636,14 +641,14 @@ func _step_runner(delta: float) -> void:
 	if _goal_bird != null:
 		if arrived:
 			_goal_bird.told(_alarm_from)
-			Alarm.raise_alarm(global_position)
+			Alarm.raise_alarm(_alarm_from)
 			_after_run()
 		elif _runner_stuck > runner_stuck_time:
 			_use_radio()
 		return
 	_timer -= delta
 	if _timer <= 0.0:
-		Alarm.raise_alarm(global_position)
+		Alarm.raise_alarm(_alarm_from)
 		_after_run()
 
 
@@ -660,7 +665,7 @@ func _pull_horn() -> void:
 	if _goal_horn != null and is_instance_valid(_goal_horn) and _goal_horn.is_usable():
 		_goal_horn.raise(self)
 	else:
-		Alarm.raise_alarm(global_position)
+		Alarm.raise_alarm(_alarm_from)
 	_after_run()
 
 
@@ -683,6 +688,22 @@ func _shout() -> void:
 			continue
 		if other.global_position.distance_to(global_position) <= shout_radius:
 			other.told(_alarm_from)
+
+
+func fire_noise() -> void:
+	if fire_hearing <= 0.0 or _fire_noise_left > 0.0:
+		return
+	_fire_noise_left = FIRE_NOISE_GAP
+	for node in get_tree().get_nodes_in_group("kiwi"):
+		var other := node as Kiwi
+		if other == null or other == self or other.is_down() or not other.can_be_told():
+			continue
+		if other.global_position.distance_to(global_position) <= fire_hearing:
+			other.told(global_position)
+
+
+func alarm_from() -> Vector3:
+	return _alarm_from
 
 
 func _nearest_horn() -> Node3D:
@@ -775,7 +796,7 @@ func _step_hunt(delta: float) -> void:
 	if Alarm.stage == Alarm.Stage.SEARCHING and _fight_time > lone_runner_time:
 		_fight_time = 0.0
 		Sfx.play(&"kiwi_radio", global_position + Vector3.UP * 0.4)
-		Alarm.raise_alarm(global_position)
+		Alarm.raise_alarm(_last_seen)
 
 	if blaster != null:
 		blaster.tick(delta, _player, _seen and dist <= blaster.reach and not is_suppressed())
@@ -960,7 +981,8 @@ func _learn(from: Vector3, needs_report: bool) -> void:
 		return
 	if not _detected:
 		_detected = true
-		alerted.emit(self)
+		if needs_report:
+			alerted.emit(self)
 	if needs_report and call_seconds() > 0.0:
 		_begin_call(from)
 		return

@@ -31,6 +31,7 @@ allow_auto = false
 magazine = ExtResource("5_mark")
 aim_fov = 24.0
 hip_reticle = false
+magazine_surface = 1
 reload_time = 3.4
 cycle_delay = 0.55
 

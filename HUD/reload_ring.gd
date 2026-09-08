@@ -64,17 +64,24 @@ func _draw() -> void:
 	if job_running():
 		_draw_case(centre)
 	else:
-		_draw_magazine(centre)
+		_draw_round(centre)
 
 
-func _draw_magazine(centre: Vector2) -> void:
-	var w := radius * 0.32
-	var h := radius * 0.55
-	var body := Rect2(centre + Vector2(-w * 0.5, -h * 0.5), Vector2(w, h))
-	draw_rect(body, colour, false, 1.5)
-	var t := radius * 0.11
-	draw_rect(Rect2(body.position + Vector2(-t * 0.4, h - t), Vector2(w + t * 0.8, t)), colour, true)
-	draw_line(body.position + Vector2(t * 0.6, t), body.position + Vector2(w - t * 0.6, t), colour, radius * 0.045)
+func _draw_round(centre: Vector2) -> void:
+	var box := glyph_box()
+	RoundGlyph.draw_on(self, centre - box * 0.5, box, colour)
+
+
+func glyph_box() -> Vector2:
+	return Vector2(radius * 0.34, radius * 0.86)
+
+
+## the outline the ring is wearing, for a check that it is the same round the fire mode row draws.
+func glyph_points() -> PackedVector2Array:
+	if job_running():
+		return PackedVector2Array()
+	var box := glyph_box()
+	return RoundGlyph.outline(size * 0.5 - box * 0.5, box)
 
 
 func _draw_case(centre: Vector2) -> void:

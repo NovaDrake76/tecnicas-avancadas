@@ -73,6 +73,10 @@ func _choose_attack() -> void:
 		_attack_timer = 0.3
 
 
+func _is_suppressor() -> bool:
+	return false
+
+
 func sight_line_visible() -> bool:
 	return _sight != null and _sight.visible
 

@@ -22,6 +22,7 @@ sfx_prefix = &"kestrel"
 slow_motion = 1.0
 motor_rpm = 9000.0
 magazine = ExtResource("5_rifle")
+magazine_surface = 1
 
 [node name="Model" type="MeshInstance3D" parent="."]
 transform = Transform3D(0, 0, -0.17, 0, 0.17, 0, 0.17, 0, 0, 0, 0, 0)

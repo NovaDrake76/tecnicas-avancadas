@@ -10,21 +10,22 @@
 [ext_resource type="Script" uid="uid://d2culktmqyskv" path="res://Player/camera_effects.gd" id="8_camfx"]
 [ext_resource type="Script" uid="uid://cgyuvyv28rhjy" path="res://Components/viewmodel_motion.gd" id="9_vm"]
 [ext_resource type="Script" uid="uid://cliulu5264l7k" path="res://Components/aim_scope.gd" id="10_aim"]
-[ext_resource type="Script" path="res://Components/footsteps.gd" id="11_steps"]
-[ext_resource type="Script" path="res://Player/weapon_rack.gd" id="12_rack"]
+[ext_resource type="Script" uid="uid://hhhjnm2njrbm" path="res://Components/footsteps.gd" id="11_steps"]
+[ext_resource type="Script" uid="uid://c1x1bekgoeoja" path="res://Player/weapon_rack.gd" id="12_rack"]
 [ext_resource type="PackedScene" path="res://Guns/gun/shrike.tscn" id="13_shrike"]
 [ext_resource type="PackedScene" path="res://Guns/gun/harrier.tscn" id="14_harrier"]
 [ext_resource type="PackedScene" path="res://Guns/gun/merlin.tscn" id="15_merlin"]
+[ext_resource type="Script" uid="uid://cas7itar63xk4" path="res://Player/magazine_pouch.gd" id="16_pouch"]
+[ext_resource type="Script" uid="uid://djstbsnibhump" path="res://Components/health.gd" id="17_health"]
+[ext_resource type="Script" uid="uid://ds0nwn85e0tix" path="res://Player/utility_belt.gd" id="18_throw"]
+[ext_resource type="Script" uid="uid://1iwot71kn823" path="res://Player/body_drag.gd" id="19_drag"]
 [ext_resource type="PackedScene" path="res://Guns/gun/osprey.tscn" id="19_osprey"]
-[ext_resource type="Script" path="res://Player/magazine_pouch.gd" id="16_pouch"]
-[ext_resource type="Script" path="res://Components/health.gd" id="17_health"]
-[ext_resource type="Script" path="res://Player/utility_belt.gd" id="18_throw"]
-[ext_resource type="Script" path="res://Player/takedown.gd" id="20_takedown"]
-[ext_resource type="Script" path="res://Player/revive.gd" id="21_revive"]
-[ext_resource type="Script" path="res://Player/binoculars.gd" id="22_binocs"]
-[ext_resource type="Script" path="res://Player/pinger.gd" id="23_ping"]
-[ext_resource type="Script" path="res://Player/body_drag.gd" id="19_drag"]
-[ext_resource type="Script" path="res://Components/viewmodel_pass.gd" id="20_vmpass"]
+[ext_resource type="Script" uid="uid://b5buv7ev1mjti" path="res://Player/takedown.gd" id="20_takedown"]
+[ext_resource type="Script" uid="uid://dlau1jp46te7e" path="res://Components/viewmodel_pass.gd" id="20_vmpass"]
+[ext_resource type="Script" uid="uid://bve53hwof4b6v" path="res://Player/revive.gd" id="21_revive"]
+[ext_resource type="Script" uid="uid://dufd56n7dy7au" path="res://Player/binoculars.gd" id="22_binocs"]
+[ext_resource type="Script" uid="uid://gplw3h51s2ba" path="res://Player/pinger.gd" id="23_ping"]
+[ext_resource type="Script" uid="uid://b1abi4s004ldb" path="res://Player/magazine_hand.gd" id="24_hand"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_bhunq"]
 radius = 0.4
@@ -58,6 +59,9 @@ near = 0.02
 far = 500.0
 script = ExtResource("8_camfx")
 
+[node name="MagazineHand" type="Node3D" parent="Head/Camera3D" unique_id=2064371540]
+script = ExtResource("24_hand")
+
 [node name="Viewmodel" type="Node3D" parent="Head/Camera3D" unique_id=1024155961]
 script = ExtResource("9_vm")
 resting_fov = 75.0
@@ -68,19 +72,23 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, -0.19, -0.5)
 [node name="AimPose" type="Node3D" parent="Head/Camera3D/Viewmodel" unique_id=1656606710]
 transform = Transform3D(1, 0, 0, 0, 0.9999556, 0.009424636, 0, -0.009424636, 0.9999556, 0, -0.090957426, -0.1461691)
 
-[node name="Weapons" type="Node3D" parent="Head/Camera3D/Viewmodel"]
+[node name="Weapons" type="Node3D" parent="Head/Camera3D/Viewmodel" unique_id=679699411]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, -0.19, -0.5)
 script = ExtResource("12_rack")
 
-[node name="KESTREL" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("2_tok1r")]
+[node name="KESTREL" parent="Head/Camera3D/Viewmodel/Weapons" unique_id=1456114947 instance=ExtResource("2_tok1r")]
 
-[node name="SHRIKE" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("13_shrike")]
+[node name="SHRIKE" parent="Head/Camera3D/Viewmodel/Weapons" unique_id=427054499 instance=ExtResource("13_shrike")]
+visible = false
 
-[node name="HARRIER" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("14_harrier")]
+[node name="HARRIER" parent="Head/Camera3D/Viewmodel/Weapons" unique_id=23431041 instance=ExtResource("14_harrier")]
+visible = false
 
-[node name="MERLIN" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("15_merlin")]
+[node name="MERLIN" parent="Head/Camera3D/Viewmodel/Weapons" unique_id=290357067 instance=ExtResource("15_merlin")]
+visible = false
 
-[node name="OSPREY" parent="Head/Camera3D/Viewmodel/Weapons" instance=ExtResource("19_osprey")]
+[node name="OSPREY" parent="Head/Camera3D/Viewmodel/Weapons" unique_id=1152886548 instance=ExtResource("19_osprey")]
+visible = false
 
 [node name="StateMachine" type="Node" parent="." unique_id=1775062315]
 script = ExtResource("4_sm")
@@ -97,32 +105,32 @@ script = ExtResource("7_inter")
 [node name="AimScope" type="Node" parent="." unique_id=1804868852]
 script = ExtResource("10_aim")
 
-[node name="Pouch" type="Node" parent="."]
+[node name="Pouch" type="Node" parent="." unique_id=1232192684]
 script = ExtResource("16_pouch")
 
-[node name="Health" type="Node" parent="."]
+[node name="Health" type="Node" parent="." unique_id=376897901]
 script = ExtResource("17_health")
 max_health = 100.0
 
-[node name="Utilities" type="Node" parent="."]
+[node name="Utilities" type="Node" parent="." unique_id=209995315]
 script = ExtResource("18_throw")
 
-[node name="Binoculars" type="Node" parent="."]
+[node name="Binoculars" type="Node" parent="." unique_id=2089757324]
 script = ExtResource("22_binocs")
 
-[node name="Pings" type="Node" parent="."]
+[node name="Pings" type="Node" parent="." unique_id=267381219]
 script = ExtResource("23_ping")
 
-[node name="Takedown" type="Node" parent="."]
+[node name="Takedown" type="Node" parent="." unique_id=909992602]
 script = ExtResource("20_takedown")
 
-[node name="Revive" type="Node" parent="."]
+[node name="Revive" type="Node" parent="." unique_id=968222294]
 script = ExtResource("21_revive")
 
-[node name="BodyDrag" type="Node" parent="."]
+[node name="BodyDrag" type="Node" parent="." unique_id=123682194]
 script = ExtResource("19_drag")
 
-[node name="ViewmodelPass" type="Node" parent="."]
+[node name="ViewmodelPass" type="Node" parent="." unique_id=247467433]
 script = ExtResource("20_vmpass")
 
 [node name="Footsteps" type="AudioStreamPlayer3D" parent="." unique_id=771204553]

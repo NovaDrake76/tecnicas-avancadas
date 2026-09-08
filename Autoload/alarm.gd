@@ -17,6 +17,7 @@ const SEARCH_WEIGHT := 0.35
 const MARK_HOLD := 0.5
 const SEARCH_SPREAD := 1.4
 const SEARCH_SPREAD_MAX := 20.0
+const ALARM_REACH := 150.0
 
 var stage := Stage.CALM
 var last_known := Vector3.ZERO
@@ -29,6 +30,7 @@ var reinforcements_enabled := false
 var wave_gaps: Array = WAVE_GAPS.duplicate()
 ## a mission that answers the alarm with the helicopter instead of birds on foot.
 var gunship := false
+var alarm_reach := ALARM_REACH
 
 var _quiet := 0.0
 var _alarm_time := 0.0
@@ -135,6 +137,18 @@ func raise_alarm(at: Vector3) -> void:
 		_reinforce = reinforce_time
 		_reinforce_shown = int(ceil(_reinforce))
 		reinforcements_changed.emit(_reinforce)
+	_tell_garrison()
+
+
+func _tell_garrison() -> void:
+	if not multiplayer.is_server():
+		return
+	for node in get_tree().get_nodes_in_group("kiwi"):
+		var bird := node as Node3D
+		if bird == null or not bird.has_method("told") or (bird.has_method("is_down") and bird.is_down()):
+			continue
+		if bird.global_position.distance_to(last_known) <= alarm_reach:
+			bird.told(last_known)
 
 
 func stand_down() -> void:

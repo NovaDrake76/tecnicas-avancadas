@@ -35,6 +35,7 @@ const CLEAR_COLOR := Color(0.55, 0.85, 0.6)
 @onready var reload_ring: ReloadRing = %ReloadRing
 @onready var vitals: Vitals = %Vitals
 @onready var damage_marks: DamageMarks = %DamageMarks
+@onready var magazine_check: MagazineCheck = %MagazineCheck
 
 var _weapon: Gun
 var _interactor: Interactor
@@ -258,6 +259,7 @@ func _follow_weapon(gun: Gun) -> void:
 	_weapon.emit_state()
 	reload_ring.watch(_weapon)
 	crosshair.watch(_weapon)
+	magazine_check.hide_check()
 	_show_crosshair(not _aiming and not reload_ring.is_showing())
 	_update_spare()
 	show_message(_weapon.weapon_model)
@@ -277,7 +279,19 @@ func _weapon_signals() -> Array:
 		["reload_finished", _on_reload_finished],
 		["reload_cancelled", _on_reload_cancelled],
 		["reload_failed", _on_reload_failed],
+		["check_started", _on_check_started],
+		["check_ended", _on_check_ended],
 	]
+
+
+func _on_check_started() -> void:
+	magazine_check.show_for(_weapon, _pouch)
+	_show_crosshair(false)
+
+
+func _on_check_ended() -> void:
+	magazine_check.hide_check()
+	_show_crosshair(not _aiming and not reload_ring.is_showing())
 
 
 func _on_level_started(_index: int, _name: String) -> void:
@@ -335,7 +349,8 @@ func _on_detections_changed(count: int) -> void:
 	_last_detections = count
 
 
-func _on_alarm_stage(_stage: int) -> void:
+func _on_alarm_stage(stage: int) -> void:
+	alert_ring.set_stage(stage)
 	_refresh_alarm()
 
 
@@ -455,7 +470,7 @@ func _on_hopup_changed(value: float, min_value: float, max_value: float) -> void
 
 func _on_fire_failed(reason: Gun.FireBlock, message: String) -> void:
 	match reason:
-		Gun.FireBlock.COOLDOWN:
+		Gun.FireBlock.COOLDOWN, Gun.FireBlock.CHECKING:
 			return
 		Gun.FireBlock.EMPTY, Gun.FireBlock.NO_MAGAZINE:
 			flash_ammo()

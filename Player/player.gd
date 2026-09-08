@@ -67,7 +67,7 @@ var _since_hurt := 999.0
 var _since_shot_at := 999.0
 var _suppression := 0.0
 const REMOTE_SILENT := ["aim_scope", "viewmodel", "interactor", "utility", "takedown", "binoculars",
-	"body_drag", "footsteps", "weapon_rack", "weapon", "pouch", "revive", "pinger"]
+	"body_drag", "footsteps", "weapon_rack", "weapon", "pouch", "revive", "pinger", "magazine_hand"]
 
 var _local := true
 var _down := false

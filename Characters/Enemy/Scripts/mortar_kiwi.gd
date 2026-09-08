@@ -93,6 +93,7 @@ func _step_bombard(delta: float) -> void:
 
 
 func _fire(at: Vector3) -> void:
+	fire_noise()
 	_shots += 1
 	var from := _tube.global_position + Vector3.UP * 0.3 if _tube != null else global_position + Vector3.UP * 0.6
 	_net_shell.rpc(from, at)

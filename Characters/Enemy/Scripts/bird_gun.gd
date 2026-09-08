@@ -169,6 +169,7 @@ func _eye_point(bone: int) -> Vector3:
 
 
 func _shoot(target: Node3D) -> void:
+	_kiwi.fire_noise()
 	var from := muzzle_point()
 	var aim := VisionCone.sight_point(target)
 	var chance := hit_chance(target)

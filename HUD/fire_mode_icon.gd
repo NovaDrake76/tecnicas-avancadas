@@ -43,14 +43,9 @@ func _draw() -> void:
 
 
 func _draw_round(at: Vector2, c: Color) -> void:
-	var w := round_size.x
-	var h := round_size.y
-	var tip_h := h * 0.38
-	var pts := PackedVector2Array()
-	var steps := 8
-	for i in steps + 1:
-		var a := PI + PI * float(i) / float(steps)
-		pts.append(at + Vector2(w * 0.5 + cos(a) * w * 0.5, tip_h + sin(a) * tip_h))
-	draw_colored_polygon(pts, c)
-	draw_rect(Rect2(at + Vector2(0.0, tip_h), Vector2(w, h - tip_h)), c)
-	draw_line(at + Vector2(0.0, h - 3.5), at + Vector2(w, h - 3.5), Color(0, 0, 0, 0.45), 1.0)
+	RoundGlyph.draw_on(self, at, round_size, c)
+
+
+## the shape one of its rounds is, so anything else claiming to draw the same round can be checked against it.
+func round_points() -> PackedVector2Array:
+	return RoundGlyph.outline(Vector2.ZERO, round_size)
