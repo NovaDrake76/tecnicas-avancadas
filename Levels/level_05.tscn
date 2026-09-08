@@ -12,9 +12,12 @@
 [ext_resource type="PackedScene" uid="uid://c1rvbshlk47qy" path="res://Models/Props/Containers/wooden_crate_1.glb" id="14_qcajc"]
 [ext_resource type="PackedScene" uid="uid://dhlda63wtimca" path="res://Models/Props/Containers/wooden_crate_2_a.glb" id="15_uax8e"]
 [ext_resource type="PackedScene" uid="uid://bvkmo8xy37bk2" path="res://Models/Props/Clutter/cement_bags_mp_1_pallet_1.glb" id="16_cyawq"]
+[ext_resource type="Resource" uid="uid://ddmrqm1pi5kwd" path="res://Guns/resources/mag_shotgun.tres" id="17_ffnd5"]
 [ext_resource type="PackedScene" uid="uid://c0cdoivyho4dv" path="res://Models/Props/Barricades/barricade_b_4.glb" id="17_naiie"]
 [ext_resource type="PackedScene" uid="uid://ccp1q8m7ld2c2" path="res://Models/Props/Walls/gate_1.glb" id="18_n6rvm"]
+[ext_resource type="Resource" uid="uid://dgcpwneel1ipy" path="res://Guns/resources/mag_heavy.tres" id="18_pfrhl"]
 [ext_resource type="PackedScene" uid="uid://ce04qhppjd3r4" path="res://Models/Props/Barrels/wooden_barrel_1.glb" id="19_4027s"]
+[ext_resource type="Resource" uid="uid://dialvaqc2s13d" path="res://Guns/resources/mag_machine.tres" id="19_v0upe"]
 [ext_resource type="Script" uid="uid://bufn6abaxlns0" path="res://Levels/hill_ring.gd" id="90_hills"]
 [ext_resource type="Script" uid="uid://bb0mpba02qew7" path="res://Levels/foliage.gd" id="91_foliage"]
 [ext_resource type="Script" uid="uid://vsvwn5qk2akl" path="res://Props/alarm_horn.gd" id="101_horn"]
@@ -63,12 +66,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.3912044, 0.0009, 17.505884
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.847343, 0.0009, 39.100533)
 
 [node name="LaserKiwi" parent="StaticBody3D" unique_id=1387126501 instance=ExtResource("4_laser")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.823765, 0.0009, 17.96407)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.01291, 0.0009, 17.96407)
 attack_range = 18.0
-hunt_sight = 32.0
-search_time = 3.5
 hunt_call_interval = Vector2(3.5, 6.5)
-stuck_time = 1.0
 armour_threshold = 0.6
 plate_health = 3
 plate_alerts = true
@@ -77,10 +77,13 @@ pulse_gap = 0.16
 pulse_damage = 9.0
 pulse_spread = 0.14
 bolt_speed = 38.0
+lead_shots = true
+burst_recover = 0.8
 charge_time = 1.1
 beam_time = 1.4
 beam_dps = 30.0
 beam_recover = 1.8
+beam_track = 10.0
 beam_chance = 0.4
 beam_cooldown = 6.0
 laser_range = 40.0
@@ -95,9 +98,7 @@ slug_speed = 95.0
 slug_damage = 30.0
 slug_thickness = 2.6
 aim_lock_before = 0.3
-search_time = 3.5
 hunt_call_interval = Vector2(3.5, 6.5)
-stuck_time = 1.0
 armour_threshold = 0.6
 plate_health = 3
 plate_alerts = true
@@ -105,6 +106,8 @@ pulse_gap = 0.16
 pulse_damage = 9.0
 pulse_spread = 0.14
 bolt_speed = 38.0
+lead_shots = true
+burst_recover = 0.8
 wander_radius = 0.0
 walk_chance = 0.0
 
@@ -136,7 +139,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, 40)
 script = ExtResource("101_horn")
 
 [node name="ObjectiveManifests" type="Node3D" parent="." unique_id=189902145]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -14)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.758027, 0, 23.75459)
 script = ExtResource("obj_script")
 id = &"manifests"
 label = "Take the supply manifests"
@@ -144,7 +147,7 @@ work_time = 4.0
 prompt = "Take the manifests"
 
 [node name="ObjectiveExfil" type="Node3D" parent="." unique_id=1385986506]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 44)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.901108, 0, 19.830223)
 script = ExtResource("obj_script")
 id = &"exfil"
 kind = 3
@@ -160,13 +163,13 @@ script = ExtResource("11_gew8q")
 model = ExtResource("12_pojku")
 
 [node name="Container2" type="StaticBody3D" parent="Camp" unique_id=1505196421]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -20.541534, 0, 59.01067)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -19.837208, 0, 59.01067)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("12_pojku")
 
 [node name="Container5" type="StaticBody3D" parent="Camp" unique_id=743277123]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -20.541534, 2.526095, 59.01067)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -19.837208, 2.526095, 59.01067)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("12_pojku")
@@ -178,7 +181,7 @@ script = ExtResource("11_gew8q")
 model = ExtResource("12_pojku")
 
 [node name="Container3" type="StaticBody3D" parent="Camp" unique_id=638848634]
-transform = Transform3D(-3.059797e-08, 0, 0.7, 0, 0.7, 0, -0.7, 0, -3.059797e-08, -3.9438539, 0, 52.637737)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -5.8054724, 0, 52.637737)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("12_pojku")
@@ -191,6 +194,12 @@ model = ExtResource("13_3kncu")
 
 [node name="BarricadeSouth4" type="StaticBody3D" parent="Camp" unique_id=1153101826]
 transform = Transform3D(-4.3710305e-08, 0, 0.9999752, 0, 1, 0, -0.9999752, 0, -4.3710305e-08, -23.97666, 0, 62.118687)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("13_3kncu")
+
+[node name="BarricadeSouth5" type="StaticBody3D" parent="Camp" unique_id=1078326448]
+transform = Transform3D(0.8464156, 0, -0.5324763, 0, 1, 0, 0.5324763, 0, 0.8464156, -11.772218, 0, 53.954937)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("13_3kncu")
@@ -214,19 +223,31 @@ script = ExtResource("11_gew8q")
 model = ExtResource("14_qcajc")
 
 [node name="Crate16" type="StaticBody3D" parent="Camp" unique_id=915634258]
-transform = Transform3D(1, 0, 0, 0, 3, 0, 0, 0, 4, -13.914357, 0, 19.033674)
+transform = Transform3D(1, 0, 0, 0, 3, 0, 0, 0, 4, -13.335996, 0, 18.562937)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("14_qcajc")
+
+[node name="Crate24" type="StaticBody3D" parent="Camp" unique_id=1305894504]
+transform = Transform3D(1, 0, 0, 0, 3.7, 0, 0, 0, 4, -13.335996, 0, 29.848454)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("14_qcajc")
 
 [node name="Crate17" type="StaticBody3D" parent="Camp" unique_id=969255829]
-transform = Transform3D(1, 0, 0, 0, 3, 0, 0, 0, 2, -15.610826, 0, 18.243486)
+transform = Transform3D(1, 0, 0, 0, 3, 0, 0, 0, 2, -15.042595, 0, 17.297974)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("14_qcajc")
 
 [node name="Crate8" type="StaticBody3D" parent="Camp" unique_id=2023647544]
 transform = Transform3D(-0.72252524, 0, -0.6913445, 0, 1, 0, 0.6913445, 0, -0.72252524, -8.718466, 0.00816083, 33.86547)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("14_qcajc")
+
+[node name="Crate21" type="StaticBody3D" parent="Camp" unique_id=2046951049]
+transform = Transform3D(-0.72252524, 0, -0.6913445, 0, 1, 0, 0.6913445, 0, -0.72252524, 0.6590071, 0.00816083, 19.29319)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("14_qcajc")
@@ -251,6 +272,36 @@ model = ExtResource("14_qcajc")
 
 [node name="Crate7" type="StaticBody3D" parent="Camp" unique_id=1294679242]
 transform = Transform3D(0.0072496533, 0, 1.4999824, 0, 1.4999999, 0, -1.4999824, 0, 0.0072496533, -11.311623, 0, 17.653862)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("14_qcajc")
+
+[node name="Crate22" type="StaticBody3D" parent="Camp" unique_id=1031166402]
+transform = Transform3D(-1.2953981, 0, 0.50417966, 0, 1, 0, -0.75626945, 0, -0.86359876, -1.795712, 2.508946, 25.653862)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("14_qcajc")
+
+[node name="Crate23" type="StaticBody3D" parent="Camp" unique_id=1761256941]
+transform = Transform3D(-1.4036717, 0, 0.3525815, 0, 1, 0, -0.52887213, 0, -0.9357811, -11.364039, 2.508946, 33.30549)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("14_qcajc")
+
+[node name="Crate20" type="StaticBody3D" parent="Camp" unique_id=2120373820]
+transform = Transform3D(0.5997854, 0, 0.04011624, 0, 2, 0, -0.016046496, 0, 1.4994634, -0.026053905, 0, 17.653862)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("14_qcajc")
+
+[node name="Crate18" type="StaticBody3D" parent="Camp" unique_id=813240592]
+transform = Transform3D(0.0072496533, 0, 1.4999824, 0, 1.4999999, 0, -1.4999824, 0, 0.0072496533, -28.514996, 0, 26.446316)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("14_qcajc")
+
+[node name="Crate19" type="StaticBody3D" parent="Camp" unique_id=402300269]
+transform = Transform3D(0.004833159, 0, 0.9999883, 0, 1, 0, -0.9999883, 0, 0.004833159, -28.514996, 0, 28.40815)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("14_qcajc")
@@ -327,74 +378,340 @@ collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("16_cyawq")
 
-[node name="BarricadeNorthA" type="StaticBody3D" parent="Camp" unique_id=240078429]
-transform = Transform3D(4, 0, 0, 0, 1, 0, 0, 0, 1, -22.87671, 0, 63.949127)
+[node name="Pickups" type="Node3D" parent="Camp" unique_id=983536332]
+
+[node name="MagazinePickup" parent="Camp/Pickups" unique_id=1123135585 instance=ExtResource("2_1jt1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.857703, 1.9073486e-06, 20.827644)
+
+[node name="MagazinePickup2" parent="Camp/Pickups" unique_id=567260927 instance=ExtResource("2_1jt1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.1039305, 1.9073486e-06, 28.64988)
+quantity = 3
+
+[node name="ShellsPickup" parent="Camp/Pickups" unique_id=583505721 instance=ExtResource("2_1jt1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.48304, 0, 29.945763)
+magazine = ExtResource("17_ffnd5")
+quantity = 3
+
+[node name="Pickup1911" parent="Camp/Pickups" unique_id=668895999 instance=ExtResource("2_1jt1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.4669285, 0, 48.048218)
+magazine = ExtResource("18_pfrhl")
+
+[node name="Pickup1911-2" parent="Camp/Pickups" unique_id=429064986 instance=ExtResource("2_1jt1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.164017, 0, 48.048218)
+magazine = ExtResource("18_pfrhl")
+
+[node name="PickupMachine" parent="Camp/Pickups" unique_id=841159663 instance=ExtResource("2_1jt1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 60.512085)
+magazine = ExtResource("19_v0upe")
+
+[node name="PickupMachine2" parent="Camp/Pickups" unique_id=1933421358 instance=ExtResource("2_1jt1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.057207, 0, 65.50725)
+magazine = ExtResource("19_v0upe")
+
+[node name="Barricades" type="Node3D" parent="Camp" unique_id=1078604152]
+
+[node name="BarricadeNorthA" type="StaticBody3D" parent="Camp/Barricades" unique_id=179738586]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5460529, 0, 63.949127)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("17_naiie")
 
-[node name="BarricadeNorthA4" type="StaticBody3D" parent="Camp" unique_id=179738586]
-transform = Transform3D(5, 0, 0, 0, 1, 0, 0, 0, 1, -7.546053, 0, 63.949127)
+[node name="BarricadeNorthA2" type="StaticBody3D" parent="Camp/Barricades" unique_id=1296576898]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.546053, 0, 63.949127)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("17_naiie")
 
-[node name="BarricadeNorthA10" type="StaticBody3D" parent="Camp" unique_id=247717696]
-transform = Transform3D(3, 0, 0, 0, 1, 0, 0, 0, 1, -23.701988, 0, 45.76751)
+[node name="BarricadeNorthA3" type="StaticBody3D" parent="Camp/Barricades" unique_id=971656169]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.546053, 0, 63.949127)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("17_naiie")
 
-[node name="BarricadeNorthA11" type="StaticBody3D" parent="Camp" unique_id=281644875]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.109988, 0, 45.76751)
+[node name="BarricadeNorthA4" type="StaticBody3D" parent="Camp/Barricades" unique_id=1753439746]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.546053, 0, 63.949127)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("17_naiie")
 
-[node name="BarricadeNorthA5" type="StaticBody3D" parent="Camp" unique_id=645440798]
-transform = Transform3D(-5.2453663e-07, 0, 1, 0, 1, 0, -12, 0, -4.371139e-08, -0.023721695, 0, 43.223164)
+[node name="BarricadeNorthA5" type="StaticBody3D" parent="Camp/Barricades" unique_id=160047775]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.546053, 0, 63.949127)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("17_naiie")
 
-[node name="BarricadeNorthA8" type="StaticBody3D" parent="Camp" unique_id=2106089931]
-transform = Transform3D(-5.2453663e-07, 0, 1, 0, 1, 0, -12, 0, -4.371139e-08, -28.600706, 0, 46.076366)
+[node name="BarricadeNorthA6" type="StaticBody3D" parent="Camp/Barricades" unique_id=1696270647]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.546053, 0, 63.949127)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("17_naiie")
 
-[node name="BarricadeNorthA7" type="StaticBody3D" parent="Camp" unique_id=894526718]
-transform = Transform3D(9.5, 0, 0, 0, 1, 0, 0, 0, 1, -14.240479, 0, 16.36243)
+[node name="BarricadeNorthA7" type="StaticBody3D" parent="Camp/Barricades" unique_id=317954012]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.546053, 0, 63.949127)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("17_naiie")
 
-[node name="BarricadeNorthA6" type="StaticBody3D" parent="Camp" unique_id=788352535]
-transform = Transform3D(-1.3113416e-07, 0, 1, 0, 1, 0, -3, 0, -4.371139e-08, -0.023721695, 0, 21.16836)
+[node name="BarricadeNorthA8" type="StaticBody3D" parent="Camp/Barricades" unique_id=846583594]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.546053, 0, 63.949127)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("17_naiie")
 
-[node name="BarricadeNorthA9" type="StaticBody3D" parent="Camp" unique_id=15315570]
-transform = Transform3D(-1.3113416e-07, 0, 1, 0, 1, 0, -3, 0, -4.371139e-08, -28.530115, 0, 21.16836)
+[node name="BarricadeNorthA9" type="StaticBody3D" parent="Camp/Barricades" unique_id=1399001131]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.546053, 0, 63.949127)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("17_naiie")
 
-[node name="BarricadeNorthA3" type="StaticBody3D" parent="Camp" unique_id=531090219]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.589678, 0, 32.573254)
+[node name="BarricadeNorthA10" type="StaticBody3D" parent="Camp/Barricades" unique_id=358573899]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.546053, 0, 63.949127)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("17_naiie")
 
-[node name="BarricadeNorthA12" type="StaticBody3D" parent="Camp" unique_id=716887710]
+[node name="BarricadeNorthA28" type="StaticBody3D" parent="Camp/Barricades" unique_id=1266494934]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5460529, 0, 15.949127)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA29" type="StaticBody3D" parent="Camp/Barricades" unique_id=223073927]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.546053, 0, 15.949127)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA30" type="StaticBody3D" parent="Camp/Barricades" unique_id=562696540]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.546053, 0, 15.949127)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA31" type="StaticBody3D" parent="Camp/Barricades" unique_id=1840761602]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.546053, 0, 15.949127)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA32" type="StaticBody3D" parent="Camp/Barricades" unique_id=2074817696]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.546053, 0, 15.949127)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA33" type="StaticBody3D" parent="Camp/Barricades" unique_id=907447972]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.546053, 0, 15.949127)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA34" type="StaticBody3D" parent="Camp/Barricades" unique_id=1360994073]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.546053, 0, 15.949127)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA35" type="StaticBody3D" parent="Camp/Barricades" unique_id=1585995430]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.546053, 0, 15.949127)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA36" type="StaticBody3D" parent="Camp/Barricades" unique_id=1468657540]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.546053, 0, 15.949127)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA37" type="StaticBody3D" parent="Camp/Barricades" unique_id=890829255]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.546053, 0, 15.949127)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA11" type="StaticBody3D" parent="Camp/Barricades" unique_id=344102459]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.257332, 0, 62.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA13" type="StaticBody3D" parent="Camp/Barricades" unique_id=1615891064]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.257332, 0, 59.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA14" type="StaticBody3D" parent="Camp/Barricades" unique_id=975908056]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.257332, 0, 56.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA15" type="StaticBody3D" parent="Camp/Barricades" unique_id=1295595500]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.257332, 0, 53.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA16" type="StaticBody3D" parent="Camp/Barricades" unique_id=168438031]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.257332, 0, 50.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA17" type="StaticBody3D" parent="Camp/Barricades" unique_id=1961199567]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.257332, 0, 47.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA18" type="StaticBody3D" parent="Camp/Barricades" unique_id=1956000120]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.257332, 0, 44.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA19" type="StaticBody3D" parent="Camp/Barricades" unique_id=1479752081]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.257332, 0, 41.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA20" type="StaticBody3D" parent="Camp/Barricades" unique_id=93654992]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.257332, 0, 38.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA21" type="StaticBody3D" parent="Camp/Barricades" unique_id=1038918198]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.257332, 0, 35.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA22" type="StaticBody3D" parent="Camp/Barricades" unique_id=1595990940]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.257332, 0, 32.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA23" type="StaticBody3D" parent="Camp/Barricades" unique_id=873535778]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.257332, 0, 29.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA24" type="StaticBody3D" parent="Camp/Barricades" unique_id=1328949080]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.257332, 0, 26.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA25" type="StaticBody3D" parent="Camp/Barricades" unique_id=108383276]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.257332, 0, 23.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA27" type="StaticBody3D" parent="Camp/Barricades" unique_id=483967621]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -27.257332, 0, 17.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA39" type="StaticBody3D" parent="Camp/Barricades" unique_id=1744736261]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.10684824, 0, 59.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA40" type="StaticBody3D" parent="Camp/Barricades" unique_id=258518393]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.10684824, 0, 56.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA41" type="StaticBody3D" parent="Camp/Barricades" unique_id=761367889]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.10684824, 0, 53.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA42" type="StaticBody3D" parent="Camp/Barricades" unique_id=354238222]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.10684824, 0, 50.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA43" type="StaticBody3D" parent="Camp/Barricades" unique_id=564932812]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.10684824, 0, 47.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA44" type="StaticBody3D" parent="Camp/Barricades" unique_id=1998696891]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.10684824, 0, 44.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA45" type="StaticBody3D" parent="Camp/Barricades" unique_id=465150001]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.10684824, 0, 41.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA46" type="StaticBody3D" parent="Camp/Barricades" unique_id=494563901]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.10684824, 0, 38.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA47" type="StaticBody3D" parent="Camp/Barricades" unique_id=599587384]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.10684824, 0, 35.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA48" type="StaticBody3D" parent="Camp/Barricades" unique_id=2060688364]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.10684824, 0, 32.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA49" type="StaticBody3D" parent="Camp/Barricades" unique_id=1593252404]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.10684824, 0, 29.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA50" type="StaticBody3D" parent="Camp/Barricades" unique_id=643836307]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.10684824, 0, 26.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA51" type="StaticBody3D" parent="Camp/Barricades" unique_id=2013358289]
+transform = Transform3D(0.2798667, 0, 0.96003884, 0, 1, 0, -0.96003884, 0, 0.2798667, 0.49414277, 0, 23.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA53" type="StaticBody3D" parent="Camp/Barricades" unique_id=110064749]
+transform = Transform3D(-0.5352516, 0, 0.8446927, 0, 1, 0, -0.8446927, 0, -0.5352516, 1.4244814, 0, 17.260662)
+collision_mask = 0
+script = ExtResource("11_gew8q")
+model = ExtResource("17_naiie")
+
+[node name="BarricadeNorthA12" type="StaticBody3D" parent="Camp/Barricades" unique_id=716887710]
 transform = Transform3D(0.81469387, 0.578562, 0.039240744, 0, -0.06766914, 0.9977078, 0.57989126, -0.8128264, -0.055129632, 2.3214195, 0.2464211, 63.903618)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("17_naiie")
 
-[node name="BarricadeNorthA2" type="StaticBody3D" parent="Camp" unique_id=907573179]
-transform = Transform3D(-5.2453663e-07, 0, 1, 0, 1, 0, -12, 0, -4.371139e-08, -12.674473, 0, 34.596474)
+[node name="BarricadeNorthA38" type="StaticBody3D" parent="Camp/Barricades" unique_id=576800449]
+transform = Transform3D(-0.4220632, 0.9044883, 0.06134657, 3.0349712e-09, -0.06766914, 0.9977078, 0.9065664, 0.42109576, 0.028560653, -30.201338, 0.2464211, 22.349749)
 collision_mask = 0
 script = ExtResource("11_gew8q")
 model = ExtResource("17_naiie")

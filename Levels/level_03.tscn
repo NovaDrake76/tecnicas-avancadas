@@ -1,26 +1,26 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://e028cgbm1tjh"]
 
-[ext_resource type="Shader" path="res://Shaders/grid_floor.gdshader" id="1_grid"]
+[ext_resource type="Shader" uid="uid://cklqih7708id7" path="res://Shaders/grid_floor.gdshader" id="1_grid"]
 [ext_resource type="PackedScene" path="res://Guns/magazine/magazine_pickup.tscn" id="2_1jt1u"]
 [ext_resource type="PackedScene" path="res://Characters/Enemy/kiwi.tscn" id="3_er0or"]
 [ext_resource type="PackedScene" path="res://Characters/Enemy/laser_kiwi.tscn" id="4_laser"]
 [ext_resource type="PackedScene" path="res://Characters/Enemy/sniper_kiwi.tscn" id="5_sniper"]
 [ext_resource type="PackedScene" path="res://Characters/Enemy/mortar_kiwi.tscn" id="6_mortar"]
-[ext_resource type="Script" path="res://Levels/hill_ring.gd" id="90_hills"]
-[ext_resource type="Script" path="res://Levels/foliage.gd" id="91_foliage"]
-[ext_resource type="Script" path="res://Props/prop.gd" id="100_prop"]
-[ext_resource type="Script" path="res://Props/alarm_horn.gd" id="101_horn"]
-[ext_resource type="PackedScene" path="res://Models/Props/Walls/wall_hr_1.glb" id="m_wall1"]
-[ext_resource type="PackedScene" path="res://Models/Props/Walls/wall_hr_2.glb" id="m_wall2"]
-[ext_resource type="PackedScene" path="res://Models/Props/Walls/pillar_hr_5.glb" id="m_pillar"]
-[ext_resource type="PackedScene" path="res://Models/Props/Walls/floor_ceiling_hr_1.glb" id="m_deck"]
-[ext_resource type="PackedScene" path="res://Models/Props/Barricades/barricade_b_1.glb" id="m_bar_b1"]
-[ext_resource type="PackedScene" path="res://Models/Props/Barricades/barricade_b_4.glb" id="m_bar_b4"]
-[ext_resource type="PackedScene" path="res://Models/Props/Containers/shipping_container_mx_1.glb" id="m_container"]
-[ext_resource type="PackedScene" path="res://Models/Props/Containers/wooden_crate_1.glb" id="m_crate1"]
-[ext_resource type="PackedScene" path="res://Models/Props/Barrels/metal_barrel_hr_1.glb" id="m_barrel1"]
-[ext_resource type="PackedScene" path="res://Models/Props/Clutter/cement_bags_mp_1_pallet_1.glb" id="m_pallet"]
-[ext_resource type="Script" path="res://Components/objective.gd" id="obj_script"]
+[ext_resource type="Script" uid="uid://bufn6abaxlns0" path="res://Levels/hill_ring.gd" id="90_hills"]
+[ext_resource type="Script" uid="uid://bb0mpba02qew7" path="res://Levels/foliage.gd" id="91_foliage"]
+[ext_resource type="Script" uid="uid://ce7thhydb1ntv" path="res://Props/prop.gd" id="100_prop"]
+[ext_resource type="Script" uid="uid://vsvwn5qk2akl" path="res://Props/alarm_horn.gd" id="101_horn"]
+[ext_resource type="PackedScene" uid="uid://c21fa2pbm2xrl" path="res://Models/Props/Barrels/metal_barrel_hr_1.glb" id="m_barrel1"]
+[ext_resource type="PackedScene" uid="uid://decay2lwp6qr7" path="res://Models/Props/Barricades/barricade_b_1.glb" id="m_bar_b1"]
+[ext_resource type="PackedScene" uid="uid://c0cdoivyho4dv" path="res://Models/Props/Barricades/barricade_b_4.glb" id="m_bar_b4"]
+[ext_resource type="PackedScene" uid="uid://neeyatftobvw" path="res://Models/Props/Containers/shipping_container_mx_1.glb" id="m_container"]
+[ext_resource type="PackedScene" uid="uid://c1rvbshlk47qy" path="res://Models/Props/Containers/wooden_crate_1.glb" id="m_crate1"]
+[ext_resource type="PackedScene" uid="uid://bvyl5nbih384s" path="res://Models/Props/Walls/floor_ceiling_hr_1.glb" id="m_deck"]
+[ext_resource type="PackedScene" uid="uid://bvkmo8xy37bk2" path="res://Models/Props/Clutter/cement_bags_mp_1_pallet_1.glb" id="m_pallet"]
+[ext_resource type="PackedScene" uid="uid://bksexa5yxidgj" path="res://Models/Props/Walls/pillar_hr_5.glb" id="m_pillar"]
+[ext_resource type="PackedScene" uid="uid://boxkc8nutfjc1" path="res://Models/Props/Walls/wall_hr_1.glb" id="m_wall1"]
+[ext_resource type="PackedScene" uid="uid://cky5fbrna8pe" path="res://Models/Props/Walls/wall_hr_2.glb" id="m_wall2"]
+[ext_resource type="Script" uid="uid://b7cjx1bre0xkg" path="res://Components/objective.gd" id="obj_script"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bhunq"]
 size = Vector3(200, 1, 200)
@@ -38,254 +38,350 @@ shader_parameter/minor_spacing = 1.0
 shader_parameter/major_spacing = 10.0
 shader_parameter/minor_fade_distance = 70.0
 
-[node name="Level03" type="Node3D"]
+[node name="Level03" type="Node3D" unique_id=1241808004]
 
-[node name="StaticBody3D" type="StaticBody3D" parent="."]
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=1267503663]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1029670822]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 shape = SubResource("BoxShape3D_bhunq")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D" unique_id=1476996421]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 visible = false
 mesh = SubResource("BoxMesh_bhunq")
 surface_material_override/0 = SubResource("ShaderMaterial_floor")
 
-[node name="MagazinePickup" parent="StaticBody3D" instance=ExtResource("2_1jt1u")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.800, 0.00000, 118.000)
+[node name="MagazinePickup" parent="StaticBody3D" unique_id=699391947 instance=ExtResource("2_1jt1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.8, 0, 118)
 
-[node name="MagazinePickup2" parent="StaticBody3D" instance=ExtResource("2_1jt1u")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.900, 0.00000, 118.000)
+[node name="MagazinePickup2" parent="StaticBody3D" unique_id=783521147 instance=ExtResource("2_1jt1u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.9, 0, 118)
 
-[node name="Kiwi" parent="StaticBody3D" instance=ExtResource("3_er0or")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 49.000, 0.00090, -37.080)
+[node name="Kiwi" parent="StaticBody3D" unique_id=2032713272 instance=ExtResource("3_er0or")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 49, 0.0009, -37.08)
 
-[node name="LaserKiwi" parent="StaticBody3D" instance=ExtResource("4_laser")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.865, 0.00090, -14.800)
+[node name="LaserKiwi" parent="StaticBody3D" unique_id=341260153 instance=ExtResource("4_laser")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.865, 0.0009, -14.8)
+attack_range = 18.0
+hunt_call_interval = Vector2(3.5, 6.5)
+armour_threshold = 0.6
+plate_health = 3
+plate_alerts = true
+pulses = 4
+pulse_gap = 0.16
+pulse_damage = 9.0
+pulse_spread = 0.14
+bolt_speed = 38.0
+lead_shots = true
+burst_recover = 0.8
+charge_time = 1.1
+beam_time = 1.4
+beam_dps = 30.0
+beam_recover = 1.8
+beam_track = 10.0
+beam_chance = 0.4
+beam_cooldown = 6.0
+laser_range = 40.0
 
-[node name="Kiwi3" parent="StaticBody3D" instance=ExtResource("3_er0or")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.892, 0.00090, 0.347)
+[node name="Kiwi3" parent="StaticBody3D" unique_id=60822380 instance=ExtResource("3_er0or")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.892, 0.0009, 0.347)
 
-[node name="Kiwi4" parent="StaticBody3D" instance=ExtResource("3_er0or")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44.428, 0.00090, 19.413)
+[node name="Kiwi4" parent="StaticBody3D" unique_id=666078131 instance=ExtResource("3_er0or")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44.428, 0.0009, 19.413)
 
-[node name="SniperKiwi" parent="StaticBody3D" instance=ExtResource("5_sniper")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 56.6, 6.45, 32.0)
+[node name="SniperKiwi" parent="StaticBody3D" unique_id=191314315 instance=ExtResource("5_sniper")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 56.6, 6.45, 32)
+sight_line_radius = 0.008
+slug_speed = 95.0
+slug_damage = 30.0
+slug_thickness = 2.6
+aim_lock_before = 0.3
+hunt_call_interval = Vector2(3.5, 6.5)
+armour_threshold = 0.6
+plate_health = 3
+plate_alerts = true
+pulse_gap = 0.16
+pulse_damage = 9.0
+pulse_spread = 0.14
+bolt_speed = 38.0
+lead_shots = true
+burst_recover = 0.8
 wander_radius = 0.0
 walk_chance = 0.0
 
-[node name="Kiwi6" parent="StaticBody3D" instance=ExtResource("3_er0or")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.009, 0.00090, 56.769)
+[node name="Kiwi6" parent="StaticBody3D" unique_id=2104989006 instance=ExtResource("3_er0or")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.009, 0.0009, 56.769)
 
-[node name="LaserKiwi2" parent="StaticBody3D" instance=ExtResource("4_laser")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50.579, 0.00090, 74.215)
+[node name="LaserKiwi2" parent="StaticBody3D" unique_id=376134201 instance=ExtResource("4_laser")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50.579, 0.0009, 74.215)
+attack_range = 18.0
+hunt_call_interval = Vector2(3.5, 6.5)
+armour_threshold = 0.6
+plate_health = 3
+plate_alerts = true
+pulses = 4
+pulse_gap = 0.16
+pulse_damage = 9.0
+pulse_spread = 0.14
+bolt_speed = 38.0
+lead_shots = true
+burst_recover = 0.8
+charge_time = 1.1
+beam_time = 1.4
+beam_dps = 30.0
+beam_recover = 1.8
+beam_track = 10.0
+beam_chance = 0.4
+beam_cooldown = 6.0
+laser_range = 40.0
 
-[node name="MortarKiwi" parent="StaticBody3D" instance=ExtResource("6_mortar")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42.0, 0.00090, 30.0)
+[node name="MortarKiwi" parent="StaticBody3D" unique_id=477153517 instance=ExtResource("6_mortar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0.0009, 30)
+min_range = 8.0
+max_range = 60.0
+flight_time = 2.6
+cooldown = 6.0
+first_shot_delay = 1.5
+blast_radius = 3.5
+blast_damage = 38.0
+cover_factor = 0.35
+flee_range = 10.0
 
-[node name="PlayerSpawn" type="Marker3D" parent="." groups=["player_spawn"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.632, 2.33, 136.366)
+[node name="PlayerSpawn" type="Marker3D" parent="." unique_id=2072896406 groups=["player_spawn"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.632, 2.33, 111.022125)
 
-[node name="HeliApproach" type="Marker3D" parent="." groups=["heli_approach"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48.0, 30.0, -55.0)
+[node name="HeliApproach" type="Marker3D" parent="." unique_id=1406553358 groups=["heli_approach"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 30, -55)
 
-[node name="HillRing" type="Node3D" parent="."]
+[node name="HillRing" type="Node3D" parent="." unique_id=1858773005]
 script = ExtResource("90_hills")
 noise_seed = 4417
 
-[node name="Foliage" type="Node3D" parent="."]
+[node name="Foliage" type="Node3D" parent="." unique_id=661064573]
 script = ExtResource("91_foliage")
 scatter_seed = 9020
 
-[node name="Stronghold" type="Node3D" parent="."]
+[node name="Stronghold" type="Node3D" parent="." unique_id=1926997765]
 
-[node name="WallN0" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 40.000, 0.000, 35.000)
+[node name="WallN0" type="StaticBody3D" parent="Stronghold" unique_id=961447830]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 35)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall1")
 
-[node name="WallS1" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 40.000, 0.000, 15.000)
+[node name="WallS1" type="StaticBody3D" parent="Stronghold" unique_id=174065750]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 15)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall2")
 
-[node name="WallN2" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 44.000, 0.000, 35.000)
+[node name="WallN2" type="StaticBody3D" parent="Stronghold" unique_id=310895919]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44, 0, 35)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall1")
 
-[node name="WallS3" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 44.000, 0.000, 15.000)
+[node name="WallS3" type="StaticBody3D" parent="Stronghold" unique_id=248127055]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44, 0, 15)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall2")
 
-[node name="WallN4" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 48.000, 0.000, 35.000)
+[node name="WallN4" type="StaticBody3D" parent="Stronghold" unique_id=1790370486]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 0, 35)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall1")
 
-[node name="WallS5" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 48.000, 0.000, 15.000)
+[node name="WallS5" type="StaticBody3D" parent="Stronghold" unique_id=1108735666]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 0, 15)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall2")
 
-[node name="WallN6" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 52.000, 0.000, 35.000)
+[node name="WallN6" type="StaticBody3D" parent="Stronghold" unique_id=1185978025]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 0, 35)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall1")
 
-[node name="WallS7" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 52.000, 0.000, 15.000)
+[node name="WallS7" type="StaticBody3D" parent="Stronghold" unique_id=1302386813]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 0, 15)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall2")
 
-[node name="WallN8" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 56.000, 0.000, 35.000)
+[node name="WallN8" type="StaticBody3D" parent="Stronghold" unique_id=870203180]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56, 0, 35)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall1")
 
-[node name="WallS9" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 56.000, 0.000, 15.000)
+[node name="WallS9" type="StaticBody3D" parent="Stronghold" unique_id=1582122036]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56, 0, 15)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall2")
 
-[node name="WallW10" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 38.000, 0.000, 17.000)
+[node name="WallW10" type="StaticBody3D" parent="Stronghold" unique_id=909587010]
+transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 38, 0, 17)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall1")
 
-[node name="WallW11" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 38.000, 0.000, 21.000)
+[node name="WallW11" type="StaticBody3D" parent="Stronghold" unique_id=2053831177]
+transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 38, 0, 21)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall2")
 
-[node name="WallW12" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 38.000, 0.000, 25.000)
+[node name="WallW12" type="StaticBody3D" parent="Stronghold" unique_id=735278230]
+transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 38, 0, 25)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall1")
 
-[node name="WallW13" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 38.000, 0.000, 29.000)
+[node name="WallW13" type="StaticBody3D" parent="Stronghold" unique_id=1642279921]
+transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 38, 0, 29)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall2")
 
-[node name="WallW14" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 38.000, 0.000, 33.000)
+[node name="WallW14" type="StaticBody3D" parent="Stronghold" unique_id=1673616793]
+transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 38, 0, 33)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall1")
 
-[node name="WallE15" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 58.000, 0.000, 17.000)
+[node name="WallE15" type="StaticBody3D" parent="Stronghold" unique_id=399848574]
+transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 58, 0, 17)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall2")
 
-[node name="WallE16" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 58.000, 0.000, 21.000)
+[node name="WallE16" type="StaticBody3D" parent="Stronghold" unique_id=276524693]
+transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 58, 0, 21)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall1")
 
-[node name="WallE17" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 58.000, 0.000, 29.000)
+[node name="WallE17" type="StaticBody3D" parent="Stronghold" unique_id=781241693]
+transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 58, 0, 29)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall2")
 
-[node name="WallE18" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 58.000, 0.000, 33.000)
+[node name="WallE18" type="StaticBody3D" parent="Stronghold" unique_id=261307938]
+transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 58, 0, 33)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_wall1")
 
-[node name="TowerLegWS" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 53.500, 0.000, 30.500)
+[node name="TowerLegWS" type="StaticBody3D" parent="Stronghold" unique_id=1826155080]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53.5, 0, 30.5)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_pillar")
 
-[node name="TowerLegES" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 56.500, 0.000, 30.500)
+[node name="TowerLegES" type="StaticBody3D" parent="Stronghold" unique_id=268024547]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56.5, 0, 30.5)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_pillar")
 
-[node name="TowerLegWN" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 53.500, 0.000, 33.500)
+[node name="TowerLegWN" type="StaticBody3D" parent="Stronghold" unique_id=876161972]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53.5, 0, 33.5)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_pillar")
 
-[node name="TowerLegEN" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 56.500, 0.000, 33.500)
+[node name="TowerLegEN" type="StaticBody3D" parent="Stronghold" unique_id=776917978]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56.5, 0, 33.5)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_pillar")
 
-[node name="TowerDeck" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 55.000, 6.000, 32.000)
+[node name="TowerDeck" type="StaticBody3D" parent="Stronghold" unique_id=1330934807]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 55, 6, 32)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_deck")
 
-[node name="ParapetN" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 55.000, 6.400, 33.850)
+[node name="ParapetN" type="StaticBody3D" parent="Stronghold" unique_id=1794223096]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 55, 6.4, 33.85)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_bar_b1")
 
-[node name="ParapetS" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 55.000, 6.400, 30.150)
+[node name="ParapetS" type="StaticBody3D" parent="Stronghold" unique_id=342971011]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 55, 6.4, 30.15)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_bar_b1")
 
-[node name="ParapetW" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 53.150, 6.400, 32.000)
+[node name="ParapetW" type="StaticBody3D" parent="Stronghold" unique_id=153572495]
+transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 53.15, 6.4, 32)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_bar_b1")
 
-[node name="Container" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 44.000, 0.000, 20.000)
+[node name="Container" type="StaticBody3D" parent="Stronghold" unique_id=2099314569]
+transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 44, 0, 20)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_container")
 
-[node name="Crate" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(0.8192, 0, 0.5736, 0, 1, 0, -0.5736, 0, 0.8192, 50.000, 0.000, 29.000)
+[node name="Crate" type="StaticBody3D" parent="Stronghold" unique_id=18536707]
+transform = Transform3D(0.8192, 0, 0.5736, 0, 1, 0, -0.5736, 0, 0.8192, 50, 0, 29)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_crate1")
 
-[node name="Barrel" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, 51.200, 0.000, 29.600)
+[node name="Barrel" type="StaticBody3D" parent="Stronghold" unique_id=890932343]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 51.2, 0, 29.6)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_barrel1")
 
-[node name="Pallet" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(0.9397, 0, -0.342, 0, 1, 0, 0.342, 0, 0.9397, 45.000, 0.000, 31.000)
+[node name="Pallet" type="StaticBody3D" parent="Stronghold" unique_id=2101265274]
+transform = Transform3D(0.9397, 0, -0.342, 0, 1, 0, 0.342, 0, 0.9397, 45, 0, 31)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_pallet")
 
-[node name="GapCover" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 62.000, 0.000, 25.000)
+[node name="GapCover" type="StaticBody3D" parent="Stronghold" unique_id=322682243]
+transform = Transform3D(6.123e-17, 0, 1, 0, 1, 0, -1, 0, 6.123e-17, 62, 0, 25)
+collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_bar_b4")
 
-[node name="AlarmHorn" type="StaticBody3D" parent="Stronghold"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50.0, 0.0, 25.0)
+[node name="AlarmHorn" type="StaticBody3D" parent="Stronghold" unique_id=406708953]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 0, 25)
 script = ExtResource("101_horn")
 
-[node name="ObjectiveStoreA" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44.0, 0.0, 22.0)
+[node name="ObjectiveStoreA" type="Node3D" parent="." unique_id=1041875460]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44, 0, 22)
 script = ExtResource("obj_script")
 id = &"store_a"
 kind = 2
 label = "Charge the first store"
-prompt = "Place a charge"
 work_time = 3.5
+prompt = "Place a charge"
 fuse = 45.0
 
-[node name="ObjectiveStoreB" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56.0, 0.0, 30.0)
+[node name="ObjectiveStoreB" type="Node3D" parent="." unique_id=854412092]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56, 0, 30)
 script = ExtResource("obj_script")
 id = &"store_b"
 kind = 2
 label = "Charge the second store"
-prompt = "Place a charge"
 work_time = 3.5
+prompt = "Place a charge"
 fuse = 45.0
 
-[node name="ObjectiveExfil" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.0, 0.0, 54.0)
+[node name="ObjectiveExfil" type="Node3D" parent="." unique_id=1488656307]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32, 0, 54)
 script = ExtResource("obj_script")
 id = &"exfil"
 kind = 3
