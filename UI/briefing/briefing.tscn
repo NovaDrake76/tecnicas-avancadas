@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://briefing0sheet"]
+
+[ext_resource type="Script" path="res://UI/briefing/briefing.gd" id="1_brief"]
+
+[node name="Briefing" type="CanvasLayer"]
+layer = 45
+script = ExtResource("1_brief")

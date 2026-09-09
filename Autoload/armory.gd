@@ -5,7 +5,7 @@ signal changed
 signal refused(message: String)
 signal bought(part: Part)
 signal part_installed(part: Part)
-signal deploy_requested
+signal deploy_requested(briefed: bool)
 
 const SLOTS := 2
 const START_POINTS := 500
@@ -271,8 +271,8 @@ func apply_to_player(player: Node) -> void:
 	changed.emit()
 
 
-func deploy() -> void:
-	deploy_requested.emit()
+func deploy(briefed := false) -> void:
+	deploy_requested.emit(briefed)
 
 
 func _on_level_cleared(_index: int, summary: Dictionary) -> void:

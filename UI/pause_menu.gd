@@ -55,6 +55,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func can_pause() -> bool:
+	var brief := get_tree().get_first_node_in_group("briefing")
+	if brief != null and brief.is_open():
+		return false
 	return Player.local(get_tree()) != null
 
 

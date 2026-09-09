@@ -1,11 +1,10 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://UI/main_menu.gd" id="1_root"]
 [ext_resource type="Script" path="res://UI/menu_ui.gd" id="2_ui"]
-[ext_resource type="PackedScene" path="res://Characters/Enemy/kiwi.tscn" id="3_kiwi"]
 [ext_resource type="Shader" path="res://Shaders/sky.gdshader" id="4_sky"]
-[ext_resource type="Shader" path="res://Shaders/terrain_grass.gdshader" id="5_grass"]
-[ext_resource type="Script" path="res://Levels/foliage.gd" id="6_foliage"]
+[ext_resource type="Script" path="res://UI/menu_reel.gd" id="7_reel"]
+[ext_resource type="Script" path="res://UI/vhs_layer.gd" id="8_vhs"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("4_sky")
@@ -14,7 +13,7 @@ shader_parameter/horizon_color = Color(0.63, 0.77, 0.89, 1)
 shader_parameter/ground_color = Color(0.2, 0.22, 0.24, 1)
 shader_parameter/cloud_color = Color(1, 1, 1, 1)
 shader_parameter/cloud_shadow = Color(0.52, 0.59, 0.7, 1)
-shader_parameter/cloud_cover = 0.4
+shader_parameter/cloud_cover = 0.55
 shader_parameter/cloud_sharpness = 0.25
 shader_parameter/cloud_scale = 0.6
 shader_parameter/horizon_softness = 0.15
@@ -27,15 +26,10 @@ sky_material = SubResource("ShaderMaterial_sky")
 background_mode = 2
 sky = SubResource("Sky_menu")
 tonemap_mode = 2
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_grass"]
-shader = ExtResource("5_grass")
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
-size = Vector2(60, 60)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
-size = Vector3(60, 1, 60)
+fog_enabled = true
+fog_light_color = Color(0.66, 0.73, 0.8, 1)
+fog_density = 0.0045
+fog_sky_affect = 0.15
 
 [node name="MainMenu" type="Node3D"]
 script = ExtResource("1_root")
@@ -48,40 +42,11 @@ transform = Transform3D(0.81915, 0.40558, -0.40558, 0, 0.7071, 0.7071, 0.57358, 
 light_energy = 1.1
 shadow_enabled = true
 
-[node name="Ground" type="StaticBody3D" parent="."]
-collision_layer = 1
-collision_mask = 0
+[node name="Reel" type="Node3D" parent="."]
+script = ExtResource("7_reel")
 
-[node name="Mesh" type="MeshInstance3D" parent="Ground"]
-mesh = SubResource("PlaneMesh_ground")
-surface_material_override/0 = SubResource("ShaderMaterial_grass")
-
-[node name="Shape" type="CollisionShape3D" parent="Ground"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
-shape = SubResource("BoxShape3D_ground")
-
-[node name="Kiwi" parent="." instance=ExtResource("3_kiwi")]
-transform = Transform3D(0.7071, 0, 0.7071, 0, 1, 0, -0.7071, 0, 0.7071, 0, 0.02, 0)
-walk_chance = 0.0
-hearing = false
-
-[node name="Foliage" type="Node3D" parent="."]
-script = ExtResource("6_foliage")
-scatter_seed = 7
-clear_radius = 40.0
-ring_scale = 0.08
-tree_count = 36
-range_grass_count = 0
-grass_count = 160
-rock_count = 8
-fern_count = 30
-debris_count = 6
-tree_collision = false
-rock_collision = false
-
-[node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.15, 0.62, 1.75)
-fov = 50.0
+[node name="Vhs" type="CanvasLayer" parent="."]
+script = ExtResource("8_vhs")
 
 [node name="MenuUI" type="CanvasLayer" parent="."]
 script = ExtResource("2_ui")

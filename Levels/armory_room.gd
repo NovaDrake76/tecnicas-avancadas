@@ -25,7 +25,7 @@ func _ready() -> void:
 	add_child(_panel)
 	_board = BOARD.new()
 	add_child(_board)
-	_board.deploy_pressed.connect(func() -> void: Armory.deploy())
+	_board.deploy_pressed.connect(func() -> void: Armory.deploy(true))
 
 
 func open_panel() -> void:

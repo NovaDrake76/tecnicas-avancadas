@@ -1343,13 +1343,13 @@ script = ExtResource("5_prop")
 model = ExtResource("m_toolbox")
 
 [node name="BenchBox" parent="Bench" unique_id=439871421 instance=ExtResource("a_box5")]
-transform = Transform3D(0.9397, 0, -0.342, 0, 1, 0, 0.342, 0, 0.9397, -0.45, 0.96, -0.15)
+transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, -0.45, 0.96, -0.15)
 
 [node name="BenchMag" parent="Bench" unique_id=1824068662 instance=ExtResource("a_pmag")]
-transform = Transform3D(0.766, 0, 0.6428, 0, 1, 0, -0.6428, 0, 0.766, 0.05, 1.04, 0.2)
+transform = Transform3D(-0.3172962, 0.9483237, 2.2773456e-08, -4.260705e-08, 9.758574e-09, -0.99997383, -0.94829893, -0.31730452, 3.7308915e-08, 0.05000019, 0.9742665, -0.14809322)
 
 [node name="BenchPaint" type="StaticBody3D" parent="Bench" unique_id=1978913982]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1, 0.96, -0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45174503, 0.96, 0.39480114)
 collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_paint")

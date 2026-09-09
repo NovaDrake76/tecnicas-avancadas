@@ -26,23 +26,82 @@ const LEVELS := [
 	{"path": "res://Levels/level_01.tscn", "name": "North Field", "par": 90.0, "reinforcements": true,
 		"optional": ["clear_field", "no_shots", "horn_cut", "no_body_found"],
 		"brief": "A forward supply camp. Command wants the two advanced birds working out of it taken off the board, and the crate of range-finding gear they brought with them. Take them out, take the case, and walk out the way you came. The camp keeps three ordinary sentries and an alarm horn by the container: a bird that sees you runs for it.",
-		"image": "res://UI/missions/level_01.png"},
+		"image": "res://UI/missions/level_01.png",
+		"briefing": [
+			{"view": [-14.0, 136.0, 1.0], "time": 0.0, "hold": 0.6},
+			{"say": "GHOST KIWI RECON. BRIEFING FOR OPERATION NORTH FIELD.", "hold": 0.8},
+			{"say": "THE KIWI EMPIRE ROSE IN NEW ZEALAND.", "stain": ["NZL"], "hold": 1.0},
+			{"say": "THE EAST COAST OF AUSTRALIA WAS THE FIRST TO FALL.", "stain": ["AUS-E"], "hold": 1.0},
+			{"say": "FROM THERE THE BIRDS WENT NORTH.", "stain": ["PNG", "IDN", "PHL"], "hold": 1.0},
+			{"say": "INDOCHINA FELL IN ONE SEASON.", "stain": ["THA", "KHM", "VNM", "LAO"], "hold": 1.0},
+			{"say": "THREE CHINESE PROVINCES ARE UNDER THE BIRD.", "stain": ["CN-GX", "CN-FJ", "CN-ZJ"], "hold": 1.0},
+			{"say": "JAPAN AND KOREA WENT QUIET LAST MONTH.", "stain": ["JPN", "KOR"], "hold": 1.4},
+			{"clear": true, "say": "YOUR MISSION: INFILTRATE THE EMPIRE AND BREAK IT FROM THE INSIDE.", "hold": 1.6},
+			{"clear": true, "view": [-37.9, 176.6, 7.0], "time": 2.6, "say": "DEPLOYMENT: POINT X. BAY OF PLENTY, NORTH ISLAND.", "hold": 0.4},
+			{"mark": [-37.75, 176.9, "POINT X"], "hold": 0.8},
+			{"say": "FIRST TASK: AN ADVANCED KIWI POST NEAR THE COAST. TWO ADVANCED BIRDS, AND THE CASE THEY BROUGHT WITH THEM.", "hold": 1.0},
+			{"say": "TAKE THEM OUT, TAKE THE CASE, WALK OUT THE WAY YOU CAME.", "hold": 1.0},
+		]},
 	{"path": "res://Levels/level_02.tscn", "name": "The Woods", "par": 110.0, "reinforcements": true,
 		"optional": ["no_shots", "no_body_found", "ghost"],
 		"brief": "The field station the camp reported to. The records room holds the empire's supply manifests: take them and get out, and nobody needs to know you were here. The woods are held by six birds, one of them armoured with laser eyes, a sniper watching the approach and a mortar that shells wherever they last saw you.",
-		"image": "res://UI/missions/level_02.png"},
+		"image": "res://UI/missions/level_02.png",
+		"briefing": [
+			{"view": [-14.0, 136.0, 1.0], "time": 0.0, "stain": ["NZL", "AUS-E", "PNG", "IDN", "PHL", "THA", "KHM", "VNM", "LAO", "CN-GX", "CN-FJ", "CN-ZJ", "JPN", "KOR"], "stagger": 0.08, "hold": 0.8},
+			{"say": "GHOST KIWI RECON. MISSION 02: THE WOODS.", "hold": 0.8},
+			{"say": "THE COAST POST IS QUIET. THE CASE YOU BROUGHT OUT NAMED THE STATION IT REPORTED TO.", "hold": 1.0},
+			{"clear": true, "view": [-38.1, 176.7, 5.0], "time": 2.6, "mark": [-37.75, 176.9, "NORTH FIELD", "done"], "say": "A FIELD STATION IN THE KAINGAROA PINES, SOUTH OF THE COAST.", "hold": 0.4},
+			{"line": [-37.75, 176.9, -38.45, 176.55], "mark": [-38.45, 176.55, "THE WOODS"], "hold": 1.0},
+			{"say": "THE RECORDS ROOM HOLDS THE EMPIRE'S SUPPLY MANIFESTS. TAKE THEM AND LEAVE NOBODY THE WISER.", "hold": 1.0},
+			{"say": "SIX BIRDS HOLD THE WOODS. ONE IS ARMOURED, WITH LASER EYES. A SNIPER WATCHES THE APPROACH. A MORTAR ANSWERS WHEREVER THEY LAST SAW YOU.", "hold": 1.2},
+			{"say": "GO IN QUIET. THE STATION MUST NOT KNOW IT WAS READ.", "hold": 1.0},
+		]},
 	{"path": "res://Levels/level_03.tscn", "name": "The Summit", "par": 130.0, "reinforcements": true,
 		"optional": ["horn_cut", "no_body_found", "ghost"],
 		"brief": "The manifests named this place: the depot the whole northern front is armed out of. Put charges on both stores and be off the mountain when they go. A walled compound, a sniper on the watchtower who sees the whole approach, two armoured laser kiwis, a mortar and a horn in the yard. The charges are loud by design, so the way out is the hard half.",
-		"image": "res://UI/missions/level_03.png"},
+		"image": "res://UI/missions/level_03.png",
+		"briefing": [
+			{"view": [-14.0, 136.0, 1.0], "time": 0.0, "stain": ["NZL", "AUS-E", "PNG", "IDN", "PHL", "THA", "KHM", "VNM", "LAO", "CN-GX", "CN-FJ", "CN-ZJ", "JPN", "KOR"], "stagger": 0.08, "hold": 0.8},
+			{"say": "GHOST KIWI RECON. MISSION 03: THE SUMMIT.", "hold": 0.8},
+			{"say": "THE MANIFESTS NAMED THE DEPOT THAT ARMS THE WHOLE NORTHERN FRONT.", "hold": 1.0},
+			{"clear": true, "view": [-38.9, 176.1, 4.6], "time": 2.6, "mark": [-37.75, 176.9, "NORTH FIELD", "done"], "say": "A WALLED COMPOUND ON THE CENTRAL PLATEAU, UNDER THE VOLCANOES.", "hold": 0.2},
+			{"mark": [-38.45, 176.55, "THE WOODS", "done"], "line": [-38.45, 176.55, -39.28, 175.57], "hold": 0.2},
+			{"mark": [-39.28, 175.57, "THE SUMMIT"], "hold": 1.0},
+			{"say": "PUT CHARGES ON BOTH STORES AND BE OFF THE MOUNTAIN WHEN THEY GO.", "hold": 1.0},
+			{"say": "A SNIPER ON THE WATCHTOWER SEES THE WHOLE APPROACH. TWO ARMOURED BIRDS, A MORTAR, AND A HORN IN THE YARD.", "hold": 1.2},
+			{"say": "THE CHARGES ARE LOUD BY DESIGN. THE WAY OUT IS THE HARD HALF.", "hold": 1.0},
+		]},
 	{"path": "res://Levels/level_04.tscn", "name": "The Crossing", "par": 100.0, "reinforcements": true,
 		"optional": ["no_shots", "horn_cut", "no_body_found"],
 		"brief": "The road the depot fed. A staging camp went up on the crossing within a week of the mountain going quiet, and the paperwork moving through it is the next thread: take the manifests out of it and leave the way you came. The camp is held in numbers now: ten sentries on the crates and the gate, two armoured birds with laser eyes, a pair of chargers that close the moment they hear you, a sniper on the open ground and a mortar behind the containers. Every one of them carries a blaster, the manifests are guarded up the road, and the horn in the yard calls more.",
-		"image": "res://UI/missions/level_04.png"},
+		"image": "res://UI/missions/level_04.png",
+		"briefing": [
+			{"view": [-14.0, 136.0, 1.0], "time": 0.0, "stain": ["NZL", "AUS-E", "PNG", "IDN", "PHL", "THA", "KHM", "VNM", "LAO", "CN-GX", "CN-FJ", "CN-ZJ", "JPN", "KOR"], "stagger": 0.08, "hold": 0.8},
+			{"say": "GHOST KIWI RECON. MISSION 04: THE CROSSING.", "hold": 0.8},
+			{"say": "THE MOUNTAIN WENT QUIET. WITHIN A WEEK A STAGING CAMP WENT UP ON THE ROAD THE DEPOT FED.", "hold": 1.0},
+			{"clear": true, "view": [-39.7, 175.9, 4.2], "time": 2.6, "mark": [-38.45, 176.55, "THE WOODS", "done"], "say": "THE MANAWATU GORGE, WHERE THE ROAD CROSSES TO THE SOUTH.", "hold": 0.2},
+			{"mark": [-39.28, 175.57, "THE SUMMIT", "done"], "line": [-39.28, 175.57, -40.32, 175.78], "hold": 0.2},
+			{"mark": [-40.32, 175.78, "THE CROSSING"], "hold": 1.0},
+			{"say": "THE PAPERWORK MOVING THROUGH IT IS THE NEXT THREAD. TAKE THE MANIFESTS AND LEAVE THE WAY YOU CAME.", "hold": 1.0},
+			{"say": "TEN SENTRIES ON THE CRATES AND THE GATE. TWO ARMOURED BIRDS. TWO CHARGERS THAT CLOSE THE MOMENT THEY HEAR YOU. A SNIPER ON THE OPEN GROUND, A MORTAR BEHIND THE CONTAINERS.", "hold": 1.2},
+			{"say": "EVERY ONE OF THEM CARRIES A BLASTER, AND THE HORN CALLS MORE.", "hold": 1.0},
+		]},
 	{"path": "res://Levels/level_05.tscn", "name": "The Long Yard", "par": 115.0, "reinforcements": true,
 		"optional": ["horn_cut", "no_body_found", "ghost"],
 		"brief": "The empire answered the crossing by building bigger. The long yard is the same camp twice over -- twice the crates, twice the walls, the same six birds spread thin across it -- and the manifests are at the far end of it. More cover to cross means more cover to use; the mortar behind it means standing still in that cover is what gets you killed.",
-		"image": "res://UI/missions/level_05.png"},
+		"image": "res://UI/missions/level_05.png",
+		"briefing": [
+			{"view": [-14.0, 136.0, 1.0], "time": 0.0, "stain": ["NZL", "AUS-E", "PNG", "IDN", "PHL", "THA", "KHM", "VNM", "LAO", "CN-GX", "CN-FJ", "CN-ZJ", "JPN", "KOR"], "stagger": 0.08, "hold": 0.8},
+			{"say": "GHOST KIWI RECON. MISSION 05: THE LONG YARD.", "hold": 0.8},
+			{"say": "THE EMPIRE ANSWERED THE CROSSING BY BUILDING BIGGER.", "hold": 1.0},
+			{"clear": true, "view": [-40.7, 175.3, 4.2], "time": 2.6, "mark": [-39.28, 175.57, "THE SUMMIT", "done"], "say": "A YARD IN THE HUTT VALLEY, AT THE GATES OF THE CAPITAL.", "hold": 0.2},
+			{"mark": [-40.32, 175.78, "THE CROSSING", "done"], "line": [-40.32, 175.78, -41.2, 174.92], "hold": 0.2},
+			{"mark": [-41.2, 174.92, "THE LONG YARD"], "hold": 1.0},
+			{"say": "THE SAME CAMP TWICE OVER: TWICE THE CRATES, TWICE THE WALLS, SIX BIRDS SPREAD THIN ACROSS IT.", "hold": 1.0},
+			{"say": "THE MANIFESTS ARE AT THE FAR END. MORE COVER TO CROSS MEANS MORE COVER TO USE.", "hold": 1.0},
+			{"say": "THE MORTAR BEHIND IT MEANS STANDING STILL IN THAT COVER IS WHAT GETS YOU KILLED.", "hold": 1.0},
+			{"say": "THIS IS THE LAST THREAD. PULL IT.", "hold": 1.2},
+		]},
 ]
 
 const OPEN_AT_START := 2
@@ -102,6 +161,16 @@ func current() -> Dictionary:
 
 func level_path() -> String:
 	return String(current()["path"])
+
+
+func has_briefing(index: int) -> bool:
+	return index >= 0 and index < LEVELS.size() and not (LEVELS[index].get("briefing", []) as Array).is_empty()
+
+
+func briefing_of(index: int) -> Array:
+	if not has_briefing(index):
+		return []
+	return LEVELS[index]["briefing"] as Array
 
 
 func start_run() -> void:

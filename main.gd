@@ -10,6 +10,7 @@ const WAVE_FALLBACK_DISTANCE := 40.0
 
 @onready var players: Node3D = $Players
 @onready var level_holder: Node3D = $LevelHolder
+@onready var briefing: Briefing = $Briefing
 
 var _level: Node
 var _waves := 0
@@ -25,6 +26,7 @@ func _ready() -> void:
 	Alarm.reinforcements_due.connect(_on_reinforcements_due)
 	Armory.deploy_requested.connect(_on_deploy)
 	Run.restart_requested.connect(_on_restart)
+	briefing.go_pressed.connect(_on_briefing_go)
 	multiplayer.peer_disconnected.connect(_on_peer_left)
 
 	if multiplayer.is_server():
@@ -115,7 +117,7 @@ func _go_armory() -> void:
 
 
 @rpc("authority", "call_local", "reliable")
-func _go_level(index: int) -> void:
+func _go_level(index: int, briefed: bool) -> void:
 	Run.level_index = index
 	_waves = 0
 	if PauseMenu.is_open():
@@ -124,29 +126,45 @@ func _go_level(index: int) -> void:
 	if who != null:
 		who.process_mode = Node.PROCESS_MODE_INHERIT
 		Armory.apply_to_player(who)
+	if briefed:
+		briefing.arm(index)
+		if who != null:
+			who.process_mode = Node.PROCESS_MODE_DISABLED
 	await Fade.cover()
+	if briefed:
+		briefing.present()
 	_load_level()
+
+
+@rpc("authority", "call_local", "reliable")
+func _release_briefing() -> void:
+	briefing.release()
+
+
+func _on_briefing_go() -> void:
+	if multiplayer.is_server():
+		_release_briefing.rpc()
 
 
 @rpc("authority", "call_remote", "reliable")
 func _send_world(run_state: int, index: int) -> void:
 	Run.level_index = index
 	if run_state == Run.State.PLAYING:
-		_go_level(index)
+		_go_level(index, false)
 	else:
 		_go_armory()
 
 
-func _on_deploy() -> void:
+func _on_deploy(briefed: bool) -> void:
 	if not multiplayer.is_server():
 		return
-	_go_level.rpc(Run.level_index)
+	_go_level.rpc(Run.level_index, briefed and Run.has_briefing(Run.level_index))
 
 
 func _on_restart(index: int) -> void:
 	if not multiplayer.is_server():
 		return
-	_go_level.rpc(index)
+	_go_level.rpc(index, false)
 
 
 func _load_level() -> void:
@@ -160,6 +178,8 @@ func _load_level() -> void:
 		return
 
 	_level = packed.instantiate()
+	if briefing.is_open():
+		_level.process_mode = Node.PROCESS_MODE_DISABLED
 	level_holder.add_child(_level)
 
 	## the kiwis register in _ready and the terrain has to exist before the player is placed, so both happen a frame before the run counts.
@@ -170,9 +190,17 @@ func _begin() -> void:
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	NavBake.bake(_level, _level)
+	if briefing.is_open():
+		briefing.loaded()
+		if not briefing.is_released():
+			await briefing.dismissed
+	if _level == null or not is_instance_valid(_level):
+		return
+	_level.process_mode = Node.PROCESS_MODE_INHERIT
 	move_player_to_spawn()
 	var here := _player()
 	if here != null:
+		here.process_mode = Node.PROCESS_MODE_INHERIT
 		here.restore()
 	Run.begin_level(_level)
 	Fade.uncover()
