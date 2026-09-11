@@ -1,65 +1,66 @@
-[gd_scene format=3 uid="uid://bat8pjypmauq1"]
+[gd_scene load_steps=68 format=3 uid="uid://bat8pjypmauq1"]
 
-[ext_resource type="Script" uid="uid://mqcvgugsyxwe" path="res://Levels/armory_room.gd" id="1_room"]
-[ext_resource type="Script" uid="uid://bppo7heu40u4f" path="res://Components/interactable.gd" id="3_inter"]
-[ext_resource type="Script" uid="uid://d1d8ife10a532" path="res://Levels/range_target.gd" id="4_target"]
-[ext_resource type="Script" uid="uid://ce7thhydb1ntv" path="res://Props/prop.gd" id="5_prop"]
-[ext_resource type="Script" uid="uid://d0pcr78tjv351" path="res://Levels/mission_board_3d.gd" id="6_board"]
-[ext_resource type="PackedScene" uid="uid://fqd2h75o62a7" path="res://Models/Ammo/ammo_box_mp_1.glb" id="a_box1"]
-[ext_resource type="PackedScene" uid="uid://gk2xibneg01o" path="res://Models/Ammo/ammo_box_mp_2.glb" id="a_box2"]
-[ext_resource type="PackedScene" uid="uid://l8m2kv1wptq5" path="res://Models/Ammo/ammo_box_mp_5.glb" id="a_box5"]
-[ext_resource type="PackedScene" uid="uid://d1okfuucok56j" path="res://Models/Ammo/pistol_mp_1_mag_loaded.glb" id="a_pmag"]
-[ext_resource type="PackedScene" uid="uid://b2oxtp3dfv57w" path="res://Models/Ammo/shotgun_ammo_2.glb" id="a_shells"]
-[ext_resource type="PackedScene" uid="uid://dek0uhtscifk1" path="res://Models/Props/Kit/lamp_mx_4_on.glb" id="m_barn"]
-[ext_resource type="PackedScene" uid="uid://bltxrf8kfcv5q" path="res://Models/Props/Kit/metal_barrel_hr_2.glb" id="m_barrel2"]
-[ext_resource type="PackedScene" uid="uid://doy23xtwi8jt3" path="res://Models/Props/Kit/metal_barrel_hr_4.glb" id="m_barrel4"]
-[ext_resource type="PackedScene" uid="uid://decay2lwp6qr7" path="res://Models/Props/Barricades/barricade_b_1.glb" id="m_bar_low"]
-[ext_resource type="PackedScene" uid="uid://bh8dto3jphmiv" path="res://Models/Props/Kit/bench_mx_1.glb" id="m_bench_seat"]
-[ext_resource type="PackedScene" uid="uid://dnagypduowx22" path="res://Models/Props/Kit/bucket_mx_1.glb" id="m_bucket"]
-[ext_resource type="PackedScene" uid="uid://bl3aaqw31mdjn" path="res://Models/Props/Kit/lamp_2_on.glb" id="m_bulkhead"]
-[ext_resource type="PackedScene" uid="uid://b2ps6fan6dw8" path="res://Models/Props/Kit/electrical_equipment_2.glb" id="m_cabinet"]
-[ext_resource type="PackedScene" uid="uid://cq2jpulcr66o7" path="res://Models/Props/Kit/floor_ceiling_hr_6.glb" id="m_ceiling"]
-[ext_resource type="PackedScene" uid="uid://c03pwmb2xsdxy" path="res://Models/Props/Kit/cement_bag_mp_1.glb" id="m_cement"]
-[ext_resource type="PackedScene" uid="uid://f8pils3h6nco" path="res://Models/Props/Kit/chair_mp_1.glb" id="m_chair"]
-[ext_resource type="PackedScene" uid="uid://c1rvbshlk47qy" path="res://Models/Props/Containers/wooden_crate_1.glb" id="m_crate1"]
-[ext_resource type="PackedScene" uid="uid://cd4as7wnhxl4q" path="res://Models/Props/Containers/wooden_crate_3.glb" id="m_crate3"]
-[ext_resource type="PackedScene" uid="uid://bulemloggm7oc" path="res://Models/Props/Kit/table_large_3.glb" id="m_desk"]
-[ext_resource type="PackedScene" uid="uid://bqe6ktehibwsk" path="res://Models/Props/Kit/doorway_hr_2_wide.glb" id="m_doorway"]
-[ext_resource type="PackedScene" uid="uid://bd58q0jx7i7ga" path="res://Models/Props/Kit/first_aid_kit_hr_1.glb" id="m_firstaid"]
-[ext_resource type="PackedScene" uid="uid://d3st22kqm4ifj" path="res://Models/Props/Kit/floor_ceiling_hr_3.glb" id="m_floor"]
-[ext_resource type="PackedScene" uid="uid://juj1j86i27qi" path="res://Models/Props/Kit/floor_ceiling_hr_4.glb" id="m_floor_range"]
-[ext_resource type="PackedScene" uid="uid://d005foytqjo68" path="res://Models/Props/Kit/gas_cylinder_mx_1.glb" id="m_gas"]
-[ext_resource type="PackedScene" uid="uid://dck6hfhvamakl" path="res://Models/Props/Kit/jerrycan_mx_1.glb" id="m_jerrycan"]
-[ext_resource type="PackedScene" uid="uid://du2ungcb3atgk" path="res://Models/Props/Kit/pc_keyboard_mp_1.glb" id="m_keyboard"]
-[ext_resource type="PackedScene" uid="uid://c3mim3rvf2b0l" path="res://Models/Props/Kit/wardrobe_mp_1.glb" id="m_locker"]
-[ext_resource type="PackedScene" uid="uid://dj6vkvmrr0gog" path="res://Models/Props/Kit/luggage_mp_1.glb" id="m_luggage"]
-[ext_resource type="PackedScene" uid="uid://cwt7pjn8e27up" path="res://Models/Props/Kit/map_mx_1.glb" id="m_map"]
-[ext_resource type="PackedScene" uid="uid://cnheksvmj440d" path="res://Models/Props/Kit/pc_monitor_mp_1.glb" id="m_monitor"]
-[ext_resource type="PackedScene" uid="uid://cwr6lwwh1jixs" path="res://Models/Props/Kit/package_hr_1.glb" id="m_package"]
-[ext_resource type="PackedScene" uid="uid://ytj022yo6uf7" path="res://Models/Props/Kit/paint_can_mx_1.glb" id="m_paint"]
-[ext_resource type="PackedScene" uid="uid://bvkmo8xy37bk2" path="res://Models/Props/Clutter/cement_bags_mp_1_pallet_1.glb" id="m_pallet"]
-[ext_resource type="PackedScene" uid="uid://ckeg1rj8a2qp3" path="res://Models/Props/Kit/pc_mp_1.glb" id="m_pc"]
-[ext_resource type="PackedScene" uid="uid://ivugch3de2rf" path="res://Models/Props/Kit/handheld_fm_radio_etx_1.glb" id="m_radio"]
-[ext_resource type="PackedScene" uid="uid://lgue1sly3i5v" path="res://Models/Props/Kit/monitoring_screen_mp_1.glb" id="m_screen"]
-[ext_resource type="PackedScene" uid="uid://ly57ge6e4t7t" path="res://Models/Props/Kit/shelf_mx_3.glb" id="m_shelf"]
-[ext_resource type="PackedScene" uid="uid://c846dy5crsj1p" path="res://Models/Props/Kit/speaker_mx_1.glb" id="m_speaker"]
-[ext_resource type="PackedScene" uid="uid://buwirtprq8yhn" path="res://Models/Props/Kit/stool_mx_1.glb" id="m_stool"]
-[ext_resource type="PackedScene" uid="uid://bpyot20st7ooo" path="res://Models/Props/Kit/ceiling_lamp_4_on.glb" id="m_strip"]
-[ext_resource type="PackedScene" uid="uid://dn3ueaxw2ww60" path="res://Models/Props/Containers/supply_crate_1.glb" id="m_supply"]
-[ext_resource type="PackedScene" uid="uid://6cp0d4l8n8gc" path="res://Models/Props/Kit/table_large_2.glb" id="m_table"]
-[ext_resource type="PackedScene" uid="uid://cuodaad3728t1" path="res://Models/Props/Clutter/toolbox_mx_1.glb" id="m_toolbox"]
-[ext_resource type="PackedScene" uid="uid://cjl4j6f1w7nsm" path="res://Models/Props/Kit/walkie_talkie_2.glb" id="m_walkie"]
-[ext_resource type="PackedScene" uid="uid://boxkc8nutfjc1" path="res://Models/Props/Walls/wall_hr_1.glb" id="m_wall"]
-[ext_resource type="PackedScene" uid="uid://cky5fbrna8pe" path="res://Models/Props/Walls/wall_hr_2.glb" id="m_wall2"]
-[ext_resource type="Texture2D" uid="uid://ddbfvf038n02s" path="res://Models/Weapons/kestrel_body.png" id="t_kestrel_body"]
-[ext_resource type="Texture2D" uid="uid://7reve2sdt1re" path="res://Models/Weapons/kestrel_mag.png" id="t_kestrel_mag"]
-[ext_resource type="Texture2D" uid="uid://by81gvrenx7ah" path="res://Models/Weapons/osprey_body.png" id="t_osprey_body"]
-[ext_resource type="Texture2D" uid="uid://bl0aeqdmw66fn" path="res://Models/Weapons/osprey_mag.png" id="t_osprey_mag"]
-[ext_resource type="PackedScene" uid="uid://b58jld0r0kblv" path="res://Models/Weapons/pistol_mp_1.glb" id="w_harrier"]
-[ext_resource type="ArrayMesh" uid="uid://cgky0oklhe07b" path="res://Models/Weapons/kestrel.obj" id="w_kestrel"]
-[ext_resource type="PackedScene" uid="uid://g3j1vymaysgu" path="res://Models/Weapons/pistol_mp_1_2.glb" id="w_merlin"]
-[ext_resource type="ArrayMesh" uid="uid://cutiju5010ey5" path="res://Models/Weapons/osprey.obj" id="w_osprey"]
-[ext_resource type="PackedScene" uid="uid://b8q08hsgelm3j" path="res://Models/Weapons/shotgun_1.glb" id="w_shotgun"]
+[ext_resource type="Script" path="res://Levels/armory_room.gd" id="1_room"]
+[ext_resource type="Script" path="res://Components/interactable.gd" id="3_inter"]
+[ext_resource type="Script" path="res://Levels/range_target.gd" id="4_target"]
+[ext_resource type="Script" path="res://Props/prop.gd" id="5_prop"]
+[ext_resource type="Script" path="res://Levels/mission_board_3d.gd" id="6_board"]
+[ext_resource type="Script" path="res://Props/loose_prop.gd" id="6_loose"]
+[ext_resource type="Mesh" path="res://Models/Weapons/kestrel.obj" id="w_kestrel"]
+[ext_resource type="Texture2D" path="res://Models/Weapons/kestrel_body.png" id="t_kestrel_body"]
+[ext_resource type="Texture2D" path="res://Models/Weapons/kestrel_mag.png" id="t_kestrel_mag"]
+[ext_resource type="Mesh" path="res://Models/Weapons/osprey.obj" id="w_osprey"]
+[ext_resource type="Texture2D" path="res://Models/Weapons/osprey_body.png" id="t_osprey_body"]
+[ext_resource type="Texture2D" path="res://Models/Weapons/osprey_mag.png" id="t_osprey_mag"]
+[ext_resource type="PackedScene" path="res://Models/Weapons/shotgun_1.glb" id="w_shotgun"]
+[ext_resource type="PackedScene" path="res://Models/Weapons/pistol_mp_1.glb" id="w_harrier"]
+[ext_resource type="PackedScene" path="res://Models/Weapons/pistol_mp_1_2.glb" id="w_merlin"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/floor_ceiling_hr_3.glb" id="m_floor"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/floor_ceiling_hr_6.glb" id="m_ceiling"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/floor_ceiling_hr_4.glb" id="m_floor_range"]
+[ext_resource type="PackedScene" path="res://Models/Props/Walls/wall_hr_1.glb" id="m_wall"]
+[ext_resource type="PackedScene" path="res://Models/Props/Walls/wall_hr_2.glb" id="m_wall2"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/doorway_hr_2_wide.glb" id="m_doorway"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/ceiling_lamp_4_on.glb" id="m_strip"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/lamp_2_on.glb" id="m_bulkhead"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/lamp_mx_4_on.glb" id="m_barn"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/table_large_2.glb" id="m_table"]
+[ext_resource type="PackedScene" path="res://Models/Props/Clutter/toolbox_mx_1.glb" id="m_toolbox"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/paint_can_mx_1.glb" id="m_paint"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/bucket_mx_1.glb" id="m_bucket"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/shelf_mx_3.glb" id="m_shelf"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/wardrobe_mp_1.glb" id="m_locker"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/electrical_equipment_2.glb" id="m_cabinet"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/gas_cylinder_mx_1.glb" id="m_gas"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/metal_barrel_hr_2.glb" id="m_barrel2"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/metal_barrel_hr_4.glb" id="m_barrel4"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/jerrycan_mx_1.glb" id="m_jerrycan"]
+[ext_resource type="PackedScene" path="res://Models/Props/Containers/wooden_crate_1.glb" id="m_crate1"]
+[ext_resource type="PackedScene" path="res://Models/Props/Containers/supply_crate_1.glb" id="m_supply"]
+[ext_resource type="PackedScene" path="res://Models/Props/Containers/wooden_crate_3.glb" id="m_crate3"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/map_mx_1.glb" id="m_map"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/table_large_3.glb" id="m_desk"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/pc_mp_1.glb" id="m_pc"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/pc_monitor_mp_1.glb" id="m_monitor"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/pc_keyboard_mp_1.glb" id="m_keyboard"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/handheld_fm_radio_etx_1.glb" id="m_radio"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/walkie_talkie_2.glb" id="m_walkie"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/chair_mp_1.glb" id="m_chair"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/monitoring_screen_mp_1.glb" id="m_screen"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/speaker_mx_1.glb" id="m_speaker"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/bench_mx_1.glb" id="m_bench_seat"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/luggage_mp_1.glb" id="m_luggage"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/package_hr_1.glb" id="m_package"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/first_aid_kit_hr_1.glb" id="m_firstaid"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/stool_mx_1.glb" id="m_stool"]
+[ext_resource type="PackedScene" path="res://Models/Props/Barricades/barricade_b_1.glb" id="m_bar_low"]
+[ext_resource type="PackedScene" path="res://Models/Props/Clutter/cement_bags_mp_1_pallet_1.glb" id="m_pallet"]
+[ext_resource type="PackedScene" path="res://Models/Props/Kit/cement_bag_mp_1.glb" id="m_cement"]
+[ext_resource type="PackedScene" path="res://Models/Ammo/ammo_box_mp_5.glb" id="a_box5"]
+[ext_resource type="PackedScene" path="res://Models/Ammo/pistol_mp_1_mag_loaded.glb" id="a_pmag"]
+[ext_resource type="PackedScene" path="res://Models/Ammo/ammo_box_mp_1.glb" id="a_box1"]
+[ext_resource type="PackedScene" path="res://Models/Ammo/ammo_box_mp_2.glb" id="a_box2"]
+[ext_resource type="PackedScene" path="res://Models/Ammo/shotgun_ammo_2.glb" id="a_shells"]
 
 [sub_resource type="BoxShape3D" id="Box_jamb"]
 size = Vector3(1.2, 3, 0.42)
@@ -69,1495 +70,1308 @@ size = Vector3(1.6, 0.5, 0.42)
 
 [sub_resource type="StandardMaterial3D" id="Mat_kestrel_body"]
 albedo_texture = ExtResource("t_kestrel_body")
-roughness = 0.65
 texture_filter = 0
+roughness = 0.65
 
 [sub_resource type="StandardMaterial3D" id="Mat_kestrel_mag"]
 albedo_texture = ExtResource("t_kestrel_mag")
-roughness = 0.65
 texture_filter = 0
+roughness = 0.65
 
 [sub_resource type="StandardMaterial3D" id="Mat_osprey_body"]
 albedo_texture = ExtResource("t_osprey_body")
-roughness = 0.65
 texture_filter = 0
+roughness = 0.65
 
 [sub_resource type="StandardMaterial3D" id="Mat_osprey_mag"]
 albedo_texture = ExtResource("t_osprey_mag")
-roughness = 0.65
 texture_filter = 0
+roughness = 0.65
 
-[node name="Armory" type="Node3D" unique_id=987758827]
+[node name="Armory" type="Node3D"]
 script = ExtResource("1_room")
 
-[node name="Shell" type="Node3D" parent="." unique_id=1761740470]
+[node name="Shell" type="Node3D" parent="."]
 
-[node name="FloorA0" type="StaticBody3D" parent="Shell" unique_id=220337543]
+[node name="FloorA0" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, -0.4, 2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor")
 
-[node name="CeilA1" type="StaticBody3D" parent="Shell" unique_id=244220072]
+[node name="CeilA1" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 3, 2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorA2" type="StaticBody3D" parent="Shell" unique_id=2079550012]
+[node name="FloorA2" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, -0.4, 6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor")
 
-[node name="CeilA3" type="StaticBody3D" parent="Shell" unique_id=459616538]
+[node name="CeilA3" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 3, 6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorA4" type="StaticBody3D" parent="Shell" unique_id=1495283476]
+[node name="FloorA4" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, -0.4, 10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor")
 
-[node name="CeilA5" type="StaticBody3D" parent="Shell" unique_id=1482632101]
+[node name="CeilA5" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 3, 10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorA6" type="StaticBody3D" parent="Shell" unique_id=645867291]
+[node name="FloorA6" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, -0.4, 2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor")
 
-[node name="CeilA7" type="StaticBody3D" parent="Shell" unique_id=529842652]
+[node name="CeilA7" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3, 2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorA8" type="StaticBody3D" parent="Shell" unique_id=2069125510]
+[node name="FloorA8" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, -0.4, 6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor")
 
-[node name="CeilA9" type="StaticBody3D" parent="Shell" unique_id=1630949303]
+[node name="CeilA9" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3, 6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorA10" type="StaticBody3D" parent="Shell" unique_id=1693825339]
+[node name="FloorA10" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, -0.4, 10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor")
 
-[node name="CeilA11" type="StaticBody3D" parent="Shell" unique_id=1252258273]
+[node name="CeilA11" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3, 10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorA12" type="StaticBody3D" parent="Shell" unique_id=1106875876]
+[node name="FloorA12" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.4, 2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor")
 
-[node name="CeilA13" type="StaticBody3D" parent="Shell" unique_id=1123540426]
+[node name="CeilA13" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorA14" type="StaticBody3D" parent="Shell" unique_id=1794941032]
+[node name="FloorA14" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.4, 6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor")
 
-[node name="CeilA15" type="StaticBody3D" parent="Shell" unique_id=1627738222]
+[node name="CeilA15" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorA16" type="StaticBody3D" parent="Shell" unique_id=205448663]
+[node name="FloorA16" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.4, 10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor")
 
-[node name="CeilA17" type="StaticBody3D" parent="Shell" unique_id=1862085557]
+[node name="CeilA17" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorA18" type="StaticBody3D" parent="Shell" unique_id=1805865186]
+[node name="FloorA18" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, -0.4, 2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor")
 
-[node name="CeilA19" type="StaticBody3D" parent="Shell" unique_id=1591640236]
+[node name="CeilA19" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 3, 2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorA20" type="StaticBody3D" parent="Shell" unique_id=258996310]
+[node name="FloorA20" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, -0.4, 6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor")
 
-[node name="CeilA21" type="StaticBody3D" parent="Shell" unique_id=1566994443]
+[node name="CeilA21" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 3, 6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorA22" type="StaticBody3D" parent="Shell" unique_id=70110027]
+[node name="FloorA22" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, -0.4, 10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor")
 
-[node name="CeilA23" type="StaticBody3D" parent="Shell" unique_id=755520751]
+[node name="CeilA23" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 3, 10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorA24" type="StaticBody3D" parent="Shell" unique_id=648829248]
+[node name="FloorA24" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, -0.4, 2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor")
 
-[node name="CeilA25" type="StaticBody3D" parent="Shell" unique_id=71266954]
+[node name="CeilA25" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 3, 2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorA26" type="StaticBody3D" parent="Shell" unique_id=1907314504]
+[node name="FloorA26" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, -0.4, 6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor")
 
-[node name="CeilA27" type="StaticBody3D" parent="Shell" unique_id=616162252]
+[node name="CeilA27" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 3, 6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorA28" type="StaticBody3D" parent="Shell" unique_id=229258920]
+[node name="FloorA28" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, -0.4, 10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor")
 
-[node name="CeilA29" type="StaticBody3D" parent="Shell" unique_id=1559106936]
+[node name="CeilA29" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 3, 10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB30" type="StaticBody3D" parent="Shell" unique_id=310455540]
+[node name="FloorB30" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB31" type="StaticBody3D" parent="Shell" unique_id=1794397462]
+[node name="CeilB31" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB32" type="StaticBody3D" parent="Shell" unique_id=83012410]
+[node name="FloorB32" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB33" type="StaticBody3D" parent="Shell" unique_id=1670574700]
+[node name="CeilB33" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB34" type="StaticBody3D" parent="Shell" unique_id=1944832344]
+[node name="FloorB34" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB35" type="StaticBody3D" parent="Shell" unique_id=1054345873]
+[node name="CeilB35" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB36" type="StaticBody3D" parent="Shell" unique_id=255220647]
+[node name="FloorB36" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -14)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB37" type="StaticBody3D" parent="Shell" unique_id=1607059403]
+[node name="CeilB37" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -14)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB38" type="StaticBody3D" parent="Shell" unique_id=1989964356]
+[node name="FloorB38" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -18)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB39" type="StaticBody3D" parent="Shell" unique_id=1862439358]
+[node name="CeilB39" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -18)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB40" type="StaticBody3D" parent="Shell" unique_id=1524121372]
+[node name="FloorB40" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -22)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB41" type="StaticBody3D" parent="Shell" unique_id=1373632340]
+[node name="CeilB41" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -22)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB42" type="StaticBody3D" parent="Shell" unique_id=1672021487]
+[node name="FloorB42" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -26)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB43" type="StaticBody3D" parent="Shell" unique_id=191395003]
+[node name="CeilB43" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -26)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB44" type="StaticBody3D" parent="Shell" unique_id=1508834091]
+[node name="FloorB44" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -30)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB45" type="StaticBody3D" parent="Shell" unique_id=448728622]
+[node name="CeilB45" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -30)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB46" type="StaticBody3D" parent="Shell" unique_id=1686163439]
+[node name="FloorB46" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -34)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB47" type="StaticBody3D" parent="Shell" unique_id=827189445]
+[node name="CeilB47" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -34)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB48" type="StaticBody3D" parent="Shell" unique_id=1381940259]
+[node name="FloorB48" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -38)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB49" type="StaticBody3D" parent="Shell" unique_id=705487452]
+[node name="CeilB49" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -38)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB50" type="StaticBody3D" parent="Shell" unique_id=1141373320]
+[node name="FloorB50" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -42)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB51" type="StaticBody3D" parent="Shell" unique_id=1003372601]
+[node name="CeilB51" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -42)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB52" type="StaticBody3D" parent="Shell" unique_id=432258757]
+[node name="FloorB52" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -46)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB53" type="StaticBody3D" parent="Shell" unique_id=1624942752]
+[node name="CeilB53" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -46)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB54" type="StaticBody3D" parent="Shell" unique_id=1749561152]
+[node name="FloorB54" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -50)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB55" type="StaticBody3D" parent="Shell" unique_id=1892302960]
+[node name="CeilB55" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -50)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB56" type="StaticBody3D" parent="Shell" unique_id=108796244]
+[node name="FloorB56" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -54)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB57" type="StaticBody3D" parent="Shell" unique_id=1024903648]
+[node name="CeilB57" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -54)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB58" type="StaticBody3D" parent="Shell" unique_id=516930659]
+[node name="FloorB58" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -58)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB59" type="StaticBody3D" parent="Shell" unique_id=1819070035]
+[node name="CeilB59" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -58)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB60" type="StaticBody3D" parent="Shell" unique_id=381694381]
+[node name="FloorB60" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -62)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB61" type="StaticBody3D" parent="Shell" unique_id=462672546]
+[node name="CeilB61" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -62)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB62" type="StaticBody3D" parent="Shell" unique_id=1878825461]
+[node name="FloorB62" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.4, -66)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB63" type="StaticBody3D" parent="Shell" unique_id=151568137]
+[node name="CeilB63" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3, -66)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB64" type="StaticBody3D" parent="Shell" unique_id=285241083]
+[node name="FloorB64" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB65" type="StaticBody3D" parent="Shell" unique_id=1355159150]
+[node name="CeilB65" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB66" type="StaticBody3D" parent="Shell" unique_id=1374950674]
+[node name="FloorB66" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB67" type="StaticBody3D" parent="Shell" unique_id=1883997943]
+[node name="CeilB67" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB68" type="StaticBody3D" parent="Shell" unique_id=1948978848]
+[node name="FloorB68" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB69" type="StaticBody3D" parent="Shell" unique_id=81517002]
+[node name="CeilB69" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB70" type="StaticBody3D" parent="Shell" unique_id=697388259]
+[node name="FloorB70" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -14)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB71" type="StaticBody3D" parent="Shell" unique_id=1585886431]
+[node name="CeilB71" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -14)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB72" type="StaticBody3D" parent="Shell" unique_id=339451484]
+[node name="FloorB72" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -18)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB73" type="StaticBody3D" parent="Shell" unique_id=1440999361]
+[node name="CeilB73" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -18)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB74" type="StaticBody3D" parent="Shell" unique_id=393110659]
+[node name="FloorB74" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -22)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB75" type="StaticBody3D" parent="Shell" unique_id=1009668802]
+[node name="CeilB75" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -22)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB76" type="StaticBody3D" parent="Shell" unique_id=1319671773]
+[node name="FloorB76" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -26)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB77" type="StaticBody3D" parent="Shell" unique_id=47957431]
+[node name="CeilB77" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -26)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB78" type="StaticBody3D" parent="Shell" unique_id=425387403]
+[node name="FloorB78" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -30)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB79" type="StaticBody3D" parent="Shell" unique_id=349370224]
+[node name="CeilB79" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -30)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB80" type="StaticBody3D" parent="Shell" unique_id=1760349096]
+[node name="FloorB80" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -34)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB81" type="StaticBody3D" parent="Shell" unique_id=643215713]
+[node name="CeilB81" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -34)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB82" type="StaticBody3D" parent="Shell" unique_id=572038841]
+[node name="FloorB82" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -38)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB83" type="StaticBody3D" parent="Shell" unique_id=396315522]
+[node name="CeilB83" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -38)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB84" type="StaticBody3D" parent="Shell" unique_id=280375131]
+[node name="FloorB84" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -42)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB85" type="StaticBody3D" parent="Shell" unique_id=1309988054]
+[node name="CeilB85" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -42)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB86" type="StaticBody3D" parent="Shell" unique_id=735583874]
+[node name="FloorB86" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -46)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB87" type="StaticBody3D" parent="Shell" unique_id=1720906778]
+[node name="CeilB87" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -46)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB88" type="StaticBody3D" parent="Shell" unique_id=139095091]
+[node name="FloorB88" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -50)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB89" type="StaticBody3D" parent="Shell" unique_id=791032487]
+[node name="CeilB89" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -50)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB90" type="StaticBody3D" parent="Shell" unique_id=471984690]
+[node name="FloorB90" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -54)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB91" type="StaticBody3D" parent="Shell" unique_id=1242966178]
+[node name="CeilB91" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -54)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB92" type="StaticBody3D" parent="Shell" unique_id=1068403864]
+[node name="FloorB92" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -58)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB93" type="StaticBody3D" parent="Shell" unique_id=1537524190]
+[node name="CeilB93" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -58)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB94" type="StaticBody3D" parent="Shell" unique_id=827718347]
+[node name="FloorB94" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -62)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB95" type="StaticBody3D" parent="Shell" unique_id=684165589]
+[node name="CeilB95" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -62)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="FloorB96" type="StaticBody3D" parent="Shell" unique_id=1350562648]
+[node name="FloorB96" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, -0.4, -66)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_floor_range")
 
-[node name="CeilB97" type="StaticBody3D" parent="Shell" unique_id=1611613149]
+[node name="CeilB97" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3, -66)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_ceiling")
 
-[node name="WallN0" type="StaticBody3D" parent="Shell" unique_id=1814622817]
+[node name="WallN0" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 0)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="WallN1" type="StaticBody3D" parent="Shell" unique_id=116159888]
+[node name="WallN1" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 0)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="WallN2" type="StaticBody3D" parent="Shell" unique_id=1247041385]
+[node name="WallN2" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 0)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="WallN3" type="StaticBody3D" parent="Shell" unique_id=1930374935]
+[node name="WallN3" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 0)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="WallS4" type="StaticBody3D" parent="Shell" unique_id=96454377]
+[node name="WallS4" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 12)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="WallS5" type="StaticBody3D" parent="Shell" unique_id=501148675]
+[node name="WallS5" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 12)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="WallS6" type="StaticBody3D" parent="Shell" unique_id=1777510343]
+[node name="WallS6" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 12)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="WallS7" type="StaticBody3D" parent="Shell" unique_id=41996819]
+[node name="WallS7" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 12)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="WallS8" type="StaticBody3D" parent="Shell" unique_id=1620450350]
+[node name="WallS8" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 12)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="WallW9" type="StaticBody3D" parent="Shell" unique_id=913491482]
+[node name="WallW9" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -10, 0, 2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="WallE10" type="StaticBody3D" parent="Shell" unique_id=1937878544]
+[node name="WallE10" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 10, 0, 2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="WallW11" type="StaticBody3D" parent="Shell" unique_id=131118253]
+[node name="WallW11" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -10, 0, 6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="WallE12" type="StaticBody3D" parent="Shell" unique_id=461520916]
+[node name="WallE12" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 10, 0, 6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="WallW13" type="StaticBody3D" parent="Shell" unique_id=425417983]
+[node name="WallW13" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -10, 0, 10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="WallE14" type="StaticBody3D" parent="Shell" unique_id=1851496235]
+[node name="WallE14" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 10, 0, 10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeW15" type="StaticBody3D" parent="Shell" unique_id=1127623366]
+[node name="RangeW15" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeE16" type="StaticBody3D" parent="Shell" unique_id=313425837]
+[node name="RangeE16" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -2)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeW17" type="StaticBody3D" parent="Shell" unique_id=414843248]
+[node name="RangeW17" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeE18" type="StaticBody3D" parent="Shell" unique_id=73747724]
+[node name="RangeE18" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeW19" type="StaticBody3D" parent="Shell" unique_id=570339953]
+[node name="RangeW19" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeE20" type="StaticBody3D" parent="Shell" unique_id=850107126]
+[node name="RangeE20" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -10)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeW21" type="StaticBody3D" parent="Shell" unique_id=1465765678]
+[node name="RangeW21" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -14)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeE22" type="StaticBody3D" parent="Shell" unique_id=1289504825]
+[node name="RangeE22" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -14)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeW23" type="StaticBody3D" parent="Shell" unique_id=221677055]
+[node name="RangeW23" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -18)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeE24" type="StaticBody3D" parent="Shell" unique_id=1137540659]
+[node name="RangeE24" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -18)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeW25" type="StaticBody3D" parent="Shell" unique_id=207271709]
+[node name="RangeW25" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -22)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeE26" type="StaticBody3D" parent="Shell" unique_id=1399473907]
+[node name="RangeE26" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -22)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeW27" type="StaticBody3D" parent="Shell" unique_id=1326421045]
+[node name="RangeW27" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -26)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeE28" type="StaticBody3D" parent="Shell" unique_id=262217038]
+[node name="RangeE28" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -26)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeW29" type="StaticBody3D" parent="Shell" unique_id=920731669]
+[node name="RangeW29" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -30)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeE30" type="StaticBody3D" parent="Shell" unique_id=1947459909]
+[node name="RangeE30" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -30)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeW31" type="StaticBody3D" parent="Shell" unique_id=393960863]
+[node name="RangeW31" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -34)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeE32" type="StaticBody3D" parent="Shell" unique_id=1506418109]
+[node name="RangeE32" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -34)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeW33" type="StaticBody3D" parent="Shell" unique_id=45260757]
+[node name="RangeW33" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -38)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeE34" type="StaticBody3D" parent="Shell" unique_id=399410370]
+[node name="RangeE34" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -38)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeW35" type="StaticBody3D" parent="Shell" unique_id=961959673]
+[node name="RangeW35" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -42)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeE36" type="StaticBody3D" parent="Shell" unique_id=1446350521]
+[node name="RangeE36" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -42)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeW37" type="StaticBody3D" parent="Shell" unique_id=1626687316]
+[node name="RangeW37" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -46)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeE38" type="StaticBody3D" parent="Shell" unique_id=107243480]
+[node name="RangeE38" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -46)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeW39" type="StaticBody3D" parent="Shell" unique_id=1115486933]
+[node name="RangeW39" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -50)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeE40" type="StaticBody3D" parent="Shell" unique_id=998734111]
+[node name="RangeE40" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -50)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeW41" type="StaticBody3D" parent="Shell" unique_id=1221861731]
+[node name="RangeW41" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -54)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeE42" type="StaticBody3D" parent="Shell" unique_id=733614363]
+[node name="RangeE42" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -54)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeW43" type="StaticBody3D" parent="Shell" unique_id=1867499130]
+[node name="RangeW43" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -58)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeE44" type="StaticBody3D" parent="Shell" unique_id=888377606]
+[node name="RangeE44" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -58)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeW45" type="StaticBody3D" parent="Shell" unique_id=1948856243]
+[node name="RangeW45" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -62)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeE46" type="StaticBody3D" parent="Shell" unique_id=1003922095]
+[node name="RangeE46" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -62)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall2")
 
-[node name="RangeW47" type="StaticBody3D" parent="Shell" unique_id=791934656]
+[node name="RangeW47" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -4, 0, -66)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeE48" type="StaticBody3D" parent="Shell" unique_id=1563420965]
+[node name="RangeE48" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4, 0, -66)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeFar49" type="StaticBody3D" parent="Shell" unique_id=1887274162]
+[node name="RangeFar49" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -68)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="RangeFar50" type="StaticBody3D" parent="Shell" unique_id=1398585186]
+[node name="RangeFar50" type="StaticBody3D" parent="Shell"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -68)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_wall")
 
-[node name="Doorway" type="StaticBody3D" parent="Shell" unique_id=1731751340]
+[node name="Doorway" type="StaticBody3D" parent="Shell"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 
-[node name="View" parent="Shell/Doorway" unique_id=1846467488 instance=ExtResource("m_doorway")]
+[node name="View" parent="Shell/Doorway" instance=ExtResource("m_doorway")]
 
-[node name="JambW" type="CollisionShape3D" parent="Shell/Doorway" unique_id=553258540]
+[node name="JambW" type="CollisionShape3D" parent="Shell/Doorway"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 1.5, 0)
 shape = SubResource("Box_jamb")
 
-[node name="JambE" type="CollisionShape3D" parent="Shell/Doorway" unique_id=1534016724]
+[node name="JambE" type="CollisionShape3D" parent="Shell/Doorway"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 1.5, 0)
 shape = SubResource("Box_jamb")
 
-[node name="Lintel" type="CollisionShape3D" parent="Shell/Doorway" unique_id=1798043979]
+[node name="Lintel" type="CollisionShape3D" parent="Shell/Doorway"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.75, 0)
 shape = SubResource("Box_lintel")
 
-[node name="Lights" type="Node3D" parent="." unique_id=2065054974]
+[node name="Lights" type="Node3D" parent="."]
 
-[node name="Strip0" type="StaticBody3D" parent="Lights" unique_id=1711518879]
+[node name="Strip0" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 2.99, 3)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_strip")
 
-[node name="Glow0" type="OmniLight3D" parent="Lights" unique_id=1810557672]
+[node name="Glow0" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 2.72, 3)
 light_color = Color(1, 0.9, 0.76, 1)
 light_energy = 1.3
 light_size = 0.4
 shadow_enabled = true
-omni_range = 11.0
+omni_range = 11
 
-[node name="Strip1" type="StaticBody3D" parent="Lights" unique_id=2020225614]
+[node name="Strip1" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 2.99, 3)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_strip")
 
-[node name="Glow1" type="OmniLight3D" parent="Lights" unique_id=879395496]
+[node name="Glow1" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 2.72, 3)
 light_color = Color(1, 0.9, 0.76, 1)
 light_energy = 1.3
 light_size = 0.4
 shadow_enabled = true
-omni_range = 11.0
+omni_range = 11
 
-[node name="Strip2" type="StaticBody3D" parent="Lights" unique_id=398559556]
+[node name="Strip2" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 2.99, 9)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_strip")
 
-[node name="Glow2" type="OmniLight3D" parent="Lights" unique_id=895882223]
+[node name="Glow2" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 2.72, 9)
 light_color = Color(1, 0.9, 0.76, 1)
 light_energy = 1.3
 light_size = 0.4
 shadow_enabled = true
-omni_range = 11.0
+omni_range = 11
 
-[node name="Strip3" type="StaticBody3D" parent="Lights" unique_id=148859743]
+[node name="Strip3" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 2.99, 9)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_strip")
 
-[node name="Glow3" type="OmniLight3D" parent="Lights" unique_id=1841853477]
+[node name="Glow3" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 2.72, 9)
 light_color = Color(1, 0.9, 0.76, 1)
 light_energy = 1.3
 light_size = 0.4
 shadow_enabled = true
-omni_range = 11.0
+omni_range = 11
 
-[node name="DoorLamp" type="StaticBody3D" parent="Lights" unique_id=1720147938]
+[node name="DoorLamp" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.72, 0.21)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_bulkhead")
 
-[node name="DoorGlow" type="OmniLight3D" parent="Lights" unique_id=1120376090]
+[node name="DoorGlow" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0.7)
 light_color = Color(1, 0.86, 0.62, 1)
 light_energy = 1.6
 light_size = 0.4
-omni_range = 7.0
+shadow_enabled = false
+omni_range = 7
 
-[node name="BenchLamp" type="StaticBody3D" parent="Lights" unique_id=675073458]
+[node name="BenchLamp" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 9.79, 2.86, 6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_barn")
 
-[node name="BenchGlow" type="OmniLight3D" parent="Lights" unique_id=408434884]
+[node name="BenchGlow" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.1, 2.35, 6)
 light_color = Color(1, 0.82, 0.55, 1)
 light_energy = 1.1
 light_size = 0.4
-omni_range = 6.0
+shadow_enabled = false
+omni_range = 6
 
-[node name="BoardLamp" type="StaticBody3D" parent="Lights" unique_id=1746156627]
+[node name="BoardLamp" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.79, 2.86, 6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_barn")
 
-[node name="BoardGlow" type="OmniLight3D" parent="Lights" unique_id=940311765]
+[node name="BoardGlow" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.1, 2.35, 6)
 light_color = Color(1, 0.82, 0.55, 1)
 light_energy = 1.1
 light_size = 0.4
-omni_range = 6.0
+shadow_enabled = false
+omni_range = 6
 
-[node name="RangeStrip0" type="StaticBody3D" parent="Lights" unique_id=1214429073]
+[node name="RangeStrip0" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 2.99, -6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_strip")
 
-[node name="RangeGlow0" type="OmniLight3D" parent="Lights" unique_id=1190567486]
+[node name="RangeGlow0" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, -6)
 light_color = Color(1, 0.9, 0.76, 1)
 light_energy = 1.2
 light_size = 0.4
+shadow_enabled = false
 omni_range = 9.5
 
-[node name="RangeStrip1" type="StaticBody3D" parent="Lights" unique_id=1797307177]
+[node name="RangeStrip1" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 2.99, -14)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_strip")
 
-[node name="RangeGlow1" type="OmniLight3D" parent="Lights" unique_id=866079901]
+[node name="RangeGlow1" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, -14)
 light_color = Color(1, 0.9, 0.76, 1)
 light_energy = 1.2
 light_size = 0.4
+shadow_enabled = false
 omni_range = 9.5
 
-[node name="RangeStrip2" type="StaticBody3D" parent="Lights" unique_id=1936742956]
+[node name="RangeStrip2" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 2.99, -22)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_strip")
 
-[node name="RangeGlow2" type="OmniLight3D" parent="Lights" unique_id=2077926611]
+[node name="RangeGlow2" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, -22)
 light_color = Color(1, 0.9, 0.76, 1)
 light_energy = 1.2
 light_size = 0.4
+shadow_enabled = false
 omni_range = 9.5
 
-[node name="RangeStrip3" type="StaticBody3D" parent="Lights" unique_id=1960295962]
+[node name="RangeStrip3" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 2.99, -30)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_strip")
 
-[node name="RangeGlow3" type="OmniLight3D" parent="Lights" unique_id=1060854804]
+[node name="RangeGlow3" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, -30)
 light_color = Color(1, 0.9, 0.76, 1)
 light_energy = 1.2
 light_size = 0.4
+shadow_enabled = false
 omni_range = 9.5
 
-[node name="RangeStrip4" type="StaticBody3D" parent="Lights" unique_id=1846847940]
+[node name="RangeStrip4" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 2.99, -38)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_strip")
 
-[node name="RangeGlow4" type="OmniLight3D" parent="Lights" unique_id=1060264825]
+[node name="RangeGlow4" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, -38)
 light_color = Color(1, 0.9, 0.76, 1)
 light_energy = 1.2
 light_size = 0.4
+shadow_enabled = false
 omni_range = 9.5
 
-[node name="RangeStrip5" type="StaticBody3D" parent="Lights" unique_id=1752481971]
+[node name="RangeStrip5" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 2.99, -46)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_strip")
 
-[node name="RangeGlow5" type="OmniLight3D" parent="Lights" unique_id=714230831]
+[node name="RangeGlow5" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, -46)
 light_color = Color(1, 0.9, 0.76, 1)
 light_energy = 1.2
 light_size = 0.4
+shadow_enabled = false
 omni_range = 9.5
 
-[node name="RangeStrip6" type="StaticBody3D" parent="Lights" unique_id=426431377]
+[node name="RangeStrip6" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 2.99, -54)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_strip")
 
-[node name="RangeGlow6" type="OmniLight3D" parent="Lights" unique_id=757970221]
+[node name="RangeGlow6" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, -54)
 light_color = Color(1, 0.9, 0.76, 1)
 light_energy = 1.2
 light_size = 0.4
+shadow_enabled = false
 omni_range = 9.5
 
-[node name="RangeStrip7" type="StaticBody3D" parent="Lights" unique_id=2048764321]
+[node name="RangeStrip7" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 2.99, -62)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_strip")
 
-[node name="RangeGlow7" type="OmniLight3D" parent="Lights" unique_id=103782369]
+[node name="RangeGlow7" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, -62)
 light_color = Color(1, 0.9, 0.76, 1)
 light_energy = 1.2
 light_size = 0.4
+shadow_enabled = false
 omni_range = 9.5
 
-[node name="FireLampW" type="StaticBody3D" parent="Lights" unique_id=439923863]
+[node name="FireLampW" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -3.79, 2.4, -3)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_bulkhead")
 
-[node name="FireLampE" type="StaticBody3D" parent="Lights" unique_id=1199641108]
+[node name="FireLampE" type="StaticBody3D" parent="Lights"]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 3.79, 2.4, -3)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_bulkhead")
 
-[node name="FireGlow" type="OmniLight3D" parent="Lights" unique_id=342169259]
+[node name="FireGlow" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, -3)
 light_color = Color(1, 0.86, 0.62, 1)
 light_energy = 1.2
 light_size = 0.4
-omni_range = 7.0
+shadow_enabled = false
+omni_range = 7
 
-[node name="PlayerSpawn" type="Marker3D" parent="." unique_id=1317977086 groups=["player_spawn"]]
+[node name="PlayerSpawn" type="Marker3D" parent="." groups=["player_spawn"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 9)
 
-[node name="Armoury" type="Node3D" parent="." unique_id=59537069]
+[node name="Armoury" type="Node3D" parent="."]
 
-[node name="GunKestrel" type="MeshInstance3D" parent="Armoury" unique_id=1188059432]
-transform = Transform3D(0, 0, -0.17, 0, 0.17, 0, 0.17, 0, 0, 9.74, 2.35, 6)
+[node name="Bench" type="StaticBody3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 9.3, 0, 6)
+script = ExtResource("5_prop")
+model = ExtResource("m_table")
+
+[node name="Interactable" type="Node" parent="Bench"]
+script = ExtResource("3_inter")
+prompt = "Open the bench"
+
+[node name="Toolbox" type="StaticBody3D" parent="Bench"]
+transform = Transform3D(0.9781, 0, 0.2079, 0, 1, 0, -0.2079, 0, 0.9781, 0.55, 0.96, 0.05)
+script = ExtResource("5_prop")
+model = ExtResource("m_toolbox")
+
+[node name="BenchBox" parent="Bench" instance=ExtResource("a_box5")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -0.45, 0.96, -0.15)
+
+[node name="BenchMag" parent="Bench" instance=ExtResource("a_pmag")]
+transform = Transform3D(-0.3173, 0.9483, 0, 0, 0, -1, -0.9483, -0.3173, 0, 0.05, 0.9743, -0.1481)
+
+[node name="BenchPaint" type="RigidBody3D" parent="Bench"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4517, 0.96, 0.3948)
+mass = 1.6
+script = ExtResource("6_loose")
+model = ExtResource("m_paint")
+
+[node name="BenchBucket" type="RigidBody3D" parent="Bench"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.62, 0, -0.5)
+mass = 2.4
+script = ExtResource("6_loose")
+model = ExtResource("m_bucket")
+
+[node name="GunKestrel" type="MeshInstance3D" parent="Armoury"]
+transform = Transform3D(0, 0, -0.17, 0, 0.17, 0, 0.17, 0, 0, 9.74, 2.35, 6.0)
 mesh = ExtResource("w_kestrel")
 surface_material_override/0 = SubResource("Mat_kestrel_body")
 surface_material_override/1 = SubResource("Mat_kestrel_mag")
 
-[node name="GunOsprey" type="MeshInstance3D" parent="Armoury" unique_id=2014479832]
-transform = Transform3D(0, 0, -0.24, 0, 0.24, 0, 0.24, 0, 0, 9.74, 1.95, 6)
+[node name="GunOsprey" type="MeshInstance3D" parent="Armoury"]
+transform = Transform3D(0, 0, -0.24, 0, 0.24, 0, 0.24, 0, 0, 9.74, 1.95, 6.0)
 mesh = ExtResource("w_osprey")
 surface_material_override/0 = SubResource("Mat_osprey_body")
 surface_material_override/1 = SubResource("Mat_osprey_mag")
 
-[node name="GunShrike" parent="Armoury" unique_id=1832182962 instance=ExtResource("w_shotgun")]
-transform = Transform3D(0, 0.75, 0, 0, 0, -0.75, -0.75, 0, 0, 9.74, 1.55, 6)
+[node name="GunShrike" parent="Armoury" instance=ExtResource("w_shotgun")]
+transform = Transform3D(0, 0.75, 0, 0, 0, -0.75, -0.75, 0, 0, 9.74, 1.55, 6.0)
 
-[node name="GunHarrier" parent="Armoury" unique_id=1282714952 instance=ExtResource("w_harrier")]
+[node name="GunHarrier" parent="Armoury" instance=ExtResource("w_harrier")]
 transform = Transform3D(0, 0, 0.8, 0, 0.8, 0, -0.8, 0, 0, 9.74, 2.15, 8.4)
 
-[node name="GunMerlin" parent="Armoury" unique_id=1281812602 instance=ExtResource("w_merlin")]
+[node name="GunMerlin" parent="Armoury" instance=ExtResource("w_merlin")]
 transform = Transform3D(0, 0, 0.72, 0, 0.72, 0, -0.72, 0, 0, 9.74, 1.7, 8.4)
 
-[node name="Shelf" type="StaticBody3D" parent="Armoury" unique_id=493526793]
-transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 9.58, 0, 2.9)
-collision_mask = 0
+[node name="Shelf" type="StaticBody3D" parent="Armoury"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 9.58, 0, 2.9)
 script = ExtResource("5_prop")
 model = ExtResource("m_shelf")
 
-[node name="Locker" type="StaticBody3D" parent="Armoury" unique_id=483019698]
-transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 9.47, 0, 10.2)
-collision_mask = 0
+[node name="Locker" type="StaticBody3D" parent="Armoury"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 9.47, 0, 10.2)
 script = ExtResource("5_prop")
 model = ExtResource("m_locker")
 
-[node name="Cabinet" type="StaticBody3D" parent="Armoury" unique_id=1168068424]
+[node name="Cabinet" type="StaticBody3D" parent="Armoury"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.6, 0, 0.21)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_cabinet")
 
-[node name="GasCylinder" type="StaticBody3D" parent="Armoury" unique_id=2078431763]
+[node name="GasCylinder" type="StaticBody3D" parent="Armoury"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0, 1.3)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_gas")
 
-[node name="BarrelA" type="StaticBody3D" parent="Armoury" unique_id=995778360]
+[node name="BarrelA" type="StaticBody3D" parent="Armoury"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.4, 0, 0.75)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_barrel2")
 
-[node name="BarrelB" type="StaticBody3D" parent="Armoury" unique_id=1277127011]
+[node name="BarrelB" type="StaticBody3D" parent="Armoury"]
 transform = Transform3D(0.8192, 0, 0.5736, 0, 1, 0, -0.5736, 0, 0.8192, 6.1, 0, 1.1)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_barrel4")
 
-[node name="Jerrycan" type="StaticBody3D" parent="Armoury" unique_id=522220191]
+[node name="Jerrycan" type="StaticBody3D" parent="Armoury"]
 transform = Transform3D(0.5, 0, -0.866, 0, 1, 0, 0.866, 0, 0.5, 9.4, 0, 8.4)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_jerrycan")
 
-[node name="BucketA" type="StaticBody3D" parent="Armoury" unique_id=1378555078]
+[node name="BucketA" type="StaticBody3D" parent="Armoury"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.9, 0, 4.1)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_bucket")
 
-[node name="ShelfBoxA" parent="Armoury" unique_id=2092597896 instance=ExtResource("a_box1")]
+[node name="ShelfBoxA" parent="Armoury" instance=ExtResource("a_box1")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 9.55, 0.02, 2.4)
 
-[node name="ShelfBoxB" parent="Armoury" unique_id=127621929 instance=ExtResource("a_box2")]
+[node name="ShelfBoxB" parent="Armoury" instance=ExtResource("a_box2")]
 transform = Transform3D(0.1736, 0, 0.9848, 0, 1, 0, -0.9848, 0, 0.1736, 9.55, 0.02, 2.75)
 
-[node name="ShelfShells" parent="Armoury" unique_id=1239074272 instance=ExtResource("a_shells")]
+[node name="ShelfShells" parent="Armoury" instance=ExtResource("a_shells")]
 transform = Transform3D(-0.0872, 0, 0.9962, 0, 1, 0, -0.9962, 0, -0.0872, 9.55, 0.02, 3.35)
 
-[node name="FloorBox" parent="Armoury" unique_id=415419633 instance=ExtResource("a_box5")]
+[node name="FloorBox" parent="Armoury" instance=ExtResource("a_box5")]
 transform = Transform3D(0.9659, 0, 0.2588, 0, 1, 0, -0.2588, 0, 0.9659, 8.4, 0, 3.6)
 
-[node name="CrateA" type="StaticBody3D" parent="Armoury" unique_id=1528102676]
+[node name="CrateA" type="StaticBody3D" parent="Armoury"]
 transform = Transform3D(0.9903, 0, 0.1392, 0, 1, 0, -0.1392, 0, 0.9903, 4.6, 0, 11)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_crate1")
 
-[node name="CrateB" type="StaticBody3D" parent="Armoury" unique_id=1536917451]
+[node name="CrateB" type="StaticBody3D" parent="Armoury"]
 transform = Transform3D(0.866, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866, 5.9, 0, 11.15)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_supply")
 
-[node name="CrateC" type="StaticBody3D" parent="Armoury" unique_id=567035177]
-transform = Transform3D(-0.948862, 0, 0.31564438, 0, 1, 0, -0.31564438, 0, -0.948862, 4.2, 0.93, 11)
-collision_mask = 0
+[node name="CrateC" type="StaticBody3D" parent="Armoury"]
+transform = Transform3D(-0.9489, 0, 0.3156, 0, 1, 0, -0.3156, 0, -0.9489, 4.2, 0.93, 11)
 script = ExtResource("5_prop")
 model = ExtResource("m_crate3")
 
-[node name="Bench" type="StaticBody3D" parent="." unique_id=1845376890]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 9.3, 0, 6)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_table")
+[node name="Operations" type="Node3D" parent="."]
 
-[node name="Interactable" type="Node" parent="Bench" unique_id=183836831]
-script = ExtResource("3_inter")
-prompt = "Open the bench"
-
-[node name="Toolbox" type="StaticBody3D" parent="Bench" unique_id=687650685]
-transform = Transform3D(0.9781, 0, 0.2079, 0, 1, 0, -0.2079, 0, 0.9781, 0.55, 0.96, 0.05)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_toolbox")
-
-[node name="BenchBox" parent="Bench" unique_id=439871421 instance=ExtResource("a_box5")]
-transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, -0.45, 0.96, -0.15)
-
-[node name="BenchMag" parent="Bench" unique_id=1824068662 instance=ExtResource("a_pmag")]
-transform = Transform3D(-0.3172962, 0.9483237, 2.2773456e-08, -4.260705e-08, 9.758574e-09, -0.99997383, -0.94829893, -0.31730452, 3.7308915e-08, 0.05000019, 0.9742665, -0.14809322)
-
-[node name="BenchPaint" type="StaticBody3D" parent="Bench" unique_id=1978913982]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45174503, 0.96, 0.39480114)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_paint")
-
-[node name="Operations" type="Node3D" parent="." unique_id=1854407647]
-
-[node name="Map" type="StaticBody3D" parent="Operations" unique_id=749999602]
-transform = Transform3D(0, 1, 0, 0, 0, -1, -1, 0, 0, -9.77, 1.7, 8.8)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_map")
-
-[node name="Desk" type="StaticBody3D" parent="Operations" unique_id=782857970]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.2, 0, 3.4)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_desk")
-
-[node name="Pc" type="StaticBody3D" parent="Operations" unique_id=2081389430]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.25, 0.91, 2.75)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_pc")
-
-[node name="Monitor" type="StaticBody3D" parent="Operations" unique_id=1083980565]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.25, 0.91, 3.5)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_monitor")
-
-[node name="Keyboard" type="StaticBody3D" parent="Operations" unique_id=1546774272]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.95, 0.91, 3.5)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_keyboard")
-
-[node name="Radio" type="StaticBody3D" parent="Operations" unique_id=1966877801]
-transform = Transform3D(0.5, 0, 0.866, 0, 1, 0, -0.866, 0, 0.5, -9.3, 0.91, 4.05)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_radio")
-
-[node name="Walkie" type="StaticBody3D" parent="Operations" unique_id=1939695047]
-transform = Transform3D(0.9397, 0, 0.342, 0, 1, 0, -0.342, 0, 0.9397, -9, 0.91, 2.5)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_walkie")
-
-[node name="Chair" type="StaticBody3D" parent="Operations" unique_id=1167368873]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -8.3, 0, 3.5)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_chair")
-
-[node name="Screen" type="StaticBody3D" parent="Operations" unique_id=1850496466]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.78, 2.35, 3.4)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_screen")
-
-[node name="Speaker" type="StaticBody3D" parent="Operations" unique_id=973132881]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.79, 2.65, 1.2)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_speaker")
-
-[node name="Seat" type="StaticBody3D" parent="Operations" unique_id=859039281]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.8, 0, 11.56)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_bench_seat")
-
-[node name="Luggage" type="StaticBody3D" parent="Operations" unique_id=841724196]
-transform = Transform3D(0.9659, 0, 0.2588, 0, 1, 0, -0.2588, 0, 0.9659, -8.6, 0, 11.4)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_luggage")
-
-[node name="PackageA" type="StaticBody3D" parent="Operations" unique_id=867871722]
-transform = Transform3D(0.9848, 0, -0.1736, 0, 1, 0, 0.1736, 0, 0.9848, -9.1, 0, 10.5)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_package")
-
-[node name="PackageB" type="StaticBody3D" parent="Operations" unique_id=548867585]
-transform = Transform3D(0.9063, 0, 0.4226, 0, 1, 0, -0.4226, 0, 0.9063, -9.05, 0.1, 10.5)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_package")
-
-[node name="FirstAid" type="StaticBody3D" parent="Operations" unique_id=1722378301]
-transform = Transform3D(0.9962, 0, 0.0872, 0, 1, 0, -0.0872, 0, 0.9962, -7.9, 0.63, 11.56)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_firstaid")
-
-[node name="Stool" type="StaticBody3D" parent="Operations" unique_id=1839818164]
-transform = Transform3D(0.9659, 0, -0.2588, 0, 1, 0, 0.2588, 0, 0.9659, -4.8, 0, 11.4)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_stool")
-
-[node name="Board" type="StaticBody3D" parent="." unique_id=242756615]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.72, 1.55, 6)
+[node name="Board" type="StaticBody3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.72, 1.55, 6.0)
 script = ExtResource("6_board")
 
-[node name="Interactable" type="Node" parent="Board" unique_id=275533439]
+[node name="Interactable" type="Node" parent="Board"]
 script = ExtResource("3_inter")
 prompt = "Open the mission board"
 
-[node name="Range" type="Node3D" parent="." unique_id=1638994848]
-
-[node name="FiringWallW" type="StaticBody3D" parent="Range" unique_id=1144441010]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.53, 0, -3.5)
-collision_mask = 0
+[node name="Map" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(0, 1, 0, 0, 0, -1, -1, 0, 0, -9.77, 1.7, 8.8)
 script = ExtResource("5_prop")
-model = ExtResource("m_bar_low")
+model = ExtResource("m_map")
 
-[node name="FiringWallE" type="StaticBody3D" parent="Range" unique_id=1076185439]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.53, 0, -3.5)
-collision_mask = 0
-script = ExtResource("5_prop")
-model = ExtResource("m_bar_low")
-
-[node name="LoadingTable" type="StaticBody3D" parent="Range" unique_id=340486152]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9, 0, -1.7)
-collision_mask = 0
+[node name="Desk" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.2, 0, 3.4)
 script = ExtResource("5_prop")
 model = ExtResource("m_desk")
 
-[node name="LoadBoxA" parent="Range" unique_id=1814779227 instance=ExtResource("a_box2")]
-transform = Transform3D(0.9848, 0, 0.1736, 0, 1, 0, -0.1736, 0, 0.9848, -3.3, 0.91, -1.75)
+[node name="Pc" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.25, 0.91, 2.75)
+script = ExtResource("5_prop")
+model = ExtResource("m_pc")
 
-[node name="LoadBoxB" parent="Range" unique_id=1159188866 instance=ExtResource("a_box1")]
-transform = Transform3D(0.9063, 0, -0.4226, 0, 1, 0, 0.4226, 0, 0.9063, -2.7, 0.91, -1.6)
+[node name="Monitor" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.25, 0.91, 3.5)
+script = ExtResource("5_prop")
+model = ExtResource("m_monitor")
 
-[node name="LoadShells" parent="Range" unique_id=523708489 instance=ExtResource("a_shells")]
-transform = Transform3D(0.342, 0, 0.9397, 0, 1, 0, -0.9397, 0, 0.342, -2.35, 0.91, -1.85)
+[node name="Keyboard" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -8.95, 0.91, 3.5)
+script = ExtResource("5_prop")
+model = ExtResource("m_keyboard")
 
-[node name="LoadMag" parent="Range" unique_id=1046052733 instance=ExtResource("a_pmag")]
-transform = Transform3D(-0.5, 0, 0.866, 0, 1, 0, -0.866, 0, -0.5, -3, 0.99, -1.5)
+[node name="Radio" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(0.5, 0, 0.866, 0, 1, 0, -0.866, 0, 0.5, -9.3, 0.91, 4.05)
+script = ExtResource("5_prop")
+model = ExtResource("m_radio")
 
-[node name="RangeStool" type="StaticBody3D" parent="Range" unique_id=1988587662]
-transform = Transform3D(0.866, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866, 3.1, 0, -1.4)
-collision_mask = 0
+[node name="Walkie" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(0.9397, 0, 0.342, 0, 1, 0, -0.342, 0, 0.9397, -9, 0.91, 2.5)
+script = ExtResource("5_prop")
+model = ExtResource("m_walkie")
+
+[node name="Chair" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -8.3, 0, 3.5)
+script = ExtResource("5_prop")
+model = ExtResource("m_chair")
+
+[node name="Screen" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.78, 2.35, 3.4)
+script = ExtResource("5_prop")
+model = ExtResource("m_screen")
+
+[node name="Speaker" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -9.79, 2.65, 1.2)
+script = ExtResource("5_prop")
+model = ExtResource("m_speaker")
+
+[node name="Seat" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.8, 0, 11.56)
+script = ExtResource("5_prop")
+model = ExtResource("m_bench_seat")
+
+[node name="Luggage" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(0.9659, 0, 0.2588, 0, 1, 0, -0.2588, 0, 0.9659, -8.6, 0, 11.4)
+script = ExtResource("5_prop")
+model = ExtResource("m_luggage")
+
+[node name="PackageA" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(0.9848, 0, -0.1736, 0, 1, 0, 0.1736, 0, 0.9848, -9.1, 0, 10.5)
+script = ExtResource("5_prop")
+model = ExtResource("m_package")
+
+[node name="PackageB" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(0.9063, 0, 0.4226, 0, 1, 0, -0.4226, 0, 0.9063, -9.05, 0.1, 10.5)
+script = ExtResource("5_prop")
+model = ExtResource("m_package")
+
+[node name="FirstAid" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(0.9962, 0, 0.0872, 0, 1, 0, -0.0872, 0, 0.9962, -7.9, 0.63, 11.56)
+script = ExtResource("5_prop")
+model = ExtResource("m_firstaid")
+
+[node name="Stool" type="StaticBody3D" parent="Operations"]
+transform = Transform3D(0.9659, 0, -0.2588, 0, 1, 0, 0.2588, 0, 0.9659, -4.8, 0, 11.4)
 script = ExtResource("5_prop")
 model = ExtResource("m_stool")
 
-[node name="RangeBucket" type="StaticBody3D" parent="Range" unique_id=1736566632]
+[node name="Range" type="Node3D" parent="."]
+
+[node name="FiringWallW" type="StaticBody3D" parent="Range"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.53, 0, -3.5)
+script = ExtResource("5_prop")
+model = ExtResource("m_bar_low")
+
+[node name="FiringWallE" type="StaticBody3D" parent="Range"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.53, 0, -3.5)
+script = ExtResource("5_prop")
+model = ExtResource("m_bar_low")
+
+[node name="LoadingTable" type="StaticBody3D" parent="Range"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9, 0, -1.7)
+script = ExtResource("5_prop")
+model = ExtResource("m_desk")
+
+[node name="LoadBoxA" parent="Range" instance=ExtResource("a_box2")]
+transform = Transform3D(0.9848, 0, 0.1736, 0, 1, 0, -0.1736, 0, 0.9848, -3.3, 0.91, -1.75)
+
+[node name="LoadBoxB" parent="Range" instance=ExtResource("a_box1")]
+transform = Transform3D(0.9063, 0, -0.4226, 0, 1, 0, 0.4226, 0, 0.9063, -2.7, 0.91, -1.6)
+
+[node name="LoadShells" parent="Range" instance=ExtResource("a_shells")]
+transform = Transform3D(0.342, 0, 0.9397, 0, 1, 0, -0.9397, 0, 0.342, -2.35, 0.91, -1.85)
+
+[node name="LoadMag" parent="Range" instance=ExtResource("a_pmag")]
+transform = Transform3D(-0.5, 0, 0.866, 0, 1, 0, -0.866, 0, -0.5, -3, 0.99, -1.5)
+
+[node name="RangeStool" type="StaticBody3D" parent="Range"]
+transform = Transform3D(0.866, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866, 3.1, 0, -1.4)
+script = ExtResource("5_prop")
+model = ExtResource("m_stool")
+
+[node name="RangeBucket" type="StaticBody3D" parent="Range"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.6, 0, -2.6)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_bucket")
 
-[node name="Sandbag0" type="StaticBody3D" parent="Range" unique_id=1066550879]
+[node name="Sandbag0" type="StaticBody3D" parent="Range"]
 transform = Transform3D(0.9848, 0, -0.1736, 0, 1, 0, 0.1736, 0, 0.9848, -2.6, 0, -66.7)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_pallet")
 
-[node name="Sandbag1" type="StaticBody3D" parent="Range" unique_id=1935029631]
+[node name="Sandbag1" type="StaticBody3D" parent="Range"]
 transform = Transform3D(0.9986, 0, -0.0523, 0, 1, 0, 0.0523, 0, 0.9986, -1.3, 0, -66.7)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_pallet")
 
-[node name="Sandbag2" type="StaticBody3D" parent="Range" unique_id=1314282190]
+[node name="Sandbag2" type="StaticBody3D" parent="Range"]
 transform = Transform3D(0.9976, 0, 0.0698, 0, 1, 0, -0.0698, 0, 0.9976, 0, 0, -66.7)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_pallet")
 
-[node name="Sandbag3" type="StaticBody3D" parent="Range" unique_id=664985937]
+[node name="Sandbag3" type="StaticBody3D" parent="Range"]
 transform = Transform3D(0.9877, 0, -0.1564, 0, 1, 0, 0.1564, 0, 0.9877, 1.3, 0, -66.7)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_pallet")
 
-[node name="Sandbag4" type="StaticBody3D" parent="Range" unique_id=29117107]
+[node name="Sandbag4" type="StaticBody3D" parent="Range"]
 transform = Transform3D(0.9994, 0, -0.0349, 0, 1, 0, 0.0349, 0, 0.9994, 2.6, 0, -66.7)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_pallet")
 
-[node name="SpentCement" type="StaticBody3D" parent="Range" unique_id=1196761802]
+[node name="SpentCement" type="StaticBody3D" parent="Range"]
 transform = Transform3D(0.766, 0, 0.6428, 0, 1, 0, -0.6428, 0, 0.766, -3.4, 0, -64.5)
-collision_mask = 0
 script = ExtResource("5_prop")
 model = ExtResource("m_cement")
 
-[node name="Targets" type="Node3D" parent="." unique_id=504657316]
+[node name="Targets" type="Node3D" parent="."]
 
-[node name="Target10" type="StaticBody3D" parent="Targets" unique_id=1683422242]
+[node name="Target10" type="StaticBody3D" parent="Targets"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.4, 0, -13)
 script = ExtResource("4_target")
 distance_label = "10 m"
 
-[node name="Target25" type="StaticBody3D" parent="Targets" unique_id=1830436348]
+[node name="Target25" type="StaticBody3D" parent="Targets"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0, -28)
 script = ExtResource("4_target")
 distance_label = "25 m"
 
-[node name="Target40" type="StaticBody3D" parent="Targets" unique_id=1278010527]
+[node name="Target40" type="StaticBody3D" parent="Targets"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4, 0, -43)
 script = ExtResource("4_target")
 distance_label = "40 m"
 
-[node name="Target60" type="StaticBody3D" parent="Targets" unique_id=985871819]
+[node name="Target60" type="StaticBody3D" parent="Targets"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, 0, -63)
 script = ExtResource("4_target")
 distance_label = "60 m"

@@ -6,6 +6,12 @@
 [ext_resource type="Script" uid="uid://bufn6abaxlns0" path="res://Levels/hill_ring.gd" id="90_hills"]
 [ext_resource type="Script" uid="uid://bb0mpba02qew7" path="res://Levels/foliage.gd" id="91_foliage"]
 [ext_resource type="Script" uid="uid://ce7thhydb1ntv" path="res://Props/prop.gd" id="100_prop"]
+[ext_resource type="Script" path="res://Props/loose_prop.gd" id="102_loose"]
+[ext_resource type="PackedScene" uid="uid://ytj022yo6uf7" path="res://Models/Props/Kit/paint_can_mx_1.glb" id="m_paint"]
+[ext_resource type="PackedScene" uid="uid://dnagypduowx22" path="res://Models/Props/Kit/bucket_mx_1.glb" id="m_bucket"]
+[ext_resource type="PackedScene" uid="uid://dck6hfhvamakl" path="res://Models/Props/Kit/jerrycan_mx_1.glb" id="m_jerry"]
+[ext_resource type="PackedScene" uid="uid://boxyrxs0lpsog" path="res://Models/Nature/stone_a.glb" id="m_stone"]
+[ext_resource type="PackedScene" uid="uid://ce04qhppjd3r4" path="res://Models/Props/Barrels/wooden_barrel_1.glb" id="m_woodbarrel"]
 [ext_resource type="Script" uid="uid://vsvwn5qk2akl" path="res://Props/alarm_horn.gd" id="101_horn"]
 [ext_resource type="Resource" uid="uid://dgcpwneel1ipy" path="res://Guns/resources/mag_heavy.tres" id="mg_1911"]
 [ext_resource type="Resource" uid="uid://dialvaqc2s13d" path="res://Guns/resources/mag_machine.tres" id="mg_machine"]
@@ -288,6 +294,48 @@ transform = Transform3D(0.9063, 0, 0.4226, 0, 1, 0, -0.4226, 0, 0.9063, -13.6, 0
 collision_mask = 0
 script = ExtResource("100_prop")
 model = ExtResource("m_toolbox")
+
+[node name="LooseCan" type="RigidBody3D" parent="Camp"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.2, 0.9, 57.1)
+mass = 1.6
+script = ExtResource("102_loose")
+model = ExtResource("m_paint")
+
+[node name="LooseBucket" type="RigidBody3D" parent="Camp"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.4, 0.0, 55.2)
+mass = 2.4
+script = ExtResource("102_loose")
+model = ExtResource("m_bucket")
+
+[node name="LooseStoneA" type="RigidBody3D" parent="Camp"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 0.0, 60.5)
+mass = 3.5
+script = ExtResource("102_loose")
+model = ExtResource("m_stone")
+
+[node name="LooseStoneB" type="RigidBody3D" parent="Camp"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 0.0, 63.4)
+mass = 3.5
+script = ExtResource("102_loose")
+model = ExtResource("m_stone")
+
+[node name="LooseJerrycan" type="RigidBody3D" parent="Camp"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.6, 0.0, 43.2)
+mass = 9.0
+script = ExtResource("102_loose")
+model = ExtResource("m_jerry")
+
+[node name="LooseBarrelA" type="RigidBody3D" parent="Camp"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.4, 0.0, 38.6)
+mass = 32.0
+script = ExtResource("102_loose")
+model = ExtResource("m_woodbarrel")
+
+[node name="LooseBarrelB" type="RigidBody3D" parent="Camp"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.1, 0.0, 40.2)
+mass = 32.0
+script = ExtResource("102_loose")
+model = ExtResource("m_woodbarrel")
 
 [node name="AlarmHorn" type="StaticBody3D" parent="Camp" unique_id=558431891]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, 40)

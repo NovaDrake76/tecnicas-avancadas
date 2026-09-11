@@ -64,6 +64,9 @@ func _on_impact(point: Vector3, normal: Vector3, hit_body: Object, energy: float
 		Run.report_hit(hit_body.has_method("is_down") and hit_body.is_down())
 
 	if not target:
+		var prop := hit_body as LooseProp
+		if prop != null and is_instance_valid(prop) and mine:
+			prop.bb_shove(_incoming, point, energy)
 		Sfx.play("bb_" + String(Sfx.surface_of(hit_body)), point)
 		if mine and multiplayer.is_server():
 			_heard_at(point)
