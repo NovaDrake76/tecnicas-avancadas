@@ -194,6 +194,12 @@ func shut_down() -> void:
 
 
 func _process(delta: float) -> void:
+	if not _combat and not _beam_on and not _charge_parts.emitting:
+		if _eye_light.visible:
+			for eye in _eye_meshes:
+				eye.visible = false
+			_eye_light.visible = false
+		return
 	_time += delta
 	var flicker := 1.0 + (0.08 * sin(_time * 61.0) + 0.05 * sin(_time * 37.0)) * maxf(_glow, 0.15)
 	var size_mul := lerpf(1.0, 2.6, _glow) * flicker

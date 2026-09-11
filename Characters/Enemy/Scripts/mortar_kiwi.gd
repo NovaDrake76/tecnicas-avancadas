@@ -154,6 +154,7 @@ func shots_fired() -> int:
 
 func _build_tube() -> void:
 	_tube = build_mortar(self, find_child("Skeleton3D", true, false) as Skeleton3D)
+	KitMesh.merge(_tube, _tube.find_children("*", "MeshInstance3D", true, false))
 
 
 static func build_mortar(kiwi: Node3D, skeleton: Skeleton3D) -> Node3D:

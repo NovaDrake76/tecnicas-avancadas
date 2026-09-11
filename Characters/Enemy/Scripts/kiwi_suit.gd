@@ -29,6 +29,8 @@ var lamp_mat: StandardMaterial3D
 var visor_mat: StandardMaterial3D
 var pale_mat: StandardMaterial3D
 
+var plate_spots: Array = []
+
 var _head_c := Vector3.ZERO
 
 
@@ -50,6 +52,29 @@ func build(kind: int, head: Node3D, torso: Node3D, leg_l: Node3D, leg_r: Node3D,
 		mi.layers = 2
 	if chevron != null:
 		chevron.layers = 2
+	for p in plates:
+		plate_spots.append([p, Vector3.ZERO])
+
+
+func merge(frames: Array) -> void:
+	var moved := {}
+	for frame in frames:
+		if frame != null:
+			moved.merge(KitMesh.merge(frame as Node3D, plates + trims))
+	plate_spots.clear()
+	var kept_plates: Array[MeshInstance3D] = []
+	for p in plates:
+		var to: Array = moved.get(p.get_instance_id(), [p, Vector3.ZERO])
+		plate_spots.append(to)
+		if not kept_plates.has(to[0]):
+			kept_plates.append(to[0])
+	var kept_trims: Array[MeshInstance3D] = []
+	for t in trims:
+		var to: Array = moved.get(t.get_instance_id(), [t, Vector3.ZERO])
+		if not kept_trims.has(to[0]):
+			kept_trims.append(to[0])
+	plates = kept_plates
+	trims = kept_trims
 
 
 func _materials() -> void:

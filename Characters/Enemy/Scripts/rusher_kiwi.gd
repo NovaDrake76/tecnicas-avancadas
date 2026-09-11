@@ -9,7 +9,13 @@ const CREST := Color(0.95, 0.25, 0.12)
 func _ready() -> void:
 	super()
 	add_to_group("rusher")
-	build_kit(self, find_child("Skeleton3D", true, false) as Skeleton3D)
+	var skeleton := find_child("Skeleton3D", true, false) as Skeleton3D
+	build_kit(self, skeleton)
+	if skeleton != null:
+		for rig in skeleton.get_children():
+			if rig is BoneRig:
+				var frame := (rig as BoneRig).frame
+				KitMesh.merge(frame, frame.find_children("*", "MeshInstance3D", true, false))
 
 
 func _on_alarmed(from: Vector3) -> void:

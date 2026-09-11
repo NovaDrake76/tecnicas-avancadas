@@ -114,6 +114,8 @@ func poll(delta: float) -> void:
 func exposure_to(who: Node3D) -> float:
 	if _body == null or who == null:
 		return 0.0
+	if who.global_position.distance_to(_body.global_position) > maxf(sight_range, point_blank) + 2.0:
+		return 0.0
 
 	var reach := sight_range
 	match stance_of(who):

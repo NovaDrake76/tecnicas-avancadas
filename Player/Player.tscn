@@ -49,6 +49,7 @@ shape = SubResource("CapsuleShape3D_bhunq")
 
 [node name="HeadClearance" type="ShapeCast3D" parent="." unique_id=913750173]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.72, 0)
+enabled = false
 shape = SubResource("SphereShape3D_head")
 target_position = Vector3(0, 0.8, 0)
 

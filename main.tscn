@@ -45,6 +45,7 @@ environment = SubResource("Environment_main")
 transform = Transform3D(0.81915, 0.40558, -0.40558, 0, 0.7071, 0.7071, 0.57358, -0.57923, 0.57923, 0, 12, 0)
 light_energy = 1.1
 shadow_enabled = true
+directional_shadow_mode = 1
 
 
 [node name="Players" type="Node3D" parent="."]
