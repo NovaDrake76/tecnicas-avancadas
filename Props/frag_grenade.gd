@@ -15,6 +15,8 @@ const DRAWN := 1.6
 @export var damage := 70.0
 ## what a wall between you and it is worth.
 @export var cover_factor := 0.3
+## how hard the blast throws loose props, per kilogram; they are scattered well past the hurt radius.
+@export var blast_shove := 7.0
 
 var belt: UtilityBelt
 
@@ -140,6 +142,7 @@ func _pop(at: Vector3) -> void:
 	var world := get_tree().current_scene
 	if world == null:
 		return
+	LooseProp.blast(get_tree(), at, radius * 1.6, blast_shove)
 	BurstFx.spawn(world, at + Vector3.UP * 0.25, FIRE, 30, 9.0, 0.4)
 	BurstFx.spawn(world, at + Vector3.UP * 0.4, SMOKE, 26, 5.0, 1.1)
 	BurstFx.spawn(world, at + Vector3.UP * 0.15, Color(0.55, 0.5, 0.4), 24, 11.0, 0.7)

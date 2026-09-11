@@ -17,6 +17,8 @@ var _label: Label
 var _tween: Tween
 var _kiwi: Node3D
 var _kiwi_view: Control
+var _kiwi_vp: SubViewport
+var _kiwi_anim: AnimationPlayer
 var _clip := ""
 var _covered_at := 0.0
 var _busy := false
@@ -61,8 +63,9 @@ func _build_kiwi() -> Control:
 	vp.own_world_3d = true
 	vp.transparent_bg = true
 	vp.size = Vector2i(KIWI_BOX.size)
-	## the curtain starts hidden, and a viewport that only draws WHEN_VISIBLE never woke up again.
-	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	## asleep until cover() wakes it: left to WHEN_VISIBLE under a curtain that starts hidden it never woke up again.
+	vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	_kiwi_vp = vp
 	holder.add_child(vp)
 	var env := WorldEnvironment.new()
 	env.environment = Environment.new()
@@ -89,6 +92,8 @@ func _build_kiwi() -> Control:
 			if String(clip).to_lower().ends_with("run"):
 				anim.get_animation(clip).loop_mode = Animation.LOOP_LINEAR
 				anim.play(clip)
+				anim.pause()
+				_kiwi_anim = anim
 				_clip = String(clip)
 				break
 	var cam := Camera3D.new()
@@ -145,6 +150,7 @@ func cover() -> void:
 	Sfx.set_gain(&"SFX", &"curtain", -14.0)
 	Sfx.set_gain(&"Ambience", &"curtain", -14.0)
 	_busy = true
+	_wake_kiwi(true)
 	visible = true
 	if _instant():
 		_rect.modulate.a = 1.0
@@ -173,8 +179,19 @@ func uncover() -> void:
 		await _tween.finished
 	_rect.modulate.a = 0.0
 	visible = false
+	_wake_kiwi(false)
 	_busy = false
 	uncovered.emit()
+
+
+func _wake_kiwi(on: bool) -> void:
+	if _kiwi_vp != null:
+		_kiwi_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS if on else SubViewport.UPDATE_DISABLED
+	if _kiwi_anim != null:
+		if on:
+			_kiwi_anim.play()
+		else:
+			_kiwi_anim.pause()
 
 
 func _instant() -> bool:

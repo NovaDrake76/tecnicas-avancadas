@@ -34,7 +34,12 @@ func points() -> PackedVector3Array:
 
 
 func stops() -> int:
-	return points().size()
+	var n := 0
+	for i in get_child_count():
+		var child := get_child(i)
+		if child is Node3D and child != _drawn:
+			n += 1
+	return n
 
 
 func next_index(from: int, direction: int) -> Array:

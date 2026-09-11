@@ -109,6 +109,7 @@ func _begin_hunt(toward: Vector3) -> void:
 	_attack = Attack.NONE
 	_suppressing = false
 	_role_goal = Vector3.INF
+	_role_timer = 0.0
 	_state = State.HUNT
 	_hunt_call = randf_range(hunt_call_interval.x, hunt_call_interval.y)
 	_play(run_clip, 0.15)
@@ -181,6 +182,7 @@ func _step_hunt(delta: float) -> void:
 		return
 
 	_role_goal = Vector3.INF
+	_role_timer = 0.0
 	var goal := _player.global_position if _seen else _last_seen
 	var arrived := _move_to(goal, hunt_speed, delta)
 	var moved := get_position_delta().length() / maxf(delta, 0.0001) > 0.3
@@ -201,7 +203,7 @@ func _step_hunt(delta: float) -> void:
 func _step_role(delta: float) -> void:
 	var job := Squad.role_for(self)
 	_role_timer -= delta
-	if _role_goal == Vector3.INF or _role_timer <= 0.0 or _role_role != job:
+	if _role_timer <= 0.0 or _role_role != job:
 		_role_role = job
 		_role_timer = Squad.ROLE_INTERVAL
 		_role_arrived = false

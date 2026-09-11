@@ -19,6 +19,7 @@
 [ext_resource type="Script" uid="uid://djstbsnibhump" path="res://Components/health.gd" id="17_health"]
 [ext_resource type="Script" uid="uid://ds0nwn85e0tix" path="res://Player/utility_belt.gd" id="18_throw"]
 [ext_resource type="Script" uid="uid://1iwot71kn823" path="res://Player/body_drag.gd" id="19_drag"]
+[ext_resource type="Script" path="res://Player/prop_carry.gd" id="24_carry"]
 [ext_resource type="PackedScene" path="res://Guns/gun/osprey.tscn" id="19_osprey"]
 [ext_resource type="Script" uid="uid://b5buv7ev1mjti" path="res://Player/takedown.gd" id="20_takedown"]
 [ext_resource type="Script" uid="uid://dlau1jp46te7e" path="res://Components/viewmodel_pass.gd" id="20_vmpass"]
@@ -48,6 +49,7 @@ shape = SubResource("CapsuleShape3D_bhunq")
 
 [node name="HeadClearance" type="ShapeCast3D" parent="." unique_id=913750173]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.72, 0)
+enabled = false
 shape = SubResource("SphereShape3D_head")
 target_position = Vector3(0, 0.8, 0)
 
@@ -129,6 +131,9 @@ script = ExtResource("21_revive")
 
 [node name="BodyDrag" type="Node" parent="." unique_id=123682194]
 script = ExtResource("19_drag")
+
+[node name="PropCarry" type="Node" parent="."]
+script = ExtResource("24_carry")
 
 [node name="ViewmodelPass" type="Node" parent="." unique_id=247467433]
 script = ExtResource("20_vmpass")

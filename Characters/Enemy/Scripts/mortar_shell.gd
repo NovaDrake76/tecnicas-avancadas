@@ -113,6 +113,7 @@ func _explode() -> void:
 
 	Sfx.play(&"mortar_blast", at)
 	Sfx.hdr(at, 10.0, 30.0)
+	LooseProp.blast(get_tree(), at, _radius * 2.0, 8.0)
 
 	_hurt(at)
 	burst.emit(at)

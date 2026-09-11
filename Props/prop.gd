@@ -23,43 +23,54 @@ func _ready() -> void:
 
 
 func _rebuild() -> void:
-	for built in [VIEW, SHAPE]:
-		var old := get_node_or_null(NodePath(built))
-		if old != null:
-			remove_child(old)
-			old.queue_free()
-	if model == null:
-		return
+	dress(self, model)
 
-	var view := model.instantiate() as Node3D
+
+## the model on a body, and a box shape grown from what the model actually measures. static and
+## shared, because a LooseProp is this same object with the physics let go of it.
+static func dress(body: CollisionObject3D, packed: PackedScene) -> AABB:
+	for built in [VIEW, SHAPE]:
+		var old := body.get_node_or_null(NodePath(built))
+		if old != null:
+			body.remove_child(old)
+			old.queue_free()
+	if packed == null:
+		return AABB()
+
+	var view := packed.instantiate() as Node3D
 	if view == null:
-		return
+		return AABB()
 	view.name = VIEW
 	## no owner, on purpose: an owned child would be serialised into the level with every vertex.
-	add_child(view)
+	body.add_child(view)
 
 	if Engine.is_editor_hint():
-		return
-	var box := bounds(view)
+		return AABB()
+	var box := bounds_of(body, view)
 	if box.size == Vector3.ZERO:
-		return
+		return box
 	var shape := CollisionShape3D.new()
 	shape.name = SHAPE
 	var solid := BoxShape3D.new()
 	solid.size = box.size
 	shape.shape = solid
 	shape.position = box.get_center()
-	add_child(shape)
+	body.add_child(shape)
+	return box
 
 
 func bounds(root: Node3D) -> AABB:
+	return bounds_of(self, root)
+
+
+static func bounds_of(body: Node3D, root: Node3D) -> AABB:
 	var box := AABB()
 	var first := true
 	for node in root.find_children("*", "MeshInstance3D", true, false):
 		var mi := node as MeshInstance3D
 		if mi.mesh == null:
 			continue
-		var local := global_transform.affine_inverse() * mi.global_transform
+		var local := body.global_transform.affine_inverse() * mi.global_transform
 		var part := local * mi.mesh.get_aabb()
 		box = part if first else box.merge(part)
 		first = false

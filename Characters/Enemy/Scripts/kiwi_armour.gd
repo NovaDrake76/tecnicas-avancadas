@@ -40,6 +40,10 @@ func bind(kiwi: CharacterBody3D, eyes: LaserEyes) -> void:
 	_rigs = built["rigs"]
 	_head = built["head"]
 	_torso = built["torso"]
+	var frames: Array = []
+	for rig in _rigs:
+		frames.append(rig.frame)
+	_suit.merge(frames)
 	var mid: Vector3 = built["mid"]
 	_weak = WeakPoint.new()
 	_weak.setup(kiwi, weak_size)
@@ -111,9 +115,11 @@ func shed() -> void:
 		Sfx.play(&"plates_shed", _kiwi.global_position + Vector3.UP * 0.3)
 	var world := get_tree().current_scene
 	if _suit != null:
+		for spot in _suit.plate_spots:
+			var piece := spot[0] as MeshInstance3D
+			if piece.visible:
+				BurstFx.spawn(world, piece.global_transform * (spot[1] as Vector3), METAL_LIGHT, 10, 3.0, 0.5)
 		for p in _suit.plates:
-			if p.visible:
-				BurstFx.spawn(world, p.global_position, METAL_LIGHT, 10, 3.0, 0.5)
 			p.visible = false
 		for t in _suit.trims:
 			t.visible = false

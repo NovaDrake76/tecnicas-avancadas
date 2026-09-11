@@ -128,6 +128,10 @@ enum Duty { WANDER, FIXED, ROUTE }
 
 const NET_INTERVAL := 0.05
 const FIRE_NOISE_GAP := 0.5
+const POLL_EVERY := 1.0 / 30.0
+const ANIM_NEAR := 30.0
+const ANIM_FAR := 70.0
+const ANIM_MARGIN := 5.0
 
 var net_clip := ""
 var _shown := ""
@@ -170,6 +174,10 @@ var _pecking := false
 var _peck_timer := 0.0
 var _peck_ready := 0.0
 var _fire_noise_left := 0.0
+var _poll_left := 0.0
+var _poll_time := 0.0
+var _anim_time := 0.0
+var _anim_wait := 0
 @onready var blaster: BirdGun = get_node_or_null("Blaster") as BirdGun
 
 
@@ -178,6 +186,7 @@ func _ready() -> void:
 	_home = global_position
 	_post = _home
 	_bind_route()
+	_poll_left = randf() * POLL_EVERY
 	model.rotation.y = deg_to_rad(model_yaw_deg)
 
 	_enable_vertex_colors()
@@ -243,12 +252,62 @@ func _show(clip: String, blend := 0.3) -> void:
 		_anim.play(full, blend)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_step_animation(delta)
 	if multiplayer.is_server():
 		return
 	if net_clip != "" and net_clip != _shown:
 		_shown = net_clip
 		_show(net_clip)
+
+
+func _step_animation(delta: float) -> void:
+	if _anim == null:
+		return
+	var stride := _animation_stride()
+	var manual := _anim.callback_mode_process == AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
+	if stride <= 1:
+		if manual:
+			## the frames it was behind are dropped, not caught up: a jump in the head would swing the cone.
+			_anim_time = 0.0
+			_anim.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_IDLE
+		return
+	if not manual:
+		_anim.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
+		_anim_time = 0.0
+		_anim_wait = 0
+	_anim_time += delta
+	_anim_wait -= 1
+	if _anim_wait > 0:
+		return
+	_anim_wait = stride
+	_anim.advance(_anim_time)
+	_anim_time = 0.0
+
+
+func _animation_stride() -> int:
+	if _state != State.DOWN and not (_can_notice() and vision.awareness <= 0.0):
+		return 1
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return 1
+	var far := cam.global_position.distance_to(global_position)
+	if _state != State.DOWN:
+		var reach := vision.sight_range + ANIM_MARGIN
+		if far <= reach:
+			return 1
+		var me := Player.local(get_tree())
+		if me != null and me.global_position.distance_to(global_position) <= reach:
+			return 1
+		if get_tree().get_node_count_in_group("player") > 1:
+			var near := Player.nearest(get_tree(), global_position)
+			if near != null and near.global_position.distance_to(global_position) <= reach:
+				return 1
+	if far <= ANIM_NEAR:
+		return 1
+	if not cam.is_position_in_frustum(global_position + Vector3.UP * 0.3):
+		return 8
+	return 2 if far <= ANIM_FAR else 4
 
 
 func _physics_process(delta: float) -> void:
@@ -264,7 +323,17 @@ func _physics_process(delta: float) -> void:
 	_fire_noise_left = maxf(0.0, _fire_noise_left - delta)
 
 	if _state != State.DOWN:
-		vision.poll(delta)
+		if not vision.alerted:
+			vision.poll(delta)
+			_poll_time = 0.0
+		else:
+			_poll_time += delta
+			_poll_left -= delta
+			if _poll_left <= 0.0:
+				_poll_left = POLL_EVERY
+				## alerted: the bar no longer fills and the poll only reports where it sees you, so 30 Hz loses nothing a probe or a player can find.
+				vision.poll(_poll_time)
+				_poll_time = 0.0
 		_update_suspicion()
 		_scan_for_bodies(delta)
 	voice.tick(delta, _is_calm())
@@ -280,6 +349,9 @@ func _physics_process(delta: float) -> void:
 		State.DOWN:
 			velocity.x = 0.0
 			velocity.z = 0.0
+			if is_on_floor():
+				## a body at rest has nothing left for a tick to do; a toss or a drop turns physics back on.
+				set_physics_process(false)
 		State.FLEE:
 			_step_flee(delta)
 		State.RUNNER:
@@ -322,6 +394,9 @@ func _physics_process(delta: float) -> void:
 			_step_walk(delta)
 
 	_publish_tier()
+	## a bird standing on the ground with nothing moving it has nothing to slide.
+	if is_on_floor() and velocity.length_squared() < 0.0001:
+		return
 	move_and_slide()
 
 
@@ -345,6 +420,7 @@ func _move_to(point: Vector3, speed: float, delta: float) -> bool:
 	to_target.y = 0.0
 	if to_target.length() <= arrive_distance:
 		_path = PackedVector3Array()
+		_path_goal = Vector3.INF
 		return true
 
 	_turn_to(_next_waypoint(point, delta), turn_speed, delta)
@@ -358,32 +434,84 @@ func _move_to(point: Vector3, speed: float, delta: float) -> bool:
 
 
 const PATH_REFRESH := 0.5
+const PATH_RETARGET := 0.25
+const PATH_JITTER := 0.1
+const PATH_QUERIES_PER_TICK := 2
 const WAYPOINT_REACH := 0.6
+
+## shared by every bird on purpose: the garrison's path queries per physics tick, not one bird's.
+static var _query_tick := -1
+static var _queries_left := 0
 
 var _path := PackedVector3Array()
 var _path_goal := Vector3.INF
 var _path_age := 0.0
 var _path_index := 0
+var _path_task := -1
+var _path_job: PathJob
+
+
+class PathJob extends RefCounted:
+	var to := Vector3.INF
+	var found := PackedVector3Array()
 
 
 func _next_waypoint(point: Vector3, delta: float) -> Vector3:
+	_take_path()
 	_path_age += delta
-	if _path.is_empty() or _path_age > PATH_REFRESH or _path_goal.distance_to(point) > 1.0:
+	var due := _path_goal == Vector3.INF or _path_age > PATH_REFRESH or (_path_age > PATH_RETARGET and _path_goal.distance_to(point) > 1.0)
+	if due and _path_task < 0 and _may_query_path():
 		_path_goal = point
-		_path_age = 0.0
-		_path_index = 0
-		_path = PackedVector3Array()
+		_path_age = -randf() * PATH_JITTER
 		var map := get_world_3d().navigation_map
-		if not NavigationServer3D.map_get_regions(map).is_empty():
-			var found := NavigationServer3D.map_get_path(map, global_position, point, true)
-			if found.size() >= 2 and found[0].distance_to(global_position) < 2.0:
-				_path = found
+		if NavigationServer3D.map_get_regions(map).is_empty():
+			_path_index = 0
+			_path = PackedVector3Array()
+		else:
+			_path_job = PathJob.new()
+			_path_job.to = point
+			_path_task = WorkerThreadPool.add_task(Kiwi._find_path.bind(_path_job, map, global_position, point))
 	if _path.is_empty():
 		return point
 	while _path_index < _path.size() - 1 \
 			and Vector2(_path[_path_index].x - global_position.x, _path[_path_index].z - global_position.z).length() < WAYPOINT_REACH:
 		_path_index += 1
 	return _path[_path_index]
+
+
+## runs on a worker thread: it may touch the job and the navigation server, never the bird.
+static func _find_path(job: PathJob, map: RID, from: Vector3, to: Vector3) -> void:
+	job.found = NavigationServer3D.map_get_path(map, from, to, true)
+
+
+func _take_path() -> void:
+	if _path_task < 0 or not WorkerThreadPool.is_task_completed(_path_task):
+		return
+	WorkerThreadPool.wait_for_task_completion(_path_task)
+	_path_task = -1
+	if _path_job.to != _path_goal:
+		return
+	var found := _path_job.found
+	_path_index = 0
+	_path = found if found.size() >= 2 and found[0].distance_to(global_position) < 2.0 else PackedVector3Array()
+
+
+func _exit_tree() -> void:
+	if _path_task >= 0:
+		## a pool task must be waited on once, and this one holds the job a freed bird would leave behind.
+		WorkerThreadPool.wait_for_task_completion(_path_task)
+		_path_task = -1
+
+
+static func _may_query_path() -> bool:
+	var tick := Engine.get_physics_frames()
+	if tick != _query_tick:
+		_query_tick = tick
+		_queries_left = PATH_QUERIES_PER_TICK
+	if _queries_left <= 0:
+		return false
+	_queries_left -= 1
+	return true
 
 
 func path_length() -> int:
@@ -759,6 +887,7 @@ func _begin_hunt(toward: Vector3) -> void:
 	_stuck = 0.0
 	_fight_time = 0.0
 	_role_goal = Vector3.INF
+	_role_timer = 0.0
 	_state = State.HUNT
 	_play(run_clip, 0.15)
 	voice.alarm()
@@ -805,6 +934,7 @@ func _step_hunt(delta: float) -> void:
 		_step_role(delta)
 		return
 	_role_goal = Vector3.INF
+	_role_timer = 0.0
 	var arrived := _move_to(_last_seen, hunt_speed, delta)
 	var moved := get_position_delta().length() / maxf(delta, 0.0001) > 0.3
 	_stuck = 0.0 if moved or arrived else _stuck + delta
@@ -822,7 +952,7 @@ func _step_hunt(delta: float) -> void:
 func _step_role(delta: float) -> void:
 	var job := Squad.role_for(self)
 	_role_timer -= delta
-	if _role_goal == Vector3.INF or _role_timer <= 0.0 or _role_role != job:
+	if _role_timer <= 0.0 or _role_role != job:
 		_role_role = job
 		_role_timer = Squad.ROLE_INTERVAL
 		_role_arrived = false
@@ -1066,12 +1196,16 @@ func is_thrown() -> bool:
 @rpc("any_peer", "call_local", "reliable")
 func net_carried(by: int) -> void:
 	body.set_dragged(by > 0)
+	if by <= 0 and multiplayer.is_server():
+		set_physics_process(true)
 	if _link != null:
 		_link.set_multiplayer_authority(by if by > 0 else 1)
 
 
 func set_dragged(value: bool) -> void:
 	body.set_dragged(value)
+	if not value and multiplayer.is_server():
+		set_physics_process(true)
 
 
 func is_dragged() -> bool:

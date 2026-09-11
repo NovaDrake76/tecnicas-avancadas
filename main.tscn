@@ -5,6 +5,7 @@
 [ext_resource type="Shader" uid="uid://dowsb4pwaj2qi" path="res://Shaders/sky.gdshader" id="4_sky"]
 [ext_resource type="PackedScene" path="res://HUD/hud.tscn" id="5_hud"]
 [ext_resource type="Script" path="res://Components/kill_plane.gd" id="6_void"]
+[ext_resource type="PackedScene" path="res://UI/briefing/briefing.tscn" id="7_brief"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_void"]
 size = Vector3(600, 10, 600)
@@ -44,6 +45,7 @@ environment = SubResource("Environment_main")
 transform = Transform3D(0.81915, 0.40558, -0.40558, 0, 0.7071, 0.7071, 0.57358, -0.57923, 0.57923, 0, 12, 0)
 light_energy = 1.1
 shadow_enabled = true
+directional_shadow_mode = 1
 
 
 [node name="Players" type="Node3D" parent="."]
@@ -60,3 +62,5 @@ script = ExtResource("6_void")
 shape = SubResource("BoxShape3D_void")
 
 [node name="LevelHolder" type="Node3D" parent="."]
+
+[node name="Briefing" parent="." instance=ExtResource("7_brief")]

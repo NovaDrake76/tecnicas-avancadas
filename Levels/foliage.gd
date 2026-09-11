@@ -51,6 +51,18 @@ class Band:
 @export var grass_tint := Color(0.62, 1.35, 0.5)
 @export_range(0.0, 0.5) var tint_variation := 0.18
 
+@export_group("Drawing")
+## grass is not drawn past this many metres from the camera.
+@export var grass_range := 70.0
+## ferns, logs and stumps are not drawn past this.
+@export var fern_range := 90.0
+## grass, ferns and debris cast shadows too when on; off, they stay out of every shadow pass.
+@export var small_shadows := false
+## grass, ferns and debris are batched in square cells this many metres across, so a cell's range is its grass's range.
+@export var small_cell := 24.0
+## trees and rocks are batched in cells this big; 0 keeps each species in one batch over the whole map.
+@export var large_cell := 0.0
+
 @export_group("Collision")
 ## trunks block movement.
 @export var tree_collision := true
@@ -69,6 +81,8 @@ class Band:
 		rebuild = false
 		if is_inside_tree():
 			build()
+
+static var _scissored_meshes := {}
 
 var _rng := RandomNumberGenerator.new()
 var _hills: HillRing
@@ -130,8 +144,8 @@ func build() -> void:
 			if mmi == null:
 				continue
 			var box := mmi.custom_aabb
-			print("  %-16s n=%-6d custom_aabb pos=%s size=%s" % [mmi.name, mmi.multimesh.instance_count,
-				str(box.position.round()), str(box.size.round())])
+			print("  %-24s n=%-6d custom_aabb pos=%s size=%s range=%.0f" % [mmi.name, mmi.multimesh.instance_count,
+				str(box.position.round()), str(box.size.round()), mmi.visibility_range_end])
 
 
 func _find_hills() -> HillRing:
@@ -178,6 +192,19 @@ func _slope(x: float, z: float) -> float:
 	return Vector2(dy_x, dy_z).length() / (2.0 * d)
 
 
+static func is_small(source: String) -> bool:
+	return source.begins_with("grass") or source.begins_with("fern") \
+		or source.begins_with("log") or source.begins_with("stump")
+
+
+func _range_of(source: String) -> float:
+	if source.begins_with("grass"):
+		return grass_range
+	if is_small(source):
+		return fern_range
+	return 0.0
+
+
 func _emit(source: String, placements: Array[Transform3D], tint := Color.WHITE) -> AABB:
 	if placements.is_empty():
 		return AABB()
@@ -190,6 +217,11 @@ func _emit(source: String, placements: Array[Transform3D], tint := Color.WHITE) 
 	var parts := _collect_meshes(probe)
 	probe.free()
 
+	var small := is_small(source)
+	var cell := small_cell if small else large_cell
+	var reach := _range_of(source)
+	var cells := _cells(placements, cell)
+
 	var bounds := AABB()
 	for index in parts.size():
 		var part: Array = parts[index]
@@ -197,31 +229,90 @@ func _emit(source: String, placements: Array[Transform3D], tint := Color.WHITE) 
 		var local: Transform3D = part[1]
 		var tinted := tint != Color.WHITE and mesh.get_surface_count() == 1
 
-		var mm := MultiMesh.new()
-		mm.transform_format = MultiMesh.TRANSFORM_3D
-		mm.use_colors = tinted
-		mm.mesh = mesh
-		mm.instance_count = placements.size()
-		for i in placements.size():
-			mm.set_instance_transform(i, placements[i] * local)
-			if tinted:
-				var jitter := _rng.randf_range(-tint_variation, tint_variation)
-				mm.set_instance_color(i, Color(tint.r + jitter, tint.g + jitter, tint.b + jitter))
-
-		var node := MultiMeshInstance3D.new()
-		node.name = "%s_%d" % [source, index]
-		node.multimesh = mm
-		## a multimesh assembled in code reports an EMPTY aabb and godot culls every instance; the bounds are handed over explicitly.
-		node.custom_aabb = _bounds_of(mesh, local, placements)
+		## rolled for every instance in planting order before any batching, so the jitter and every band planted after it land exactly where they always did.
+		var colours := PackedColorArray()
 		if tinted:
-			node.material_override = _tinting_material(mesh)
-		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-		add_child(node)
+			colours.resize(placements.size())
+			for i in placements.size():
+				var jitter := _rng.randf_range(-tint_variation, tint_variation)
+				colours[i] = Color(tint.r + jitter, tint.g + jitter, tint.b + jitter)
+		var drawn_mesh := mesh if tinted else scissored(mesh)
+		var override: Material = scissor(_tinting_material(mesh)) if tinted else null
+
+		for key in cells:
+			var picked: Array = cells[key]
+			var mm := MultiMesh.new()
+			mm.transform_format = MultiMesh.TRANSFORM_3D
+			mm.use_colors = tinted
+			mm.mesh = drawn_mesh
+			mm.instance_count = picked.size()
+			var chunk: Array[Transform3D] = []
+			for j in picked.size():
+				var at: int = picked[j]
+				mm.set_instance_transform(j, placements[at] * local)
+				if tinted:
+					mm.set_instance_color(j, colours[at])
+				chunk.append(placements[at])
+
+			var node := MultiMeshInstance3D.new()
+			node.name = "%s_%d_%d_%d" % [source, index, (key as Vector2i).x, (key as Vector2i).y]
+			node.multimesh = mm
+			## a multimesh assembled in code reports an EMPTY aabb and godot culls every instance; the bounds are handed over explicitly.
+			node.custom_aabb = _bounds_of(mesh, local, chunk)
+			if override != null:
+				node.material_override = override
+			node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if small_shadows or not small \
+				else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			if reach > 0.0:
+				## the range is measured to the cell's centre, so the half diagonal is added or a cell's near edge would vanish at your feet.
+				node.visibility_range_end = reach + cell * 0.71
+			add_child(node)
 
 		var box := local * mesh.get_aabb()
 		bounds = box if index == 0 else bounds.merge(box)
 
 	return bounds
+
+
+func _cells(placements: Array[Transform3D], cell: float) -> Dictionary:
+	var out := {}
+	for i in placements.size():
+		var key := Vector2i.ZERO
+		if cell > 0.0:
+			var at := placements[i].origin
+			key = Vector2i(floori(at.x / cell), floori(at.z / cell))
+		if not out.has(key):
+			out[key] = []
+		(out[key] as Array).append(i)
+	return out
+
+
+## the same mesh with every alpha-blended surface cut instead, made once per mesh for the session.
+static func scissored(mesh: Mesh) -> Mesh:
+	var key := mesh.get_instance_id()
+	if _scissored_meshes.has(key):
+		return _scissored_meshes[key]
+	var copy := mesh.duplicate() as Mesh
+	var changed := false
+	for s in mesh.get_surface_count():
+		var mat := mesh.surface_get_material(s)
+		var cut := scissor(mat)
+		if cut != mat:
+			copy.surface_set_material(s, cut)
+			changed = true
+	var out: Mesh = copy if changed else mesh
+	_scissored_meshes[key] = out
+	return out
+
+
+static func scissor(mat: Material) -> Material:
+	var base := mat as BaseMaterial3D
+	if base == null or base.transparency != BaseMaterial3D.TRANSPARENCY_ALPHA:
+		return mat
+	var cut := base.duplicate() as BaseMaterial3D
+	cut.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	cut.alpha_scissor_threshold = 0.5
+	return cut
 
 
 func _collect_meshes(root: Node3D) -> Array:

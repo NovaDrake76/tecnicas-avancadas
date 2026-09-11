@@ -201,6 +201,88 @@ static func put(mesh: Mesh, material: Material, parent: Node, at := Vector3.ZERO
 	return mi
 
 
+static func merge(root: Node3D, pieces: Array) -> Dictionary:
+	var groups := {}
+	for piece in pieces:
+		var mi := piece as MeshInstance3D
+		if mi == null or not is_instance_valid(mi) or mi.mesh == null or not mi.visible or mi.get_child_count() > 0:
+			continue
+		if not root.is_ancestor_of(mi) or mi.mesh.get_surface_count() != 1 or (mi.mesh is ArrayMesh and (mi.mesh as ArrayMesh).surface_get_primitive_type(0) != Mesh.PRIMITIVE_TRIANGLES):
+			continue
+		var mat: Material = mi.material_override if mi.material_override != null else mi.mesh.surface_get_material(0)
+		if mat == null:
+			continue
+		var key := "%d/%d/%d" % [mat.get_instance_id(), mi.layers, mi.cast_shadow]
+		if not groups.has(key):
+			groups[key] = []
+		(groups[key] as Array).append(mi)
+	var moved := {}
+	for key: String in groups:
+		var group: Array = groups[key]
+		if group.size() < 2:
+			continue
+		var first := group[0] as MeshInstance3D
+		var mat: Material = first.material_override if first.material_override != null else first.mesh.surface_get_material(0)
+		var tinted := mat is BaseMaterial3D and (mat as BaseMaterial3D).vertex_color_use_as_albedo
+		var verts := PackedVector3Array()
+		var normals := PackedVector3Array()
+		var uvs := PackedVector2Array()
+		var tints := PackedColorArray()
+		var index := PackedInt32Array()
+		for piece in group:
+			var mi := piece as MeshInstance3D
+			var rel := _relative(root, mi)
+			var turn := rel.basis.inverse().transposed()
+			var arrays := mi.mesh.surface_get_arrays(0)
+			var v: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+			var n: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL] if arrays[Mesh.ARRAY_NORMAL] != null else PackedVector3Array()
+			var uv: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV] if arrays[Mesh.ARRAY_TEX_UV] != null else PackedVector2Array()
+			var c: PackedColorArray = arrays[Mesh.ARRAY_COLOR] if arrays[Mesh.ARRAY_COLOR] != null else PackedColorArray()
+			var ix: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
+			var base := verts.size()
+			for i in v.size():
+				verts.append(rel * v[i])
+				normals.append((turn * (n[i] if i < n.size() else Vector3.UP)).normalized())
+				uvs.append(uv[i] if i < uv.size() else Vector2.ZERO)
+				if tinted:
+					tints.append(c[i] if i < c.size() else Color.WHITE)
+			if ix.is_empty():
+				for i in v.size():
+					index.append(base + i)
+			else:
+				for i in ix:
+					index.append(base + i)
+			moved[mi.get_instance_id()] = [null, rel.origin]
+		var surface := []
+		surface.resize(Mesh.ARRAY_MAX)
+		surface[Mesh.ARRAY_VERTEX] = verts
+		surface[Mesh.ARRAY_NORMAL] = normals
+		surface[Mesh.ARRAY_TEX_UV] = uvs
+		if tinted:
+			surface[Mesh.ARRAY_COLOR] = tints
+		surface[Mesh.ARRAY_INDEX] = index
+		var mesh := ArrayMesh.new()
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface)
+		var merged := put(mesh, mat, root, Vector3.ZERO, "Merged")
+		merged.layers = first.layers
+		merged.cast_shadow = first.cast_shadow
+		for piece in group:
+			var mi := piece as MeshInstance3D
+			(moved[mi.get_instance_id()] as Array)[0] = merged
+			mi.get_parent().remove_child(mi)
+			mi.queue_free()
+	return moved
+
+
+static func _relative(root: Node3D, node: Node3D) -> Transform3D:
+	var xf := Transform3D.IDENTITY
+	var at: Node = node
+	while at != null and at != root:
+		xf = (at as Node3D).transform * xf
+		at = at.get_parent()
+	return xf
+
+
 static func basis_along(y_axis: Vector3) -> Basis:
 	var y := y_axis.normalized()
 	var helper := Vector3.FORWARD if absf(y.dot(Vector3.FORWARD)) < 0.9 else Vector3.RIGHT
