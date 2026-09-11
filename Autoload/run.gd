@@ -102,6 +102,21 @@ const LEVELS := [
 			{"say": "THE MORTAR BEHIND IT MEANS STANDING STILL IN THAT COVER IS WHAT GETS YOU KILLED.", "hold": 1.0},
 			{"say": "THIS IS THE LAST THREAD. PULL IT.", "hold": 1.2},
 		]},
+	{"path": "res://Levels/level_06.tscn", "name": "The Village", "par": 150.0, "reinforcements": true,
+		"optional": ["no_shots", "horn_cut", "no_body_found", "ghost"],
+		"brief": "A hill village the empire emptied and moved into, cut into the side of a mountain in three terraces: a street with a gate at each end, the command house above it, the barracks and the garage below. You start behind the spur to the east, higher than the village; look before you move. The signal log is upstairs in the command house, and the way out is the road down to the valley. Twelve sentries hold the village, two of them walking the street and one each on the lower yard and the upper terrace, a sniper on the barracks roof, a mortar in a pit on the upper terrace, an armoured bird on the street and a charger by the garage. The horn is inside the east gate. There are more ways in than the gates.",
+		"image": "res://UI/missions/level_06.png",
+		"briefing": [
+			{"view": [-14.0, 136.0, 1.0], "time": 0.0, "stain": ["NZL", "AUS-E", "PNG", "IDN", "PHL", "THA", "KHM", "VNM", "LAO", "CN-GX", "CN-FJ", "CN-ZJ", "JPN", "KOR"], "stagger": 0.08, "hold": 0.8},
+			{"say": "GHOST KIWI RECON. MISSION 06: THE VILLAGE.", "hold": 0.8},
+			{"say": "THE YARD WAS THE CAPITAL'S LAST DOOR. THE BIRDS PULLED BACK INTO THE HILLS AND TOOK A VILLAGE WITH THEM.", "hold": 1.0},
+			{"clear": true, "view": [-41.1, 175.3, 4.6], "time": 2.6, "mark": [-41.2, 174.92, "THE LONG YARD", "done"], "say": "A HILL VILLAGE IN THE RIMUTAKA RANGE, EMPTIED AND GARRISONED.", "hold": 0.2},
+			{"line": [-41.2, 174.92, -41.1, 175.32], "mark": [-41.1, 175.32, "THE VILLAGE"], "hold": 1.0},
+			{"say": "YOU START BEHIND THE SPUR ABOVE IT. LOOK BEFORE YOU MOVE.", "hold": 1.0},
+			{"say": "THE SIGNAL LOG IS UPSTAIRS IN THE COMMAND HOUSE. THE WAY OUT IS THE ROAD DOWN TO THE VALLEY.", "hold": 1.2},
+			{"say": "TWELVE SENTRIES, A SNIPER ON THE BARRACKS ROOF, A MORTAR, AN ARMOURED BIRD, A CHARGER. THE HORN IS INSIDE THE EAST GATE.", "hold": 1.2},
+			{"say": "THERE ARE MORE WAYS IN THAN THE GATES.", "hold": 1.0},
+		]},
 ]
 
 const OPEN_AT_START := 2
@@ -203,6 +218,15 @@ func restart_level() -> bool:
 		return false
 	restart_requested.emit(level_index)
 	return true
+
+
+## the level is going away: nothing may keep pointing into it. called before the free, because a
+## `node as Objective` on a freed object throws, and the waypoint walks this list every frame.
+func forget_level() -> void:
+	objectives.clear()
+	objectives_changed.emit()
+	targets_total = 0
+	targets_down = 0
 
 
 func begin_level(level: Node) -> void:

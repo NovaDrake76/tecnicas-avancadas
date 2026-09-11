@@ -44,6 +44,10 @@ window/size/window_height_override=1080
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/terrain_3d/plugin.cfg")
+
 [gui]
 
 theme/custom_font="res://Fonts/IBMPlexSansCondensed-Regular.ttf"

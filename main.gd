@@ -169,6 +169,7 @@ func _on_restart(index: int) -> void:
 
 func _load_level() -> void:
 	if _level != null and is_instance_valid(_level):
+		Run.forget_level()
 		_level.queue_free()
 		_level = null
 

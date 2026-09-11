@@ -1,0 +1,54 @@
+[gd_resource type="Terrain3DAssets" load_steps=15 format=3]
+
+[ext_resource type="Texture2D" path="res://Levels/terrain/textures/m_grass_dry.png" id="t0"]
+[ext_resource type="Texture2D" path="res://Levels/terrain/textures/cliff_rock.png" id="t1"]
+[ext_resource type="Texture2D" path="res://Levels/terrain/textures/m_yard_dirt.png" id="t2"]
+[ext_resource type="Texture2D" path="res://Levels/terrain/textures/m_road.png" id="t3"]
+[ext_resource type="Texture2D" path="res://Levels/terrain/textures/m_river_gravel.png" id="t4"]
+[ext_resource type="Texture2D" path="res://Levels/terrain/textures/m_scree.png" id="t5"]
+[ext_resource type="Texture2D" path="res://Levels/terrain/textures/m_grass_stony.png" id="t6"]
+
+[sub_resource type="Terrain3DTextureAsset" id="a0"]
+name = "m_grass_dry"
+id = 0
+albedo_texture = ExtResource("t0")
+uv_scale = 0.35
+
+[sub_resource type="Terrain3DTextureAsset" id="a1"]
+name = "cliff_rock"
+id = 1
+albedo_texture = ExtResource("t1")
+uv_scale = 0.3
+
+[sub_resource type="Terrain3DTextureAsset" id="a2"]
+name = "m_yard_dirt"
+id = 2
+albedo_texture = ExtResource("t2")
+uv_scale = 0.45
+
+[sub_resource type="Terrain3DTextureAsset" id="a3"]
+name = "m_road"
+id = 3
+albedo_texture = ExtResource("t3")
+uv_scale = 0.32
+
+[sub_resource type="Terrain3DTextureAsset" id="a4"]
+name = "m_river_gravel"
+id = 4
+albedo_texture = ExtResource("t4")
+uv_scale = 0.4
+
+[sub_resource type="Terrain3DTextureAsset" id="a5"]
+name = "m_scree"
+id = 5
+albedo_texture = ExtResource("t5")
+uv_scale = 0.38
+
+[sub_resource type="Terrain3DTextureAsset" id="a6"]
+name = "m_grass_stony"
+id = 6
+albedo_texture = ExtResource("t6")
+uv_scale = 0.35
+
+[resource]
+texture_list = Array[Terrain3DTextureAsset]([SubResource("a0"), SubResource("a1"), SubResource("a2"), SubResource("a3"), SubResource("a4"), SubResource("a5"), SubResource("a6")])
