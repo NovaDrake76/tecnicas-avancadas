@@ -9,6 +9,7 @@ const PROPS := "res://Models/Props/"
 const NATURE := "res://Models/Nature/"
 const GRASS := preload("res://Shaders/terrain_grass.gdshader")
 const FLAG := preload("res://Shaders/flag.gdshader")
+const CLOTH := preload("res://UI/kiwi_flag.png")
 const SCENES := ["march", "rally", "battle"]
 const SPACING := 400.0
 const TILE := 4.0
@@ -21,7 +22,6 @@ const SPECTATORS := 26
 const CROWD := 48
 const SHOOTERS := 7
 const RUNNERS := 6
-const EMPIRE_RED := Color(0.62, 0.13, 0.10)
 const ASPHALT := Color(0.16, 0.16, 0.17)
 const CONCRETE := Color(0.46, 0.45, 0.42)
 const EARTH := Color(0.26, 0.23, 0.18)
@@ -50,13 +50,11 @@ var _t := 0.0
 var _cuts := 0
 var _kiwi_scene: PackedScene
 var _scenes := {}
-var _roundel: ImageTexture
 var _birds := 0
 
 
 func _ready() -> void:
 	_kiwi_scene = load(KIWI) as PackedScene
-	_roundel = _make_roundel()
 	_build_march(Vector3(0.0, 0.0, 0.0))
 	_build_rally(Vector3(SPACING, 0.0, 0.0))
 	_build_battle(Vector3(SPACING * 2.0, 0.0, 0.0))
@@ -226,7 +224,7 @@ func _block(parent: Node, at: Vector3, wide: int, deep: int, storeys: int, yaw :
 			_place(root, _glb("Walls/wall_hr_2.glb" if j % 2 == 0 else "Walls/wall_hr_1.glb"), Vector3(w * 0.5, y, z), 90.0)
 	_box(root, Vector3(0.0, float(storeys) * STOREY + 0.15, 0.0), Vector3(w + 0.5, 0.3, d + 0.5), ROOF)
 	if banner:
-		_banner(root, Vector3(0.0, float(storeys) * STOREY - 1.7, d * 0.5 + 0.22), 0.0, Vector2(2.6, 1.6))
+		_banner(root, Vector3(0.0, float(storeys) * STOREY - 1.7, d * 0.5 + 0.22), 0.0, Vector2(2.6, 1.56))
 	return root
 
 
@@ -243,32 +241,13 @@ func _camera(at: Vector3, look: Vector3, fov: float) -> Camera3D:
 	return cam
 
 
-func _make_roundel() -> ImageTexture:
-	var w := 192
-	var h := 120
-	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
-	img.fill(EMPIRE_RED)
-	var c := Vector2(w * 0.5, h * 0.5)
-	for y in h:
-		for x in w:
-			var dist := Vector2(x, y).distance_to(c)
-			if dist < 22.0:
-				img.set_pixel(x, y, Color(0.06, 0.05, 0.05))
-			elif dist < 36.0:
-				img.set_pixel(x, y, Color(0.93, 0.9, 0.84))
-	for y in range(h - 8, h):
-		for x in w:
-			img.set_pixel(x, y, Color(0.06, 0.05, 0.05))
-	return ImageTexture.create_from_image(img)
-
-
 func _banner(parent: Node, at: Vector3, yaw: float, size: Vector2) -> void:
 	var mesh := MeshInstance3D.new()
 	var quad := QuadMesh.new()
 	quad.size = size
 	mesh.mesh = quad
 	var mat := StandardMaterial3D.new()
-	mat.albedo_texture = _roundel
+	mat.albedo_texture = CLOTH
 	mat.roughness = 0.9
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mesh.material_override = mat
@@ -295,15 +274,15 @@ func _flag(parent: Node, at: Vector3, height := 4.2, yaw := 0.0) -> void:
 	var cloth := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.orientation = PlaneMesh.FACE_Z
-	plane.size = Vector2(1.7, 1.05)
+	plane.size = Vector2(1.75, 1.05)
 	plane.subdivide_width = 24
 	plane.subdivide_depth = 12
 	cloth.mesh = plane
 	var mat := ShaderMaterial.new()
 	mat.shader = FLAG
-	mat.set_shader_parameter("cloth", _roundel)
+	mat.set_shader_parameter("cloth", CLOTH)
 	cloth.material_override = mat
-	_place(parent, cloth, at + Vector3(0.85, height - 0.6, 0.0))
+	_place(parent, cloth, at + Vector3(0.875, height - 0.6, 0.0))
 
 
 ## ---------------------------------------------------------------- the march
@@ -381,7 +360,7 @@ func _build_rally(origin: Vector3) -> void:
 	_block(root, origin + Vector3(26.0, 0.0, -4.0), 2, 3, 3, -90.0, 0, true)
 	_block(root, origin + Vector3(26.0, 0.0, 12.0), 2, 2, 4, -90.0, -1, false)
 	for x in [-6.0, 0.0, 6.0]:
-		_banner(root, origin + Vector3(x, 2.4, -12.5), 0.0, Vector2(2.6, 1.6))
+		_banner(root, origin + Vector3(x, 2.4, -12.5), 0.0, Vector2(2.6, 1.56))
 	_box(root, origin + Vector3(0.0, 0.5, -12.6), Vector3(16.0, 1.0, 0.4), CONCRETE)
 	var podium := _place(root, _glb("Kit/table_large_2.glb"), origin + Vector3(0.0, 0.0, -8.5))
 	_place(root, _glb("Kit/table_large_2.glb"), origin + Vector3(-2.2, 0.0, -8.5))
