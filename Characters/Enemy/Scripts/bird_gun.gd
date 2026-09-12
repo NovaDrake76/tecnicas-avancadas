@@ -84,18 +84,32 @@ func _has_laser_eyes() -> bool:
 	return _kiwi != null and "eyes" in _kiwi and _kiwi.eyes != null and is_instance_valid(_kiwi.eyes)
 
 
+const GLOW_FAR := 60.0
+
+
 func _process(_delta: float) -> void:
 	if _glow_eyes.is_empty():
 		return
 	_lit = enabled and _kiwi != null and _kiwi.is_hunting() and not _kiwi.is_down()
+	var shown := _lit and _glow_in_view()
+	if not shown and not _glow_light.visible:
+		return
 	for i in 2:
 		var eye := _glow_eyes[i]
-		eye.visible = _lit
-		if _lit:
+		eye.visible = shown
+		if shown:
 			eye.global_position = _eye_point(_eye_l if i == 0 else _eye_r)
-	_glow_light.visible = _lit
-	if _lit:
+	_glow_light.visible = shown
+	if shown:
 		_glow_light.global_position = muzzle_point()
+
+
+func _glow_in_view() -> bool:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return true
+	var at := _kiwi.global_position + Vector3.UP * 0.4
+	return cam.global_position.distance_squared_to(at) < GLOW_FAR * GLOW_FAR and cam.is_position_in_frustum(at)
 
 
 func eyes_lit() -> bool:

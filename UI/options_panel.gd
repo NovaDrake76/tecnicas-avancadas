@@ -80,6 +80,10 @@ func _video() -> Control:
 		func(i: int) -> void:
 			Settings.max_fps = Settings.FPS_CAPS[i]
 			Settings.commit())
+	_dropdown(page, "GRAPHICS QUALITY", Settings.QUALITY_NAMES, Settings.quality,
+		func(i: int) -> void:
+			Settings.quality = i
+			Settings.commit())
 	return page
 
 

@@ -110,6 +110,7 @@ func _begin_hunt(toward: Vector3) -> void:
 	_suppressing = false
 	_role_goal = Vector3.INF
 	_role_timer = 0.0
+	_sight_left = 0.0
 	_state = State.HUNT
 	_hunt_call = randf_range(hunt_call_interval.x, hunt_call_interval.y)
 	_play(run_clip, 0.15)
@@ -128,7 +129,12 @@ func _step_hunt(delta: float) -> void:
 		return
 	var at := VisionCone.sight_point(_player)
 	var dist := global_position.distance_to(_player.global_position)
-	_seen = dist <= hunt_sight and vision.sees_point(at, hunt_sight)
+	_sight_left -= delta
+	if dist > hunt_sight:
+		_seen = false
+	elif _sight_left <= 0.0:
+		_sight_left = SIGHT_EVERY * randf_range(0.8, 1.2)
+		_seen = vision.sees_point(at, hunt_sight)
 	_unseen_for = 0.0 if _seen else _unseen_for + delta
 	if _seen:
 		_last_seen = _player.global_position

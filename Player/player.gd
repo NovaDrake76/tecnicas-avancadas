@@ -231,12 +231,25 @@ static func local(tree: SceneTree) -> Player:
 	return tree.get_first_node_in_group("local_player") as Player
 
 
+## one list per frame and per player count, shared by every caller: the birds asked for it sixteen times a tick.
+static var _all_stamp := -1
+static var _all_count := -1
+static var _all_cache: Array[Player] = []
+
+
 static func all(tree: SceneTree) -> Array[Player]:
+	var stamp := Engine.get_physics_frames() * 100000 + Engine.get_process_frames()
+	var count := tree.get_node_count_in_group("player")
+	if stamp == _all_stamp and count == _all_count:
+		return _all_cache
 	var out: Array[Player] = []
 	for node in tree.get_nodes_in_group("player"):
 		var who := node as Player
 		if who != null and is_instance_valid(who) and who.is_alive():
 			out.append(who)
+	_all_stamp = stamp
+	_all_count = count
+	_all_cache = out
 	return out
 
 

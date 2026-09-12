@@ -197,11 +197,15 @@ static func is_small(source: String) -> bool:
 		or source.begins_with("log") or source.begins_with("stump")
 
 
+## the graphics quality's share of the grass and fern ranges, set by Settings and read when a level is built.
+static var range_scale := 1.0
+
+
 func _range_of(source: String) -> float:
 	if source.begins_with("grass"):
-		return grass_range
+		return grass_range * range_scale
 	if is_small(source):
-		return fern_range
+		return fern_range * range_scale
 	return 0.0
 
 
