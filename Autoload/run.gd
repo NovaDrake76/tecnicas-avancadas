@@ -23,7 +23,7 @@ signal detections_changed(count: int)
 signal shot_hit(lethal: bool)
 
 const LEVELS := [
-	{"path": "res://Levels/level_01.tscn", "name": "North Field", "par": 90.0, "reinforcements": true,
+	{"path": "res://Levels/level_01-A.tscn", "name": "North Field", "par": 90.0, "reinforcements": true,
 		"optional": ["clear_field", "no_shots", "horn_cut", "no_body_found"],
 		"brief": "A forward supply camp. Command wants the two advanced birds working out of it taken off the board, and the crate of range-finding gear they brought with them. Take them out, take the case, and walk out the way you came. The camp keeps three ordinary sentries and an alarm horn by the container: a bird that sees you runs for it.",
 		"image": "res://UI/missions/level_01.png",
@@ -42,9 +42,9 @@ const LEVELS := [
 			{"say": "FIRST TASK: AN ADVANCED KIWI POST NEAR THE COAST. TWO ADVANCED BIRDS, AND THE CASE THEY BROUGHT WITH THEM.", "hold": 1.0},
 			{"say": "TAKE THEM OUT, TAKE THE CASE, WALK OUT THE WAY YOU CAME.", "hold": 1.0},
 		]},
-	{"path": "res://Levels/level_02.tscn", "name": "The Woods", "par": 110.0, "reinforcements": true,
+	{"path": "res://Levels/level_02-A.tscn", "name": "Hilltown", "par": 110.0, "reinforcements": true,
 		"optional": ["no_shots", "no_body_found", "ghost"],
-		"brief": "The field station the camp reported to. The records room holds the empire's supply manifests: take them and get out, and nobody needs to know you were here. The woods are held by six birds, one of them armoured with laser eyes, a sniper watching the approach and a mortar that shells wherever they last saw you.",
+		"brief": "The field station the camp reported to. The records room holds the empire's supply manifests: take them and get out, and nobody needs to know you were here. Hilltown is held by six birds, two snipers are watching your approach, be careful.",
 		"image": "res://UI/missions/level_02.png",
 		"briefing": [
 			{"view": [-14.0, 136.0, 1.0], "time": 0.0, "stain": ["NZL", "AUS-E", "PNG", "IDN", "PHL", "THA", "KHM", "VNM", "LAO", "CN-GX", "CN-FJ", "CN-ZJ", "JPN", "KOR"], "stagger": 0.08, "hold": 0.8},
