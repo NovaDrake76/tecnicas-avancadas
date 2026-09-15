@@ -132,6 +132,9 @@ const POLL_EVERY := 1.0 / 30.0
 const ANIM_NEAR := 30.0
 const ANIM_FAR := 70.0
 const ANIM_MARGIN := 5.0
+const SIGHT_EVERY := 1.0 / 30.0
+const PECK_EVERY := 1.0 / 20.0
+const NEAR_FIGHT := 15.0
 
 var net_clip := ""
 var _shown := ""
@@ -178,6 +181,18 @@ var _poll_left := 0.0
 var _poll_time := 0.0
 var _anim_time := 0.0
 var _anim_wait := 0
+var _sight_left := 0.0
+var _peck_left := 0.0
+var _tick_phase := 0
+var _tick_stride := 1
+var _tick_banked := 0
+var _tick_used := 1
+var _tick_time := 0.0
+## read once per frame for every bird: the camera, the local operative and how many operatives there are.
+static var _frame_stamp := -1
+static var _frame_cam: Camera3D
+static var _frame_local: Node3D
+static var _frame_players := 0
 @onready var blaster: BirdGun = get_node_or_null("Blaster") as BirdGun
 
 
@@ -187,6 +202,7 @@ func _ready() -> void:
 	_post = _home
 	_bind_route()
 	_poll_left = randf() * POLL_EVERY
+	_tick_phase = randi() % 4
 	model.rotation.y = deg_to_rad(model_yaw_deg)
 
 	_enable_vertex_colors()
@@ -286,20 +302,23 @@ func _step_animation(delta: float) -> void:
 
 
 func _animation_stride() -> int:
+	if _state == State.HUNT or _state == State.FLEE:
+		return _fight_stride()
 	if _state != State.DOWN and not (_can_notice() and vision.awareness <= 0.0):
 		return 1
-	var cam := get_viewport().get_camera_3d()
-	if cam == null:
+	_refresh_frame()
+	var cam := _frame_cam
+	if cam == null or not is_instance_valid(cam):
 		return 1
 	var far := cam.global_position.distance_to(global_position)
 	if _state != State.DOWN:
 		var reach := vision.sight_range + ANIM_MARGIN
 		if far <= reach:
 			return 1
-		var me := Player.local(get_tree())
-		if me != null and me.global_position.distance_to(global_position) <= reach:
+		var me := _frame_local
+		if me != null and is_instance_valid(me) and me.global_position.distance_to(global_position) <= reach:
 			return 1
-		if get_tree().get_node_count_in_group("player") > 1:
+		if _frame_players > 1:
 			var near := Player.nearest(get_tree(), global_position)
 			if near != null and near.global_position.distance_to(global_position) <= reach:
 				return 1
@@ -310,12 +329,52 @@ func _animation_stride() -> int:
 	return 2 if far <= ANIM_FAR else 4
 
 
+func _fight_stride() -> int:
+	_refresh_frame()
+	var cam := _frame_cam
+	if cam == null or not is_instance_valid(cam):
+		return 1
+	var far := cam.global_position.distance_to(global_position)
+	if far <= ANIM_NEAR:
+		return 1
+	for who in Player.all(get_tree()):
+		if who.global_position.distance_to(global_position) <= NEAR_FIGHT:
+			return 1
+	if not cam.is_position_in_frustum(global_position + Vector3.UP * 0.3):
+		return 4
+	return 2 if far <= ANIM_FAR else 4
+
+
+func _refresh_frame() -> void:
+	var stamp := Engine.get_process_frames()
+	if stamp == _frame_stamp:
+		return
+	_frame_stamp = stamp
+	_frame_cam = get_viewport().get_camera_3d()
+	_frame_local = Player.local(get_tree())
+	_frame_players = get_tree().get_node_count_in_group("player")
+
+
+func _fighting_under_alarm() -> bool:
+	return (_state == State.HUNT or _state == State.ATTACK) and Alarm.stage == Alarm.Stage.ALARM
+
+
 func _physics_process(delta: float) -> void:
 	## while the player is hauling it the drag owns where it is; gravity and move_and_slide would fight the pull.
 	if body.is_dragged():
 		return
 	if body.step_thrown(delta):
 		return
+	_tick_time += delta
+	_tick_banked += 1
+	## a bird nobody could be deciding about thinks on its own phase of every second or fourth tick, with the time it banked.
+	if _tick_stride > 1 and (Engine.get_physics_frames() + _tick_phase) % _tick_stride != 0:
+		return
+	delta = _tick_time
+	_tick_used = _tick_banked
+	_tick_time = 0.0
+	_tick_banked = 0
+	_tick_stride = _think_stride()
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 	else:
@@ -323,7 +382,7 @@ func _physics_process(delta: float) -> void:
 	_fire_noise_left = maxf(0.0, _fire_noise_left - delta)
 
 	if _state != State.DOWN:
-		if not vision.alerted:
+		if not vision.alerted and not _fighting_under_alarm():
 			vision.poll(delta)
 			_poll_time = 0.0
 		else:
@@ -340,7 +399,7 @@ func _physics_process(delta: float) -> void:
 
 	if _step_peck(delta):
 		_publish_tier()
-		move_and_slide()
+		_slide()
 		return
 
 	match _state:
@@ -397,7 +456,37 @@ func _physics_process(delta: float) -> void:
 	## a bird standing on the ground with nothing moving it has nothing to slide.
 	if is_on_floor() and velocity.length_squared() < 0.0001:
 		return
+	_slide()
+
+
+func _think_stride() -> int:
+	match _state:
+		State.CALL, State.SUSPECT, State.RUNNER, State.HORN, State.ATTACK, State.DOWN:
+			return 1
+	if body.is_thrown():
+		return 1
+	var near_sq := INF
+	for who in Player.all(get_tree()):
+		near_sq = minf(near_sq, who.global_position.distance_squared_to(global_position))
+	if near_sq == INF:
+		return 1
+	var near := sqrt(near_sq)
+	if _can_notice():
+		var reach := vision.sight_range + ANIM_MARGIN
+		if near <= reach:
+			return 1
+		return 2 if near <= reach * 2.0 else 4
+	return 1 if near <= maxf(NEAR_FIGHT, hunt_sight) else 2
+
+
+func _slide() -> void:
+	if _tick_used <= 1:
+		move_and_slide()
+		return
+	var scale_by := float(_tick_used)
+	velocity *= scale_by
 	move_and_slide()
+	velocity /= scale_by
 
 
 func _step_walk(delta: float) -> void:
@@ -429,7 +518,9 @@ func _move_to(point: Vector3, speed: float, delta: float) -> bool:
 	velocity.x = forward.x * speed
 	velocity.z = forward.z * speed
 
-	StepClimb.try_step(self, forward, 4)
+	## only a bird the last slide stopped against something can be at a step; elsewhere the look-ahead is a test move for nothing.
+	if is_on_wall():
+		StepClimb.try_step(self, forward, 4)
 	return false
 
 
@@ -888,6 +979,7 @@ func _begin_hunt(toward: Vector3) -> void:
 	_fight_time = 0.0
 	_role_goal = Vector3.INF
 	_role_timer = 0.0
+	_sight_left = 0.0
 	_state = State.HUNT
 	_play(run_clip, 0.15)
 	voice.alarm()
@@ -905,7 +997,12 @@ func _step_hunt(delta: float) -> void:
 		return
 	var at := VisionCone.sight_point(_player)
 	var dist := global_position.distance_to(_player.global_position)
-	_seen = dist <= hunt_sight and vision.sees_point(at, hunt_sight)
+	_sight_left -= delta
+	if dist > hunt_sight:
+		_seen = false
+	elif _sight_left <= 0.0:
+		_sight_left = SIGHT_EVERY * randf_range(0.8, 1.2)
+		_seen = vision.sees_point(at, hunt_sight)
 	if _seen:
 		_last_seen = _player.global_position
 		_search = search_time
@@ -1036,6 +1133,10 @@ func _step_peck(delta: float) -> bool:
 		return true
 	if not is_hunting() or _peck_ready > 0.0 or not multiplayer.is_server():
 		return false
+	_peck_left -= delta
+	if _peck_left > 0.0:
+		return false
+	_peck_left = PECK_EVERY
 	var near := Player.nearest(get_tree(), global_position)
 	if near == null or (near.has_method("is_alive") and not near.is_alive()):
 		return false

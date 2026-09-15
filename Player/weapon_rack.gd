@@ -72,6 +72,15 @@ func count() -> int:
 	return weapons().size()
 
 
+func display(index: int) -> void:
+	var guns := all_weapons()
+	for i in guns.size():
+		guns[i].visible = i == index
+		if is_inside_tree():
+			for pass_node in get_tree().get_nodes_in_group("viewmodel_pass"):
+				(pass_node as ViewmodelPass).hand_back(guns[i])
+
+
 func select(index: int) -> void:
 	var guns := weapons()
 	if guns.is_empty():

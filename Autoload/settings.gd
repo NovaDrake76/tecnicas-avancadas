@@ -7,12 +7,18 @@ enum WindowMode { WINDOWED, FULLSCREEN, BORDERLESS }
 
 const VSYNC_MODES := [DisplayServer.VSYNC_DISABLED, DisplayServer.VSYNC_ENABLED, DisplayServer.VSYNC_ADAPTIVE]
 const FPS_CAPS := [0, 60, 120, 144, 240]
+const QUALITY_NAMES := ["Low", "Medium", "High"]
+const SHADOW_SIZES := [1024, 2048, 4096]
+const SHADOW_FILTERS := [RenderingServer.SHADOW_QUALITY_HARD, RenderingServer.SHADOW_QUALITY_SOFT_VERY_LOW, RenderingServer.SHADOW_QUALITY_SOFT_LOW]
+const RENDER_SCALES := [0.7, 1.0, 1.0]
+const FOLIAGE_RANGES := [0.55, 0.8, 1.0]
 
 var path := "user://settings.cfg"
 
 var window_mode := WindowMode.WINDOWED
 var vsync := 1
 var max_fps := 0
+var quality := 2
 var master_volume := 0.8
 var music_volume := 0.8
 var sfx_volume := 1.0
@@ -39,6 +45,7 @@ func commit() -> void:
 
 func _apply_video() -> void:
 	Engine.max_fps = max_fps
+	_apply_quality()
 	if DisplayServer.get_name() == "headless":
 		return
 	## a game launched minimized stays minimized; forcing the saved fullscreen on it drags a window over whatever is on screen.
@@ -55,6 +62,17 @@ func _apply_video() -> void:
 	DisplayServer.window_set_vsync_mode(VSYNC_MODES[clampi(vsync, 0, 2)])
 
 
+func _apply_quality() -> void:
+	var q := clampi(quality, 0, 2)
+	RenderingServer.directional_shadow_atlas_set_size(SHADOW_SIZES[q], true)
+	RenderingServer.directional_soft_shadow_filter_set_quality(SHADOW_FILTERS[q])
+	RenderingServer.positional_soft_shadow_filter_set_quality(SHADOW_FILTERS[q])
+	var root := get_tree().root
+	root.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
+	root.scaling_3d_scale = RENDER_SCALES[q]
+	Foliage.range_scale = FOLIAGE_RANGES[q]
+
+
 func _apply_audio() -> void:
 	var master := AudioServer.get_bus_index(&"Master")
 	if master >= 0:
@@ -68,6 +86,7 @@ func save() -> void:
 	cfg.set_value("video", "window_mode", window_mode)
 	cfg.set_value("video", "vsync", vsync)
 	cfg.set_value("video", "max_fps", max_fps)
+	cfg.set_value("video", "quality", quality)
 	cfg.set_value("audio", "master", master_volume)
 	cfg.set_value("audio", "music", music_volume)
 	cfg.set_value("audio", "sfx", sfx_volume)
@@ -83,6 +102,7 @@ func load_from_disk() -> void:
 	window_mode = clampi(int(cfg.get_value("video", "window_mode", window_mode)), 0, 2) as WindowMode
 	vsync = clampi(int(cfg.get_value("video", "vsync", vsync)), 0, 2)
 	max_fps = int(cfg.get_value("video", "max_fps", max_fps))
+	quality = clampi(int(cfg.get_value("video", "quality", quality)), 0, 2)
 	master_volume = clampf(float(cfg.get_value("audio", "master", master_volume)), 0.0, 1.0)
 	music_volume = clampf(float(cfg.get_value("audio", "music", music_volume)), 0.0, 1.0)
 	sfx_volume = clampf(float(cfg.get_value("audio", "sfx", sfx_volume)), 0.0, 1.0)

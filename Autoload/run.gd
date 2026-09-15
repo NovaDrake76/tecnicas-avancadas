@@ -23,7 +23,56 @@ signal detections_changed(count: int)
 signal shot_hit(lethal: bool)
 
 const LEVELS := [
-	{"path": "res://Levels/level_01-A.tscn", "name": "North Field", "par": 90.0, "reinforcements": true,
+	{"path": "res://Levels/level_01-A.tscn", "name": "The Motor Pool", "par": 100.0, "reinforcements": true,
+		"optional": ["no_shots", "horn_cut", "no_body_found", "ghost"],
+		"brief": "A motor pool in a valley behind the coast: a garage, a house, sheds, a truck and wrecked cars, walled on the west. The birds keep a range-finder case in the house: take it and get out to the south-east. You start north-west of the compound. Five hold it: three sentries, a sniper on the container at the east edge and another on the house roof. The horn stands by the fuel drums, and a bird that sees you runs for it.",
+		"image": "res://UI/missions/level_01-A.png",
+		"briefing": [
+			{"view": [-14.0, 136.0, 1.0], "time": 0.0, "hold": 0.6},
+			{"say": "GHOST KIWI RECON. MISSION 01: THE MOTOR POOL.", "hold": 0.8},
+			{"say": "THE KIWI EMPIRE ROSE IN NEW ZEALAND.", "stain": ["NZL"], "hold": 1.0},
+			{"say": "THE EAST COAST OF AUSTRALIA WAS THE FIRST TO FALL.", "stain": ["AUS-E"], "hold": 1.0},
+			{"say": "FROM THERE THE BIRDS WENT NORTH.", "stain": ["PNG", "IDN", "PHL"], "hold": 1.0},
+			{"say": "INDOCHINA FELL IN ONE SEASON.", "stain": ["THA", "KHM", "VNM", "LAO"], "hold": 1.0},
+			{"say": "THREE CHINESE PROVINCES ARE UNDER THE BIRD.", "stain": ["CN-GX", "CN-FJ", "CN-ZJ"], "hold": 1.0},
+			{"say": "JAPAN AND KOREA WENT QUIET LAST MONTH.", "stain": ["JPN", "KOR"], "hold": 1.4},
+			{"clear": true, "say": "YOUR MISSION: INFILTRATE THE EMPIRE AND BREAK IT FROM THE INSIDE.", "hold": 1.6},
+			{"clear": true, "view": [-37.9, 176.6, 7.0], "time": 2.6, "say": "DEPLOYMENT: POINT X. BAY OF PLENTY, NORTH ISLAND.", "hold": 0.4},
+			{"mark": [-37.75, 176.9, "POINT X"], "hold": 0.8},
+			{"say": "FIRST TASK: A MOTOR POOL IN A VALLEY BEHIND THE COAST. THE BIRDS KEEP A RANGE-FINDER CASE IN THE HOUSE.", "hold": 1.0},
+			{"say": "FIVE BIRDS HOLD IT. A SNIPER ON THE CONTAINER, ANOTHER ON THE HOUSE ROOF, A HORN BY THE FUEL DRUMS.", "hold": 1.2},
+			{"say": "TAKE THE CASE AND GET OUT TO THE SOUTH-EAST.", "hold": 1.0},
+		]},
+	{"path": "res://Levels/level_02-A.tscn", "name": "The Ridge Post", "par": 110.0, "reinforcements": true,
+		"optional": ["no_shots", "horn_cut", "no_body_found", "ghost"],
+		"brief": "A walled post with a gatehouse on a hilltop inland from the coast, a handful of buildings inside the wall and a road winding past below. You start at the foot of the hill to the north. The other range-finder case is kept inside the wall: take it and get out past the south wall. Six hold the post: four sentries, a sniper on each of two rooftops, and the horn in the yard.",
+		"image": "res://UI/missions/level_02-A.png",
+		"briefing": [
+			{"view": [-14.0, 136.0, 1.0], "time": 0.0, "stain": ["NZL", "AUS-E", "PNG", "IDN", "PHL", "THA", "KHM", "VNM", "LAO", "CN-GX", "CN-FJ", "CN-ZJ", "JPN", "KOR"], "stagger": 0.08, "hold": 0.8},
+			{"say": "GHOST KIWI RECON. MISSION 02: THE RIDGE POST.", "hold": 0.8},
+			{"say": "THE CASE FROM THE MOTOR POOL WAS HALF A SET. THE OTHER HALF WENT INLAND, UP TO A POST ON THE HIGH GROUND.", "hold": 1.0},
+			{"clear": true, "view": [-38.2, 176.7, 5.0], "time": 2.6, "mark": [-37.75, 176.9, "THE MOTOR POOL", "done"], "say": "A WALLED POST ON A HILLTOP INLAND FROM THE COAST.", "hold": 0.4},
+			{"line": [-37.75, 176.9, -38.45, 176.55], "mark": [-38.45, 176.55, "THE RIDGE POST"], "hold": 1.0},
+			{"say": "YOU START AT THE FOOT OF THE HILL TO THE NORTH. THE CASE IS INSIDE THE WALL.", "hold": 1.0},
+			{"say": "FOUR SENTRIES, A SNIPER ON EACH OF TWO ROOFTOPS, AND A HORN IN THE YARD.", "hold": 1.2},
+			{"say": "TAKE THE CASE AND GET OUT PAST THE SOUTH WALL.", "hold": 1.0},
+		]},
+	{"path": "res://Levels/level_06.tscn", "name": "The Village", "par": 150.0, "reinforcements": true,
+		"optional": ["no_shots", "horn_cut", "no_body_found", "ghost"],
+		"brief": "A hill village the empire emptied and garrisoned, cut into a mountainside in three terraces. You start on the spur to the east, above it: look before you move. The signal log is upstairs in the command house; the way out is the road down to the valley. Twelve sentries hold it, with a sniper on the barracks roof, a mortar on the upper terrace, an armoured bird on the street and a charger by the garage. The horn is inside the east gate. There are more ways in than the gates.",
+		"image": "res://UI/missions/level_06.png",
+		"briefing": [
+			{"view": [-14.0, 136.0, 1.0], "time": 0.0, "stain": ["NZL", "AUS-E", "PNG", "IDN", "PHL", "THA", "KHM", "VNM", "LAO", "CN-GX", "CN-FJ", "CN-ZJ", "JPN", "KOR"], "stagger": 0.08, "hold": 0.8},
+			{"say": "GHOST KIWI RECON. MISSION 03: THE VILLAGE.", "hold": 0.8},
+			{"say": "THE CASE IS WHOLE AGAIN. ITS RANGES WERE SET ON THE ROAD SOUTH, INTO THE HILLS ABOVE THE CAPITAL.", "hold": 1.0},
+			{"clear": true, "view": [-41.1, 175.3, 4.6], "time": 2.6, "mark": [-38.45, 176.55, "THE RIDGE POST", "done"], "say": "A HILL VILLAGE IN THE RIMUTAKA RANGE, EMPTIED AND GARRISONED.", "hold": 0.2},
+			{"line": [-38.45, 176.55, -41.1, 175.32], "mark": [-41.1, 175.32, "THE VILLAGE"], "hold": 1.0},
+			{"say": "YOU START BEHIND THE SPUR ABOVE IT. LOOK BEFORE YOU MOVE.", "hold": 1.0},
+			{"say": "THE SIGNAL LOG IS UPSTAIRS IN THE COMMAND HOUSE. THE WAY OUT IS THE ROAD DOWN TO THE VALLEY.", "hold": 1.2},
+			{"say": "TWELVE SENTRIES, A SNIPER ON THE BARRACKS ROOF, A MORTAR, AN ARMOURED BIRD, A CHARGER. THE HORN IS INSIDE THE EAST GATE.", "hold": 1.2},
+			{"say": "THERE ARE MORE WAYS IN THAN THE GATES.", "hold": 1.0},
+		]},
+	{"path": "res://Levels/level_01.tscn", "name": "North Field", "par": 90.0, "reinforcements": true,
 		"optional": ["clear_field", "no_shots", "horn_cut", "no_body_found"],
 		"brief": "A forward supply camp. Command wants the two advanced birds working out of it taken off the board, and the crate of range-finding gear they brought with them. Take them out, take the case, and walk out the way you came. The camp keeps three ordinary sentries and an alarm horn by the container: a bird that sees you runs for it.",
 		"image": "res://UI/missions/level_01.png",
@@ -42,9 +91,9 @@ const LEVELS := [
 			{"say": "FIRST TASK: AN ADVANCED KIWI POST NEAR THE COAST. TWO ADVANCED BIRDS, AND THE CASE THEY BROUGHT WITH THEM.", "hold": 1.0},
 			{"say": "TAKE THEM OUT, TAKE THE CASE, WALK OUT THE WAY YOU CAME.", "hold": 1.0},
 		]},
-	{"path": "res://Levels/level_02-A.tscn", "name": "Hilltown", "par": 110.0, "reinforcements": true,
+	{"path": "res://Levels/level_02.tscn", "name": "The Woods", "par": 110.0, "reinforcements": true,
 		"optional": ["no_shots", "no_body_found", "ghost"],
-		"brief": "The field station the camp reported to. The records room holds the empire's supply manifests: take them and get out, and nobody needs to know you were here. Hilltown is held by six birds, two snipers are watching your approach, be careful.",
+		"brief": "The field station the camp reported to. The records room holds the empire's supply manifests: take them and get out, and nobody needs to know you were here. The woods are held by six birds, one of them armoured with laser eyes, a sniper watching the approach and a mortar that shells wherever they last saw you.",
 		"image": "res://UI/missions/level_02.png",
 		"briefing": [
 			{"view": [-14.0, 136.0, 1.0], "time": 0.0, "stain": ["NZL", "AUS-E", "PNG", "IDN", "PHL", "THA", "KHM", "VNM", "LAO", "CN-GX", "CN-FJ", "CN-ZJ", "JPN", "KOR"], "stagger": 0.08, "hold": 0.8},
@@ -102,24 +151,10 @@ const LEVELS := [
 			{"say": "THE MORTAR BEHIND IT MEANS STANDING STILL IN THAT COVER IS WHAT GETS YOU KILLED.", "hold": 1.0},
 			{"say": "THIS IS THE LAST THREAD. PULL IT.", "hold": 1.2},
 		]},
-	{"path": "res://Levels/level_06.tscn", "name": "The Village", "par": 150.0, "reinforcements": true,
-		"optional": ["no_shots", "horn_cut", "no_body_found", "ghost"],
-		"brief": "A hill village the empire emptied and moved into, cut into the side of a mountain in three terraces: a street with a gate at each end, the command house above it, the barracks and the garage below. You start behind the spur to the east, higher than the village; look before you move. The signal log is upstairs in the command house, and the way out is the road down to the valley. Twelve sentries hold the village, two of them walking the street and one each on the lower yard and the upper terrace, a sniper on the barracks roof, a mortar in a pit on the upper terrace, an armoured bird on the street and a charger by the garage. The horn is inside the east gate. There are more ways in than the gates.",
-		"image": "res://UI/missions/level_06.png",
-		"briefing": [
-			{"view": [-14.0, 136.0, 1.0], "time": 0.0, "stain": ["NZL", "AUS-E", "PNG", "IDN", "PHL", "THA", "KHM", "VNM", "LAO", "CN-GX", "CN-FJ", "CN-ZJ", "JPN", "KOR"], "stagger": 0.08, "hold": 0.8},
-			{"say": "GHOST KIWI RECON. MISSION 06: THE VILLAGE.", "hold": 0.8},
-			{"say": "THE YARD WAS THE CAPITAL'S LAST DOOR. THE BIRDS PULLED BACK INTO THE HILLS AND TOOK A VILLAGE WITH THEM.", "hold": 1.0},
-			{"clear": true, "view": [-41.1, 175.3, 4.6], "time": 2.6, "mark": [-41.2, 174.92, "THE LONG YARD", "done"], "say": "A HILL VILLAGE IN THE RIMUTAKA RANGE, EMPTIED AND GARRISONED.", "hold": 0.2},
-			{"line": [-41.2, 174.92, -41.1, 175.32], "mark": [-41.1, 175.32, "THE VILLAGE"], "hold": 1.0},
-			{"say": "YOU START BEHIND THE SPUR ABOVE IT. LOOK BEFORE YOU MOVE.", "hold": 1.0},
-			{"say": "THE SIGNAL LOG IS UPSTAIRS IN THE COMMAND HOUSE. THE WAY OUT IS THE ROAD DOWN TO THE VALLEY.", "hold": 1.2},
-			{"say": "TWELVE SENTRIES, A SNIPER ON THE BARRACKS ROOF, A MORTAR, AN ARMOURED BIRD, A CHARGER. THE HORN IS INSIDE THE EAST GATE.", "hold": 1.2},
-			{"say": "THERE ARE MORE WAYS IN THAN THE GATES.", "hold": 1.0},
-		]},
 ]
 
 const OPEN_AT_START := 2
+const ON_BOARD := 3
 
 const POINTS_PER_TARGET := 100
 const ACCURACY_BONUS := 250
@@ -151,6 +186,7 @@ var run_score := 0
 var completed := {}
 ## every mission open on the board, so whoever is building a level can go straight to it. on when the game runs from the editor and off in an exported build, which keeps the progression.
 var open_all := OS.has_feature("editor")
+var shelved_on_board := false
 var best_grades := {}
 
 var _level_score := 0
@@ -167,7 +203,14 @@ func _process(delta: float) -> void:
 
 
 func level_count() -> int:
-	return LEVELS.size()
+	return LEVELS.size() if shelved_on_board else mini(ON_BOARD, LEVELS.size())
+
+
+func index_of(path: String) -> int:
+	for i in LEVELS.size():
+		if String(LEVELS[i]["path"]) == path:
+			return i
+	return -1
 
 
 func current() -> Dictionary:
@@ -368,7 +411,7 @@ func objective_count() -> String:
 
 
 func is_unlocked(index: int) -> bool:
-	if index < 0 or index >= LEVELS.size():
+	if index < 0 or index >= level_count():
 		return false
 	return open_all or index < OPEN_AT_START + completed.size()
 
@@ -377,7 +420,7 @@ func suggested_level() -> int:
 	var furthest := -1
 	for i in completed.keys():
 		furthest = maxi(furthest, int(i))
-	var next := clampi(furthest + 1, 0, LEVELS.size() - 1)
+	var next := clampi(furthest + 1, 0, level_count() - 1)
 	while next > 0 and not is_unlocked(next):
 		next -= 1
 	return next
@@ -431,7 +474,7 @@ func grade_letter(ratio: float) -> String:
 
 
 func all_done() -> bool:
-	return completed.size() >= LEVELS.size()
+	return completed.size() >= level_count()
 
 
 func select_level(index: int) -> bool:
@@ -464,7 +507,7 @@ func dismiss_results() -> void:
 
 
 func advance() -> bool:
-	if level_index + 1 >= LEVELS.size():
+	if level_index + 1 >= level_count():
 		_set_state(State.FINISHED)
 		run_finished.emit(_summary())
 		return false
@@ -753,9 +796,9 @@ func _summary() -> Dictionary:
 		"best": best(level_index),
 		"run_score": run_score,
 		"cleared": completed.size(),
-		"missions": LEVELS.size(),
+		"missions": level_count(),
 		"all_done": all_done(),
-		"last": level_index + 1 >= LEVELS.size(),
+		"last": level_index + 1 >= level_count(),
 	}
 
 
