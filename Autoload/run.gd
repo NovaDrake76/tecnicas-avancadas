@@ -24,8 +24,8 @@ signal shot_hit(lethal: bool)
 
 const LEVELS := [
 	{"path": "res://Levels/level_01-A.tscn", "name": "The Motor Pool", "par": 100.0, "reinforcements": true,
-		"optional": ["horn_cut", "no_body_found", "ghost"],
-		"brief": "A motor pool in a valley behind the coast: a garage, a house, sheds, a truck and wrecked cars, walled on the west and open to the east. Command wants it quiet before its trucks roll again: put every bird in it down. Five hold it: three sentries, a sniper on the container at the east edge and another on the house roof. The alarm horn stands by the fuel drums, and a bird that sees you runs for it.",
+		"optional": ["no_shots", "horn_cut", "no_body_found", "ghost"],
+		"brief": "A motor pool in a valley behind the coast: a garage, a house, sheds, a truck and wrecked cars, walled on the west. The birds keep a range-finder case in the house: take it and get out to the south-east. You start north-west of the compound. Five hold it: three sentries, a sniper on the container at the east edge and another on the house roof. The horn stands by the fuel drums, and a bird that sees you runs for it.",
 		"image": "res://UI/missions/level_01-A.png",
 		"briefing": [
 			{"view": [-14.0, 136.0, 1.0], "time": 0.0, "hold": 0.6},
@@ -39,9 +39,23 @@ const LEVELS := [
 			{"clear": true, "say": "YOUR MISSION: INFILTRATE THE EMPIRE AND BREAK IT FROM THE INSIDE.", "hold": 1.6},
 			{"clear": true, "view": [-37.9, 176.6, 7.0], "time": 2.6, "say": "DEPLOYMENT: POINT X. BAY OF PLENTY, NORTH ISLAND.", "hold": 0.4},
 			{"mark": [-37.75, 176.9, "POINT X"], "hold": 0.8},
-			{"say": "FIRST TASK: A MOTOR POOL IN A VALLEY BEHIND THE COAST. THE TRUCKS THAT SUPPLY THEIR POSTS ARE FUELLED THERE.", "hold": 1.0},
+			{"say": "FIRST TASK: A MOTOR POOL IN A VALLEY BEHIND THE COAST. THE BIRDS KEEP A RANGE-FINDER CASE IN THE HOUSE.", "hold": 1.0},
 			{"say": "FIVE BIRDS HOLD IT. A SNIPER ON THE CONTAINER, ANOTHER ON THE HOUSE ROOF, A HORN BY THE FUEL DRUMS.", "hold": 1.2},
-			{"say": "PUT EVERY ONE OF THEM DOWN.", "hold": 1.0},
+			{"say": "TAKE THE CASE AND GET OUT TO THE SOUTH-EAST.", "hold": 1.0},
+		]},
+	{"path": "res://Levels/level_02-A.tscn", "name": "The Ridge Post", "par": 110.0, "reinforcements": true,
+		"optional": ["no_shots", "horn_cut", "no_body_found", "ghost"],
+		"brief": "A walled post with a gatehouse on a hilltop inland from the coast, a handful of buildings inside the wall and a road winding past below. You start at the foot of the hill to the north. The other range-finder case is kept inside the wall: take it and get out past the south wall. Six hold the post: four sentries, a sniper on each of two rooftops, and the horn in the yard.",
+		"image": "res://UI/missions/level_02-A.png",
+		"briefing": [
+			{"view": [-14.0, 136.0, 1.0], "time": 0.0, "stain": ["NZL", "AUS-E", "PNG", "IDN", "PHL", "THA", "KHM", "VNM", "LAO", "CN-GX", "CN-FJ", "CN-ZJ", "JPN", "KOR"], "stagger": 0.08, "hold": 0.8},
+			{"say": "GHOST KIWI RECON. MISSION 02: THE RIDGE POST.", "hold": 0.8},
+			{"say": "THE CASE FROM THE MOTOR POOL WAS HALF A SET. THE OTHER HALF WENT INLAND, UP TO A POST ON THE HIGH GROUND.", "hold": 1.0},
+			{"clear": true, "view": [-38.2, 176.7, 5.0], "time": 2.6, "mark": [-37.75, 176.9, "THE MOTOR POOL", "done"], "say": "A WALLED POST ON A HILLTOP INLAND FROM THE COAST.", "hold": 0.4},
+			{"line": [-37.75, 176.9, -38.45, 176.55], "mark": [-38.45, 176.55, "THE RIDGE POST"], "hold": 1.0},
+			{"say": "YOU START AT THE FOOT OF THE HILL TO THE NORTH. THE CASE IS INSIDE THE WALL.", "hold": 1.0},
+			{"say": "FOUR SENTRIES, A SNIPER ON EACH OF TWO ROOFTOPS, AND A HORN IN THE YARD.", "hold": 1.2},
+			{"say": "TAKE THE CASE AND GET OUT PAST THE SOUTH WALL.", "hold": 1.0},
 		]},
 	{"path": "res://Levels/level_06.tscn", "name": "The Village", "par": 150.0, "reinforcements": true,
 		"optional": ["no_shots", "horn_cut", "no_body_found", "ghost"],
@@ -49,10 +63,10 @@ const LEVELS := [
 		"image": "res://UI/missions/level_06.png",
 		"briefing": [
 			{"view": [-14.0, 136.0, 1.0], "time": 0.0, "stain": ["NZL", "AUS-E", "PNG", "IDN", "PHL", "THA", "KHM", "VNM", "LAO", "CN-GX", "CN-FJ", "CN-ZJ", "JPN", "KOR"], "stagger": 0.08, "hold": 0.8},
-			{"say": "GHOST KIWI RECON. MISSION 02: THE VILLAGE.", "hold": 0.8},
-			{"say": "THE MOTOR POOL IS QUIET. THE TRUCKS IT FUELLED WERE RUNNING SOUTH, INTO THE HILLS ABOVE THE CAPITAL.", "hold": 1.0},
-			{"clear": true, "view": [-41.1, 175.3, 4.6], "time": 2.6, "mark": [-37.75, 176.9, "THE MOTOR POOL", "done"], "say": "A HILL VILLAGE IN THE RIMUTAKA RANGE, EMPTIED AND GARRISONED.", "hold": 0.2},
-			{"line": [-37.75, 176.9, -41.1, 175.32], "mark": [-41.1, 175.32, "THE VILLAGE"], "hold": 1.0},
+			{"say": "GHOST KIWI RECON. MISSION 03: THE VILLAGE.", "hold": 0.8},
+			{"say": "THE CASE IS WHOLE AGAIN. ITS RANGES WERE SET ON THE ROAD SOUTH, INTO THE HILLS ABOVE THE CAPITAL.", "hold": 1.0},
+			{"clear": true, "view": [-41.1, 175.3, 4.6], "time": 2.6, "mark": [-38.45, 176.55, "THE RIDGE POST", "done"], "say": "A HILL VILLAGE IN THE RIMUTAKA RANGE, EMPTIED AND GARRISONED.", "hold": 0.2},
+			{"line": [-38.45, 176.55, -41.1, 175.32], "mark": [-41.1, 175.32, "THE VILLAGE"], "hold": 1.0},
 			{"say": "YOU START BEHIND THE SPUR ABOVE IT. LOOK BEFORE YOU MOVE.", "hold": 1.0},
 			{"say": "THE SIGNAL LOG IS UPSTAIRS IN THE COMMAND HOUSE. THE WAY OUT IS THE ROAD DOWN TO THE VALLEY.", "hold": 1.2},
 			{"say": "TWELVE SENTRIES, A SNIPER ON THE BARRACKS ROOF, A MORTAR, AN ARMOURED BIRD, A CHARGER. THE HORN IS INSIDE THE EAST GATE.", "hold": 1.2},
@@ -140,7 +154,7 @@ const LEVELS := [
 ]
 
 const OPEN_AT_START := 2
-const ON_BOARD := 2
+const ON_BOARD := 3
 
 const POINTS_PER_TARGET := 100
 const ACCURACY_BONUS := 250

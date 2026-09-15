@@ -329,6 +329,7 @@ size = Vector3(1.2, 0.9, 0.42)
 
 [node name="Terrain3D" type="Terrain3D" parent="." unique_id=201977181]
 data_directory = "res://Levels/terrain/level_02"
+collision_mode = 3
 material = SubResource("Terrain3DMaterial_jgo8k")
 assets = SubResource("Terrain3DAssets_dlrr3")
 top_level = true
