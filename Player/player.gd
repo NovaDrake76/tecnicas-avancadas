@@ -71,10 +71,17 @@ const REMOTE_SILENT := ["aim_scope", "viewmodel", "interactor", "utility", "take
 	"body_drag", "prop_carry", "footsteps", "weapon_rack", "weapon", "pouch", "revive", "pinger",
 	"magazine_hand"]
 
+const RACK := "Head/Camera3D/Viewmodel/Weapons"
+
 var _local := true
 var _down := false
 var _avatar: Avatar
 var _kit: Array[Node] = []
+var held := 0:
+	set(value):
+		held = value
+		if not _local:
+			_show_held()
 
 
 func _ready() -> void:
@@ -97,8 +104,12 @@ func _ready() -> void:
 		_go_remote()
 	if _local:
 		Net.announce_local.call_deferred(self)
+	var rack := get_node_or_null(RACK) as WeaponRack
+	if _local and rack != null:
+		rack.weapon_changed.connect(_on_weapon_changed)
+		_on_weapon_changed(rack.current())
 
-	Netlink.sync(self, [".:position", ".:rotation", "Head:position", "Head:rotation"],
+	Netlink.sync(self, [".:position", ".:rotation", "Head:position", "Head:rotation", ".:held"],
 		get_multiplayer_authority())
 	_base_sensitivity = mouse_sensitivity
 	_apply_settings()
@@ -136,11 +147,28 @@ func _go_remote() -> void:
 	if view != null:
 		view.position = Vector3.ZERO
 		view.rotation = Vector3.ZERO
-	var rack := get_node_or_null("Head/Camera3D/Viewmodel/Weapons") as Node3D
+	var rack := get_node_or_null(RACK) as Node3D
 	if rack != null:
 		rack.position = Vector3(0.20, -0.34, -0.26)
 		rack.rotation = Vector3(0.0, deg_to_rad(-8.0), 0.0)
+	var pass_node := get_node_or_null("ViewmodelPass")
+	if pass_node != null:
+		pass_node.remove_from_group("viewmodel_pass")
+		pass_node.process_mode = Node.PROCESS_MODE_DISABLED
+	_show_held()
 	_show_body()
+
+
+func _on_weapon_changed(gun: Gun) -> void:
+	var rack := get_node_or_null(RACK) as WeaponRack
+	if rack != null and gun != null:
+		held = rack.all_weapons().find(gun)
+
+
+func _show_held() -> void:
+	var rack := get_node_or_null(RACK) as WeaponRack
+	if rack != null:
+		rack.display(held)
 
 
 func _show_body() -> void:

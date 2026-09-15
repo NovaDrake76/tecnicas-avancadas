@@ -4,3 +4,6 @@
 
 # Editor-local settings (machine-specific paths)
 .vscode/
+
+# Godot copies a GDExtension library aside while it runs and deletes the copy on exit
+addons/terrain_3d/bin/~*

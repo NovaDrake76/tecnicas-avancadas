@@ -6,6 +6,7 @@ const GROUP := "nav_geometry"
 const CELL_SIZE := 0.3
 const CELL_HEIGHT := 0.2
 const TERRAIN_HEIGHT := 400.0
+const PLAY_MARGIN := 24.0
 
 
 static func bake(root: Node, parent: Node) -> NavigationRegion3D:
@@ -38,7 +39,7 @@ static func bake(root: Node, parent: Node) -> NavigationRegion3D:
 	var terrain_faces := 0
 	for terrain in terrains_under(root):
 		## a Terrain3D collider lives in the physics server with no node, so the parser never sees it; the terrain hands its faces over itself.
-		var box := terrain_bounds(terrain)
+		var box := play_bounds(root, terrain_bounds(terrain))
 		var faces: PackedVector3Array = terrain.call("generate_nav_mesh_source_geometry", box, false)
 		source.add_faces(faces, Transform3D.IDENTITY)
 		terrain_faces += int(faces.size() / 3.0)
@@ -72,3 +73,19 @@ static func terrain_bounds(terrain: Node3D) -> AABB:
 	if locations.is_empty():
 		return AABB()
 	return AABB(Vector3(lo.x, -TERRAIN_HEIGHT * 0.5, lo.y), Vector3(hi.x - lo.x, TERRAIN_HEIGHT, hi.y - lo.y))
+
+
+static func play_bounds(root: Node, terrain_box: AABB) -> AABB:
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	for node in root.find_children("*", "Node3D", true, false):
+		if node is CollisionObject3D or node is CollisionShape3D or node.is_in_group("player_spawn") or node.is_in_group("bird_spawn"):
+			var at := (node as Node3D).global_position
+			lo = lo.min(Vector2(at.x, at.z))
+			hi = hi.max(Vector2(at.x, at.z))
+	if lo.x > hi.x or not terrain_box.has_volume():
+		return terrain_box
+	lo -= Vector2.ONE * PLAY_MARGIN
+	hi += Vector2.ONE * PLAY_MARGIN
+	var box := AABB(Vector3(lo.x, terrain_box.position.y, lo.y), Vector3(hi.x - lo.x, terrain_box.size.y, hi.y - lo.y))
+	return box.intersection(terrain_box)

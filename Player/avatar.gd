@@ -9,6 +9,7 @@ const BAND := Color(0.35, 0.85, 0.45)
 
 const STRIDE := 1.1
 const SWING_DEG := 28.0
+const BODY := false
 
 var _body: Node3D
 var _legs: Array[Node3D] = []
@@ -31,7 +32,22 @@ func _build() -> void:
 	_body = Node3D.new()
 	_body.name = "Body"
 	add_child(_body)
+	if BODY:
+		_build_body()
 
+	_tag = Label3D.new()
+	_tag.text = ""
+	_tag.position = Vector3(0.0, 1.98, 0.0)
+	_tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_tag.no_depth_test = false
+	_tag.pixel_size = 0.004
+	_tag.modulate = BAND
+	_tag.outline_modulate = Color(0.0, 0.0, 0.0, 0.8)
+	_tag.outline_size = 10
+	add_child(_tag)
+
+
+func _build_body() -> void:
 	_box(_body, Vector3(0.52, 0.62, 0.30), Vector3(0.0, 1.16, 0.0), KIT)
 	_box(_body, Vector3(0.56, 0.36, 0.34), Vector3(0.0, 1.22, 0.0), PLATE)
 	_box(_body, Vector3(0.24, 0.26, 0.24), Vector3(0.0, 1.60, 0.0), SKIN)
@@ -46,17 +62,6 @@ func _build() -> void:
 		_body.add_child(hip)
 		_box(hip, Vector3(0.19, 0.86, 0.22), Vector3(0.0, -0.43, 0.0), PLATE)
 		_legs.append(hip)
-
-	_tag = Label3D.new()
-	_tag.text = ""
-	_tag.position = Vector3(0.0, 1.98, 0.0)
-	_tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_tag.no_depth_test = false
-	_tag.pixel_size = 0.004
-	_tag.modulate = BAND
-	_tag.outline_modulate = Color(0.0, 0.0, 0.0, 0.8)
-	_tag.outline_size = 10
-	add_child(_tag)
 
 
 func lie(down: bool) -> void:
